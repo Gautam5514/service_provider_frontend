@@ -23,7 +23,10 @@ export default function LoginPage() {
 
     try {
       const { data } = await api.post("/auth/login", form);
-      saveAuthSession(data);
+      // data.wsToken → sessionStorage (for Socket.io)
+      // data.user    → localStorage   (for UI rendering)
+      // httpOnly cookie set by backend automatically
+      saveAuthSession({ user: data.user, wsToken: data.wsToken });
 
       if (data.user?.role === "provider") {
         try {

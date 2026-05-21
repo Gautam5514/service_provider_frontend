@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
-import { getSocket } from "@/lib/socket";
+import { getSocket, ensureSocket } from "@/lib/socket";
 
 // ── Notification tone (Web Audio API — no file needed) ─────────────────────
 function playTone() {
@@ -148,17 +148,37 @@ export default function NotificationBell({ align = "right", variant = "dark" }) 
 
   // ── Socket push ────────────────────────────────────────────────────────
   useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
-    const handler = (n) => {
-      setItems((prev) => [n, ...prev.filter((x) => x._id !== n._id)].slice(0, 50));
-      setUnread((c) => c + 1);
-      setPulse(true);
-      setTimeout(() => setPulse(false), 2500);
-      if (!isMuted()) playTone();
+    let mounted  = true;
+    let bound    = null; // { socket, handler } set once listener is attached
+
+    async function setup() {
+      // Fast path: token already in sessionStorage (page refresh / same tab)
+      let s = getSocket();
+
+      // Slow path: new tab or first load — fetch token from cookie session
+      if (!s) s = await ensureSocket();
+
+      if (!s || !mounted) return;
+
+      const handler = (n) => {
+        setItems((prev) => [n, ...prev.filter((x) => x._id !== n._id)].slice(0, 50));
+        setUnread((c) => c + 1);
+        setPulse(true);
+        setTimeout(() => setPulse(false), 2500);
+        if (!isMuted()) playTone();
+      };
+
+      s.on("notification:new", handler);
+      bound = { socket: s, handler };
+    }
+
+    setup();
+
+    return () => {
+      mounted = false;
+      // Remove listener only if it was successfully attached
+      if (bound) bound.socket.off("notification:new", bound.handler);
     };
-    socket.on("notification:new", handler);
-    return () => socket.off("notification:new", handler);
   }, []);
 
   // ── Close on outside click / Escape ───────────────────────────────────

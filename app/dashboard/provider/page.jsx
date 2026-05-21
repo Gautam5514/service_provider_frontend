@@ -7,6 +7,7 @@ import { getStoredUser } from "@/lib/auth";
 import {
   BellRing, BriefcaseBusiness, CheckCircle2, Star,
   ArrowRight, Zap, TrendingUp, Clock, ClipboardList,
+  IndianRupee, Calendar, Wallet,
 } from "lucide-react";
 
 function isActiveJob(status) {
@@ -16,32 +17,35 @@ function isActiveJob(status) {
 const STEP_LABELS = ["Profile", "Services", "KYC", "Work", "Bank", "Schedule", "Agreement"];
 
 export default function ProviderDashboardHome() {
-  const [provider, setProvider]         = useState(null);
-  const [jobs, setJobs]                 = useState([]);
+  const [provider, setProvider]           = useState(null);
+  const [jobs, setJobs]                   = useState([]);
   const [availableJobs, setAvailableJobs] = useState([]);
-  const [poolMessage, setPoolMessage]   = useState("");
-  const [loading, setLoading]           = useState(true);
+  const [poolMessage, setPoolMessage]     = useState("");
+  const [earnings, setEarnings]           = useState(null);
+  const [loading, setLoading]             = useState(true);
   const user = useMemo(() => getStoredUser(), []);
 
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
+    const load = async () => {
       try {
-        const [profileRes, jobsRes, poolRes] = await Promise.all([
+        const [profileRes, jobsRes, poolRes, earningsRes] = await Promise.all([
           api.get(`/providers/me?userId=${user.id}`),
           api.get("/bookings/provider/jobs"),
           api.get("/bookings/provider/available"),
+          api.get("/bookings/provider/earnings"),
         ]);
-        if (profileRes.data.success) setProvider(profileRes.data.provider);
-        if (jobsRes.data.success)    setJobs(jobsRes.data.jobs || []);
+        if (profileRes.data.success)  setProvider(profileRes.data.provider);
+        if (jobsRes.data.success)     setJobs(jobsRes.data.jobs || []);
         if (poolRes.data.success) {
           setAvailableJobs(poolRes.data.jobs || []);
           setPoolMessage(poolRes.data.message || "");
         }
+        if (earningsRes.data.success) setEarnings(earningsRes.data.earnings);
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     };
-    fetch();
+    load();
   }, [user]);
 
   if (loading) {
@@ -212,6 +216,40 @@ export default function ProviderDashboardHome() {
             </div>
           ))}
         </div>
+
+        {/* ── Real Earnings Summary ── */}
+        {earnings && (
+          <div className="bg-white rounded-2xl border border-zinc-100 overflow-hidden shadow-sm">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 bg-zinc-50/50">
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500">Earnings Overview</p>
+              <Link href="/dashboard/provider/completed"
+                className="text-[10px] font-bold tracking-widest uppercase text-zinc-400 hover:text-black transition-colors">
+                Full History →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-zinc-100">
+              {[
+                { label: "This Week",   value: `₹${(earnings.myPayoutMonth > 0 ? earnings.thisWeek : 0).toLocaleString("en-IN")}`, Icon: Calendar,      color: "text-blue-500",    bg: "bg-blue-50" },
+                { label: "This Month",  value: `₹${earnings.myPayoutMonth.toLocaleString("en-IN")}`,                                 Icon: IndianRupee,   color: "text-emerald-500", bg: "bg-emerald-50" },
+                { label: "Total Earned",value: `₹${earnings.myPayoutTotal.toLocaleString("en-IN")}`,                                 Icon: Wallet,        color: "text-violet-500",  bg: "bg-violet-50" },
+                { label: "Jobs Done",   value: earnings.jobCount,                                                                      Icon: CheckCircle2,  color: "text-amber-500",   bg: "bg-amber-50" },
+              ].map(({ label, value, Icon, color, bg }) => (
+                <div key={label} className="px-5 py-4 text-center">
+                  <div className={`w-8 h-8 ${bg} rounded-xl flex items-center justify-center mx-auto mb-2`}>
+                    <Icon size={15} className={color} strokeWidth={1.8} />
+                  </div>
+                  <p className="text-xl font-black text-zinc-900 tracking-tight">{loading ? "—" : value}</p>
+                  <p className="text-[9px] font-bold tracking-widest uppercase text-zinc-400 mt-0.5">{label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="px-5 py-3 border-t border-zinc-100 bg-zinc-50/40">
+              <p className="text-[10px] text-zinc-400 font-medium">
+                Your payout = base price − platform fee − GST · {earnings.jobsThisMonth} job{earnings.jobsThisMonth !== 1 ? "s" : ""} completed this month
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Quick actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

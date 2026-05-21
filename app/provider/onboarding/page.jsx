@@ -215,8 +215,109 @@ export default function ProviderOnboardingPage() {
     fetchStatus();
   }, [router]);
 
+  // ─── Client-side validation per step (prevents bad API calls) ─────────────
+  function validateStep(step) {
+    const errs = [];
+
+    if (step === 1) {
+      if (!profile.dateOfBirth)
+        errs.push("Date of birth is required.");
+      else {
+        const ageMs  = Date.now() - new Date(profile.dateOfBirth).getTime();
+        const ageYrs = ageMs / (365.25 * 24 * 3600 * 1000);
+        if (ageYrs < 18) errs.push("You must be at least 18 years old to register as a provider.");
+        if (ageYrs > 80) errs.push("Please enter a valid date of birth.");
+      }
+      if (!profile.city.trim() || profile.city.trim().length < 2)
+        errs.push("City is required (minimum 2 characters).");
+      if (!profile.serviceArea.trim() || profile.serviceArea.trim().length < 2)
+        errs.push("Service area is required — e.g. 'South Delhi' or 'Bandra West'.");
+      const radius = Number(profile.workingRadiusKm);
+      if (!radius || radius < 1 || radius > 100)
+        errs.push("Working radius must be between 1 and 100 km.");
+      if (profile.emergencyContact) {
+        const ec = profile.emergencyContact.replace(/\D/g, "");
+        if (ec.length !== 10) errs.push("Emergency contact must be a valid 10-digit mobile number.");
+      }
+      if (profile.alternatePhone) {
+        const ap = profile.alternatePhone.replace(/\D/g, "");
+        if (ap.length !== 10) errs.push("Alternate phone must be a valid 10-digit mobile number.");
+      }
+    }
+
+    if (step === 2) {
+      if (services.length === 0)
+        errs.push("Add at least one service you offer.");
+      services.forEach((s, i) => {
+        const num = i + 1;
+        if (!s.serviceName.trim() || s.serviceName.trim().length < 2)
+          errs.push(`Service ${num}: Service name is required (min 2 characters).`);
+        const exp = Number(s.experienceYears);
+        if (isNaN(exp) || exp < 0 || exp > 60)
+          errs.push(`Service ${num}: Experience years must be between 0 and 60.`);
+      });
+    }
+
+    if (step === 3) {
+      if (!documents.aadhaar?.fileUrl)   errs.push("Aadhaar card upload is required.");
+      if (!documents.pan?.fileUrl)       errs.push("PAN card upload is required.");
+      if (!documents.selfie?.fileUrl)    errs.push("Live selfie photo is required.");
+      const aadhaarNum = (documents.aadhaar?.docNumberMasked || "").replace(/\s/g, "");
+      if (aadhaarNum && !/^\d{12}$/.test(aadhaarNum))
+        errs.push("Aadhaar number must be exactly 12 digits (no spaces).");
+      const panNum = (documents.pan?.docNumberMasked || "").toUpperCase().replace(/\s/g, "");
+      if (panNum && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(panNum))
+        errs.push("PAN format is invalid — expected format: ABCDE1234F.");
+    }
+
+    if (step === 5) {
+      if (!bankDetails.accountHolderName.trim())
+        errs.push("Account holder name is required (must match bank records).");
+      if (!bankDetails.accountNumber) {
+        errs.push("Account number is required.");
+      } else {
+        const acNum = bankDetails.accountNumber.replace(/\s/g, "");
+        if (!/^\d+$/.test(acNum))   errs.push("Account number must contain digits only.");
+        if (acNum.length < 9)       errs.push("Account number is too short (minimum 9 digits).");
+        if (acNum.length > 18)      errs.push("Account number is too long (maximum 18 digits).");
+      }
+      if (!bankDetails.ifscCode) {
+        errs.push("IFSC code is required.");
+      } else {
+        const ifsc = bankDetails.ifscCode.toUpperCase().replace(/\s/g, "");
+        if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc))
+          errs.push("IFSC code format is invalid — expected 11 characters like SBIN0001234.");
+      }
+      if (bankDetails.upiId && !/^[\w.\-+]+@[\w]+$/.test(bankDetails.upiId))
+        errs.push("UPI ID format is invalid — expected format: yourname@upi or 9876543210@paytm.");
+    }
+
+    if (step === 6) {
+      if (availability.availableDays.length === 0)
+        errs.push("Select at least one working day.");
+      if (!availability.workingHoursFrom || !availability.workingHoursTo)
+        errs.push("Working hours (from and to) are required.");
+      else if (availability.workingHoursFrom >= availability.workingHoursTo)
+        errs.push("Working hours end time must be after start time.");
+      const tr = Number(availability.travelRadiusKm);
+      if (!tr || tr < 1 || tr > 100)
+        errs.push("Travel radius must be between 1 and 100 km.");
+    }
+
+    return errs;
+  }
+
   const handleNext = async () => {
     setError("");
+
+    // Client-side validation before touching the API
+    const clientErrors = validateStep(currentStep);
+    if (clientErrors.length > 0) {
+      setError(clientErrors.join("\n")); // shown as pre-wrapped text below
+      window.scrollTo(0, 0);
+      return;
+    }
+
     setLoading(true);
     try {
       let endpoint;
@@ -380,7 +481,21 @@ export default function ProviderOnboardingPage() {
       <div className="max-w-5xl mx-auto px-4 py-10">
         {error && (
           <div className="mb-6 p-4 border border-red-200 bg-red-50 text-red-700 text-xs font-semibold leading-relaxed">
-            {error}
+            {error.includes("\n") ? (
+              <ul className="space-y-1.5">
+                {error.split("\n").filter(Boolean).map((e, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="shrink-0 mt-px text-red-400">✕</span>
+                    {e}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 mt-px text-red-400">✕</span>
+                {error}
+              </div>
+            )}
           </div>
         )}
 
@@ -448,15 +563,33 @@ export default function ProviderOnboardingPage() {
                     <option value="other">Other</option>
                   </select>
                 </Field>
-                <Field label="Emergency Contact" hint="Recommended — family or friend">
-                  <input type="tel" placeholder="+91 9876543210" value={profile.emergencyContact}
-                    onChange={(e) => setProfile((p) => ({ ...p, emergencyContact: e.target.value }))}
-                    className={inputCls} />
+                <Field label="Emergency Contact" hint="Recommended — must be a 10-digit mobile number">
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="10-digit mobile number"
+                    value={profile.emergencyContact}
+                    maxLength={10}
+                    onChange={(e) => setProfile((p) => ({ ...p, emergencyContact: e.target.value.replace(/\D/g, "").slice(0, 10) }))}
+                    className={`${inputCls} tracking-widest ${profile.emergencyContact && profile.emergencyContact.length === 10 ? "border-emerald-400" : profile.emergencyContact.length > 0 ? "border-amber-400" : ""}`}
+                  />
+                  {profile.emergencyContact.length > 0 && profile.emergencyContact.length < 10 && (
+                    <p className="text-[10px] text-amber-600 font-semibold mt-1">{10 - profile.emergencyContact.length} more digit{10 - profile.emergencyContact.length !== 1 ? "s" : ""} needed</p>
+                  )}
                 </Field>
-                <Field label="Alternate Phone">
-                  <input type="tel" placeholder="+91 9876543210" value={profile.alternatePhone}
-                    onChange={(e) => setProfile((p) => ({ ...p, alternatePhone: e.target.value }))}
-                    className={inputCls} />
+                <Field label="Alternate Phone" hint="Optional — 10-digit mobile number">
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="10-digit mobile number"
+                    value={profile.alternatePhone}
+                    maxLength={10}
+                    onChange={(e) => setProfile((p) => ({ ...p, alternatePhone: e.target.value.replace(/\D/g, "").slice(0, 10) }))}
+                    className={`${inputCls} tracking-widest ${profile.alternatePhone && profile.alternatePhone.length === 10 ? "border-emerald-400" : profile.alternatePhone.length > 0 ? "border-amber-400" : ""}`}
+                  />
+                  {profile.alternatePhone.length > 0 && profile.alternatePhone.length < 10 && (
+                    <p className="text-[10px] text-amber-600 font-semibold mt-1">{10 - profile.alternatePhone.length} more digit{10 - profile.alternatePhone.length !== 1 ? "s" : ""} needed</p>
+                  )}
                 </Field>
                 <Field label="Languages Spoken" hint="Comma separated: Hindi, English">
                   <input type="text" placeholder="Hindi, English" value={profile.languages}
@@ -585,11 +718,43 @@ export default function ProviderOnboardingPage() {
                         />
                       </Field>
                       {hasMask && (
-                        <Field label="Document Number" hint="Enter masked or partial number">
-                          <input type="text" placeholder={maskPlaceholder}
+                        <Field label="Document Number" hint={key === "aadhaar" ? "12-digit Aadhaar number" : "PAN format: ABCDE1234F"}>
+                          <input
+                            type="text"
+                            placeholder={maskPlaceholder}
                             value={documents[key]?.docNumberMasked || ""}
-                            onChange={(e) => setDocuments((d) => ({ ...d, [key]: { ...d[key], docNumberMasked: e.target.value } }))}
-                            className={inputCls} />
+                            maxLength={key === "aadhaar" ? 12 : 10}
+                            onChange={(e) => {
+                              let v = e.target.value;
+                              if (key === "aadhaar") v = v.replace(/\D/g, "").slice(0, 12);
+                              if (key === "pan")     v = v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+                              setDocuments((d) => ({ ...d, [key]: { ...d[key], docNumberMasked: v } }));
+                            }}
+                            className={(() => {
+                              const v = documents[key]?.docNumberMasked || "";
+                              const valid =
+                                key === "aadhaar" ? /^\d{12}$/.test(v)
+                                : key === "pan"   ? /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v)
+                                : true;
+                              const hasValue = v.length > 0;
+                              return `${inputCls} tracking-widest font-mono ${hasValue && valid ? "border-emerald-400" : hasValue ? "border-amber-400" : ""}`;
+                            })()}
+                          />
+                          {/* Format hint */}
+                          {(() => {
+                            const v = documents[key]?.docNumberMasked || "";
+                            if (!v) return null;
+                            if (key === "aadhaar") {
+                              if (/^\d{12}$/.test(v)) return <p className="text-[10px] text-emerald-600 font-semibold mt-1">✓ Valid Aadhaar format</p>;
+                              if (!/^\d+$/.test(v))   return <p className="text-[10px] text-red-500 font-semibold mt-1">Aadhaar must contain digits only</p>;
+                              return <p className="text-[10px] text-amber-600 font-semibold mt-1">{12 - v.length} more digit{12 - v.length !== 1 ? "s" : ""} needed</p>;
+                            }
+                            if (key === "pan") {
+                              if (/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v)) return <p className="text-[10px] text-emerald-600 font-semibold mt-1">✓ Valid PAN format</p>;
+                              return <p className="text-[10px] text-amber-600 font-semibold mt-1">Format: 5 letters + 4 digits + 1 letter (e.g. ABCDE1234F)</p>;
+                            }
+                            return null;
+                          })()}
                         </Field>
                       )}
                     </div>
@@ -676,15 +841,45 @@ export default function ProviderOnboardingPage() {
                     onChange={(e) => setBankDetails((b) => ({ ...b, accountHolderName: e.target.value }))}
                     className={inputCls} />
                 </Field>
-                <Field label="IFSC Code *">
-                  <input type="text" placeholder="SBIN0001234" value={bankDetails.ifscCode}
-                    onChange={(e) => setBankDetails((b) => ({ ...b, ifscCode: e.target.value.toUpperCase() }))}
-                    className={inputCls + " uppercase tracking-widest"} />
+                <Field label="IFSC Code *" hint="11-character code on your cheque / passbook">
+                  <input
+                    type="text"
+                    placeholder="SBIN0001234"
+                    maxLength={11}
+                    value={bankDetails.ifscCode}
+                    onChange={(e) => setBankDetails((b) => ({ ...b, ifscCode: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 11) }))}
+                    className={(() => {
+                      const v = bankDetails.ifscCode;
+                      const valid = /^[A-Z]{4}0[A-Z0-9]{6}$/.test(v);
+                      return `${inputCls} uppercase tracking-widest font-mono ${v.length > 0 && valid ? "border-emerald-400" : v.length > 0 ? "border-amber-400" : ""}`;
+                    })()}
+                  />
+                  {bankDetails.ifscCode.length > 0 && (
+                    /^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankDetails.ifscCode)
+                      ? <p className="text-[10px] text-emerald-600 font-semibold mt-1">✓ Valid IFSC format</p>
+                      : <p className="text-[10px] text-amber-600 font-semibold mt-1">Format: 4 letters + 0 + 6 alphanumeric (11 chars total)</p>
+                  )}
                 </Field>
-                <Field label="Account Number *">
-                  <input type="password" placeholder="••••••••••••" value={bankDetails.accountNumber}
-                    onChange={(e) => setBankDetails((b) => ({ ...b, accountNumber: e.target.value }))}
-                    className={inputCls} />
+                <Field label="Account Number *" hint="9–18 digits — digits only, no spaces">
+                  <input
+                    type="password"
+                    placeholder="Enter account number"
+                    value={bankDetails.accountNumber}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(0, 18);
+                      setBankDetails((b) => ({ ...b, accountNumber: v }));
+                    }}
+                    className={(() => {
+                      const v = bankDetails.accountNumber;
+                      const valid = v.length >= 9 && v.length <= 18;
+                      return `${inputCls} ${v.length > 0 && valid ? "border-emerald-400" : v.length > 0 ? "border-amber-400" : ""}`;
+                    })()}
+                  />
+                  {bankDetails.accountNumber.length > 0 && (
+                    bankDetails.accountNumber.length < 9
+                      ? <p className="text-[10px] text-amber-600 font-semibold mt-1">Need at least {9 - bankDetails.accountNumber.length} more digit{9 - bankDetails.accountNumber.length !== 1 ? "s" : ""}</p>
+                      : <p className="text-[10px] text-emerald-600 font-semibold mt-1">✓ {bankDetails.accountNumber.length} digits entered</p>
+                  )}
                 </Field>
                 <Field label="UPI ID" hint="Optional — for faster payouts">
                   <input type="text" placeholder="yourname@upi" value={bankDetails.upiId}

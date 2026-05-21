@@ -25,25 +25,25 @@ import {
 const ROLE_CONFIG = {
   customer: {
     label:       "Smart Search",
-    placeholder: "Search services, bookings, status, city…",
+    placeholder: "Search services...",
     endpoint:    "/search",
     chips:       ["AC repair", "Fan install", "completed", "today"],
   },
   provider: {
     label:       "Provider Search",
-    placeholder: "Search orders, customers, status, payment…",
+    placeholder: "Search orders...",
     endpoint:    "/search",
     chips:       ["completed", "in progress", "cash", "today"],
   },
   admin: {
     label:       "Admin Search",
-    placeholder: "Search users, providers, bookings, dates…",
+    placeholder: "Search workspace...",
     endpoint:    "/search",
     chips:       ["pending", "approved", "today", "cash"],
   },
   public: {
     label:       "Service Search",
-    placeholder: "AC repair, fridge, fan, electrician…",
+    placeholder: "Search services...",
     endpoint:    "/search/public",
     chips:       ["AC repair", "Fridge repair", "Fan install", "TV mounting"],
   },
@@ -121,6 +121,18 @@ export default function SmartSearch({ role: roleProp, compact = false, className
   // ── Abort in-flight request on component unmount ──────────────────────────
   useEffect(() => {
     return () => { abortRef.current?.abort(); };
+  }, []);
+
+  // ── Keyboard shortcut (⌘K or Ctrl+K) to focus input ──────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
@@ -247,20 +259,15 @@ export default function SmartSearch({ role: roleProp, compact = false, className
   return (
     <div
       ref={boxRef}
-      className={`relative ${compact ? "w-full max-w-xl" : "w-full max-w-3xl"} ${className}`}
+      className={`relative ${compact ? "w-full max-w-xs" : "w-full max-w-3xl"} ${className}`}
       role="combobox"
       aria-expanded={open}
       aria-haspopup="listbox"
     >
       {/* ── Search pill ──────────────────────────────────────────────────── */}
-      <div className="relative rounded-full bg-gradient-to-b from-zinc-700 via-zinc-950 to-black p-[2px] shadow-[0_12px_28px_rgba(0,0,0,0.22),inset_0_2px_4px_rgba(255,255,255,0.18)]">
-        <div className="relative rounded-full bg-white shadow-[inset_0_2px_5px_rgba(0,0,0,0.16)]">
-
-          {/* Search icon button */}
-          <div className="absolute left-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-zinc-950 text-white shadow-[0_4px_12px_rgba(0,0,0,0.35)] md:h-11 md:w-11">
-            <Search size={compact ? 19 : 22} strokeWidth={2.8} />
-          </div>
-
+      {compact ? (
+        <div className="relative flex items-center h-10 w-full rounded-xl border border-zinc-200/80 bg-zinc-50/70 hover:bg-zinc-100/50 focus-within:bg-white focus-within:border-black/50 focus-within:shadow-sm transition-all duration-200 px-3.5 gap-2.5">
+          <Search size={15} className="text-zinc-400 shrink-0" strokeWidth={2.2} />
           <input
             ref={inputRef}
             role="searchbox"
@@ -279,10 +286,8 @@ export default function SmartSearch({ role: roleProp, compact = false, className
             placeholder={cfg.placeholder}
             autoComplete="off"
             spellCheck={false}
-            className="h-12 w-full rounded-full bg-transparent pl-14 pr-14 text-sm font-black text-zinc-900 outline-none placeholder:text-zinc-400 md:h-14 md:pl-16 md:pr-16 md:text-base"
+            className="w-full bg-transparent text-xs font-bold text-zinc-900 outline-none placeholder:text-zinc-400"
           />
-
-          {/* Clear (×) or cursor icon on the right */}
           {query ? (
             <button
               type="button"
@@ -294,22 +299,75 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                 setActiveIdx(-1);
                 inputRef.current?.focus();
               }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+              className="text-zinc-400 hover:text-zinc-900 transition-colors"
             >
-              <X size={18} />
+              <X size={15} />
             </button>
           ) : (
-            <button
-              type="button"
-              aria-label="Open search"
-              onClick={() => { setOpen(true); inputRef.current?.focus(); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rotate-[-18deg] text-zinc-500 drop-shadow-[0_4px_2px_rgba(0,0,0,0.25)] hover:text-black transition-colors"
-            >
-              <MousePointer2 size={compact ? 27 : 31} fill="currentColor" strokeWidth={1.8} />
-            </button>
+            <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-0.5 rounded border border-zinc-200 bg-white px-1.5 font-mono text-[9px] font-medium text-zinc-400 shadow-sm shrink-0">
+              ⌘K
+            </kbd>
           )}
         </div>
-      </div>
+      ) : (
+        <div className="relative rounded-full bg-gradient-to-b from-zinc-700 via-zinc-950 to-black p-[2px] shadow-[0_12px_28px_rgba(0,0,0,0.22),inset_0_2px_4px_rgba(255,255,255,0.18)]">
+          <div className="relative rounded-full bg-white shadow-[inset_0_2px_5px_rgba(0,0,0,0.16)]">
+
+            {/* Search icon button */}
+            <div className="absolute left-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-zinc-950 text-white shadow-[0_4px_12px_rgba(0,0,0,0.35)] md:h-11 md:w-11">
+              <Search size={22} strokeWidth={2.8} />
+            </div>
+
+            <input
+              ref={inputRef}
+              role="searchbox"
+              aria-label={cfg.label}
+              aria-autocomplete="list"
+              aria-controls="sm-results"
+              aria-activedescendant={activeIdx >= 0 ? `sm-result-${activeIdx}` : undefined}
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setOpen(true);
+                setActiveIdx(-1);
+              }}
+              onFocus={() => setOpen(true)}
+              onKeyDown={onKeyDown}
+              placeholder={cfg.placeholder}
+              autoComplete="off"
+              spellCheck={false}
+              className="h-12 w-full rounded-full bg-transparent pl-14 pr-14 text-sm font-black text-zinc-900 outline-none placeholder:text-zinc-400 md:h-14 md:pl-16 md:pr-16 md:text-base"
+            />
+
+            {/* Clear (×) or cursor icon on the right */}
+            {query ? (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => {
+                  setQuery("");
+                  setResults([]);
+                  setHasError(false);
+                  setActiveIdx(-1);
+                  inputRef.current?.focus();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                aria-label="Open search"
+                onClick={() => { setOpen(true); inputRef.current?.focus(); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rotate-[-18deg] text-zinc-500 drop-shadow-[0_4px_2px_rgba(0,0,0,0.25)] hover:text-black transition-colors"
+              >
+                <MousePointer2 size={31} fill="currentColor" strokeWidth={1.8} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Dropdown panel ───────────────────────────────────────────────── */}
       {open && (

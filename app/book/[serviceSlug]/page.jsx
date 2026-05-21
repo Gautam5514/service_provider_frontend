@@ -1,7 +1,7 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { use, useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
@@ -26,9 +26,11 @@ function getNextDays(n = 7) {
 function fmtDate(d) { return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }); }
 function fmtDateISO(d) { return d.toISOString().split("T")[0]; }
 
-export default function BookingPage({ params }) {
+function BookingPageContent({ params }) {
   const { serviceSlug } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const cartParam = searchParams.get("cart");
 
   const svc      = getServiceBySlug(serviceSlug);
   const category = getCategoryForSlug(serviceSlug);
@@ -55,8 +57,36 @@ export default function BookingPage({ params }) {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponResult,  setCouponResult]  = useState(null); // { discount, finalAmount, message, error }
 
-  // Pricing
-  const basePrice   = svc?.price || 0;
+  // Cart parsing and state
+  const [cartItems, setCartItems] = useState(() => {
+    if (svc) {
+      return [{ service: svc, quantity: 1 }];
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    if (cartParam) {
+      const items = [];
+      const segments = cartParam.split(",");
+      for (const segment of segments) {
+        const [slug, qtyStr] = segment.split(":");
+        if (slug) {
+          const service = getServiceBySlug(slug);
+          const quantity = parseInt(qtyStr, 10) || 1;
+          if (service) {
+            items.push({ service, quantity });
+          }
+        }
+      }
+      if (items.length > 0) {
+        setCartItems(items);
+      }
+    }
+  }, [cartParam]);
+
+  // Pricing calculations based on all cart items
+  const basePrice   = cartItems.reduce((acc, item) => acc + (item.service?.price || 0) * item.quantity, 0);
   const platformFee = Math.round(basePrice * PLATFORM_FEE_RATE);
   const tax         = Math.round((basePrice + platformFee) * GST_RATE);
   const subtotal    = basePrice + platformFee + tax;
@@ -140,7 +170,11 @@ export default function BookingPage({ params }) {
 
   const handleBook = async () => {
     const user = getStoredUser();
-    if (!user) { router.push(`/login?redirect=/book/${serviceSlug}`); return; }
+    if (!user) {
+      const redirectPath = `/book/${serviceSlug}${cartParam ? `?cart=${encodeURIComponent(cartParam)}` : ""}`;
+      router.push(`/login?redirect=${redirectPath}`);
+      return;
+    }
     if (user.role !== "customer") { setError("Only customers can book services."); return; }
 
     setLoading(true); setError("");
@@ -157,10 +191,15 @@ export default function BookingPage({ params }) {
         }).catch(() => {});
       }
 
+      // Combine service names for database representation
+      const combinedServiceName = cartItems
+        .map(item => `${item.service.name} (x${item.quantity})`)
+        .join(" + ");
+
       const { data } = await api.post("/bookings", {
         serviceCategory: category,
-        serviceName:     svc.name,
-        serviceSlug:     svc.slug,
+        serviceName:     combinedServiceName,
+        serviceSlug:     serviceSlug,
         scheduledDate:   selectedDate,
         scheduledTimeSlot: selectedSlot,
         address,
@@ -381,7 +420,19 @@ export default function BookingPage({ params }) {
                   {/* Summary rows */}
                   <div className="space-y-0 mb-6">
                     {[
-                      { label: "Service", value: svc.name },
+                      { 
+                        label: "Services", 
+                        value: (
+                          <div className="space-y-1">
+                            {cartItems.map((item, idx) => (
+                              <div key={idx} className="flex items-center gap-2 text-zinc-800">
+                                <span className="font-bold">{item.service.name}</span>
+                                <span className="text-xs text-zinc-500 font-medium bg-zinc-100 px-1.5 py-0.5 rounded">x{item.quantity}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      },
                       { label: "Date",    value: days.find(d => fmtDateISO(d) === selectedDate) ? fmtDate(days.find(d => fmtDateISO(d) === selectedDate)) : selectedDate },
                       { label: "Time",    value: TIME_SLOTS.find(s => s.value === selectedSlot)?.label || selectedSlot },
                       { label: "Address", value: `${address.text}, ${address.city}${address.pincode ? " – " + address.pincode : ""}` },
@@ -389,7 +440,7 @@ export default function BookingPage({ params }) {
                     ].map(row => (
                       <div key={row.label} className="flex gap-4 py-3 border-b border-zinc-100 last:border-0">
                         <span className="text-[10px] font-bold tracking-widests uppercase text-zinc-400 w-20 flex-shrink-0 pt-0.5">{row.label}</span>
-                        <span className="text-sm font-semibold text-zinc-900">{row.value}</span>
+                        <div className="text-sm font-semibold text-zinc-900">{row.value}</div>
                       </div>
                     ))}
                   </div>
@@ -440,39 +491,55 @@ export default function BookingPage({ params }) {
 
           {/* Summary card */}
           <div>
-            <div className="bg-white border border-zinc-200 p-6 sticky top-24">
-              <div className="flex items-center gap-3 mb-5 pb-4 border-b border-zinc-100">
-                <span className="text-2xl"><meta.icon size={28} className="text-black" /></span>
-                <div>
+            <div className="bg-white border border-zinc-200 p-6 sticky top-24 shadow-sm">
+              <div className="flex items-start gap-3 mb-5 pb-4 border-b border-zinc-100">
+                <span className="text-2xl mt-0.5"><meta.icon size={28} className="text-black" /></span>
+                <div className="flex-1 min-w-0">
                   <p className="text-[9px] font-bold tracking-widests uppercase text-zinc-400">{meta.label}</p>
-                  <p className="font-bold text-sm text-black">{svc.name}</p>
+                  <div className="mt-1 space-y-1">
+                    {cartItems.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-start text-xs font-bold text-black gap-2">
+                        <span className="truncate">{item.service.name}</span>
+                        <span className="text-zinc-500 font-medium whitespace-nowrap">x{item.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-2 mb-4">
+                <div className="text-[10px] font-bold tracking-widest uppercase text-zinc-400 mb-1">Items Breakdown</div>
+                {cartItems.map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-[11px] text-zinc-600 pl-2 border-l-2 border-zinc-200 my-1.5">
+                    <span>{item.service.name} (x{item.quantity})</span>
+                    <span>{formatPrice((item.service?.price || 0) * item.quantity)}</span>
+                  </div>
+                ))}
+                <div className="h-px bg-zinc-150 my-3" />
+
                 {[
-                  { label: "Service charge", value: formatPrice(basePrice)   },
+                  { label: "Subtotal",       value: formatPrice(basePrice)   },
                   { label: "Platform fee",   value: formatPrice(platformFee) },
                   { label: "GST (18%)",      value: formatPrice(tax)         },
                 ].map(r => (
-                  <div key={r.label} className="flex justify-between text-xs">
+                  <div key={r.label} className="flex justify-between text-xs my-1">
                     <span className="text-zinc-500">{r.label}</span>
                     <span className="font-semibold text-zinc-800">{r.value}</span>
                   </div>
                 ))}
                 {discount > 0 && (
-                  <div className="flex justify-between text-xs text-emerald-600">
+                  <div className="flex justify-between text-xs text-emerald-600 my-1">
                     <span className="font-semibold">Coupon discount</span>
                     <span className="font-bold">−{formatPrice(discount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between pt-3 border-t border-zinc-200">
+                <div className="flex justify-between pt-3 border-t border-zinc-200 mt-3">
                   <span className="text-sm font-bold text-black">Total</span>
                   <span className="text-base font-extrabold text-black">{formatPrice(totalAmount)}</span>
                 </div>
               </div>
 
-              <div className="bg-zinc-50 border border-zinc-100 p-3 text-xs text-zinc-500 leading-relaxed flex items-start gap-2">
+              <div className="bg-zinc-50 border border-zinc-100 p-3 text-xs text-zinc-500 leading-relaxed flex items-start gap-2 rounded">
                 <CreditCard size={14} className="mt-0.5 flex-shrink-0" />
                 <span><strong>Cash on Delivery</strong> — Pay after the job is completed.</span>
               </div>
@@ -490,5 +557,20 @@ export default function BookingPage({ params }) {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BookingPage({ params }) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin text-black" size={32} />
+          <p className="text-zinc-400 font-bold tracking-widest uppercase text-xs">Loading Booking System...</p>
+        </div>
+      </div>
+    }>
+      <BookingPageContent params={params} />
+    </Suspense>
   );
 }

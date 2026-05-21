@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
-import { clearAuthSession, getDashboardPath, getStoredUser } from "@/lib/auth";
+import { performLogout, getDashboardPath, getStoredUser } from "@/lib/auth";
 import NotificationBell from "@/components/NotificationBell";
 import { Search, Wrench, ShieldCheck, Clock, ArrowRight, Home, Calendar, LogOut } from "lucide-react";
 
@@ -23,8 +23,7 @@ export default function CustomerDashboardPage() {
   }, [router, user]);
 
   const handleLogout = () => {
-    clearAuthSession();
-    router.push("/login");
+    performLogout().then(() => router.push("/login"));
   };
 
   if (!user) return null;
