@@ -13,7 +13,7 @@ export async function generateMetadata({ params }) {
     ? Math.min(...services.map(s => s.price))
     : null;
 
-  const title       = `${meta.label} Near You — Starting ₹${lowestPrice ?? "149"} | ServiceMarket`;
+  const title       = `${meta.label} Near You — Starting ₹${lowestPrice ?? "149"} | EliteCrew`;
   const description = `Book verified ${meta.label} professionals at your doorstep. ${meta.description}. Starting from ₹${lowestPrice ?? "149"}. Pay after service. KYC-verified pros.`;
 
   return {
@@ -50,8 +50,8 @@ export default async function ServiceCategoryLayout({ children, params }) {
         description: meta.description,
         provider: {
           "@type": "LocalBusiness",
-          name:    "ServiceMarket",
-          url:     process.env.NEXT_PUBLIC_SITE_URL || "https://servicemarket.example.com",
+          name:    "EliteCrew",
+          url:     process.env.NEXT_PUBLIC_SITE_URL || "https://elitecrew.example.com",
         },
         areaServed: {
           "@type": "Country",

@@ -1,7 +1,7 @@
 export default function manifest() {
   return {
-    name:             "ServiceMarket — Home Services",
-    short_name:       "ServiceMarket",
+    name:             "EliteCrew — Home Services",
+    short_name:       "EliteCrew",
     description:      "Book verified AC, electrical & appliance experts at your doorstep. Pay after service.",
     start_url:        "/",
     display:          "standalone",

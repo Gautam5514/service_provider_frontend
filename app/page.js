@@ -108,7 +108,7 @@ const INITIAL_TESTIMONIALS = [
     avatar:  "RV",
     category: "electrical",
     service: "Electrical Work",
-    text:    "Had an electrical fault for weeks. The ServiceMarket technician diagnosed and fixed it in 30 minutes. Clean work, zero mess.",
+    text:    "Had an electrical fault for weeks. The EliteCrew technician diagnosed and fixed it in 30 minutes. Clean work, zero mess.",
   },
   {
     name:    "Anjali Mehra",
@@ -715,12 +715,12 @@ export default function HomePage() {
               <div className="absolute inset-0 bg-black rounded-xl opacity-0 group-hover:opacity-5 transition-opacity" />
               <img 
                 src="/logo-transparent.png" 
-                alt="ServiceMarket" 
+                alt="EliteCrew" 
                 className="w-8 h-8 object-contain drop-shadow-sm"
               />
             </div>
             <span className="hidden sm:block text-base font-extrabold tracking-tight">
-              Service<span className="font-light text-zinc-400">Market</span>
+              Elite<span className="font-light text-zinc-400">Crew</span>
             </span>
           </Link>
 
@@ -1482,7 +1482,7 @@ export default function HomePage() {
                 Turn your skills into a stable income.
               </h2>
               <p className="text-white/40 text-base leading-relaxed mb-8 max-w-md">
-                Join 2,000+ verified professionals already earning through ServiceMarket. Flexible hours, instant job alerts, and weekly direct payouts.
+                Join 2,000+ verified professionals already earning through EliteCrew. Flexible hours, instant job alerts, and weekly direct payouts.
               </p>
 
               {/* Perks */}
@@ -1723,7 +1723,7 @@ export default function HomePage() {
             Ready for a service?
           </h2>
           <p className="text-zinc-500 text-base leading-relaxed mb-10 max-w-md mx-auto">
-            Join 50,000+ customers who trust ServiceMarket for fast, reliable, and transparently-priced home services.
+            Join 50,000+ customers who trust EliteCrew for fast, reliable, and transparently-priced home services.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/services/ac"
@@ -1750,11 +1750,11 @@ export default function HomePage() {
               <Link href="/" className="flex items-center gap-2.5 mb-4 group">
                 <img 
                   src="/logo-transparent.png" 
-                  alt="ServiceMarket" 
+                  alt="EliteCrew" 
                   className="w-8 h-8 object-contain"
                 />
                 <span className="text-base font-extrabold tracking-tight">
-                  Service<span className="font-light text-zinc-400">Market</span>
+                  Elite<span className="font-light text-zinc-400">Crew</span>
                 </span>
               </Link>
               <p className="text-xs text-zinc-400 leading-relaxed max-w-[195px]">
@@ -1819,7 +1819,7 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-7 border-t border-zinc-100">
             <p className="text-[10px] text-zinc-400 font-medium">
-              © {new Date().getFullYear()} ServiceMarket · All rights reserved.
+              © {new Date().getFullYear()} EliteCrew · All rights reserved.
             </p>
             <p className="text-[10px] text-zinc-300 font-medium">
               Built with care for India&apos;s homes.

@@ -98,7 +98,7 @@ export default function SupportWidget() {
                 <MessageSquare size={15} className="text-emerald-400" />
               </div>
               <div>
-                <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-500">ServiceMarket</p>
+                <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-500">EliteCrew</p>
                 <p className="text-sm font-extrabold text-white">Support</p>
               </div>
             </div>

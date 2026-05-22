@@ -5,7 +5,7 @@ export default function TermsPage() {
     <InfoPageShell
       eyebrow="Legal"
       title="Terms of Service"
-      description="These terms explain how customers, providers, bookings, payments, ratings, and platform support work on ServiceMarket."
+      description="These terms explain how customers, providers, bookings, payments, ratings, and platform support work on EliteCrew."
       cta={{ label: "Contact Support", href: "/contact" }}
       sections={[
         {
@@ -22,8 +22,8 @@ export default function TermsPage() {
         },
         {
           kicker: "Platform",
-          title: "ServiceMarket role",
-          body: "ServiceMarket helps connect customers and providers, track booking status, collect ratings, and generate service records.",
+          title: "EliteCrew role",
+          body: "EliteCrew helps connect customers and providers, track booking status, collect ratings, and generate service records.",
           items: ["Pricing may include service charge, platform fee, and tax", "Support decisions use booking history", "Policies may change as the product improves"],
         },
       ]}

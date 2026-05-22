@@ -12,19 +12,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  metadataBase: new URL("https://servicemarket.example.com"),
+  metadataBase: new URL("https://elitecrew.example.com"),
   title: {
-    default: "ServiceMarket — Expert Home Services at Your Doorstep",
-    template: "%s | ServiceMarket",
+    default: "EliteCrew — Expert Home Services at Your Doorstep",
+    template: "%s | EliteCrew",
   },
   description: "Book verified AC technicians, electricians, and home appliance experts in minutes. Transparent pricing, no surprises.",
   keywords: ["home services", "AC repair", "electrician", "plumber", "cleaning", "home maintenance"],
-  authors: [{ name: "ServiceMarket" }],
+  authors: [{ name: "EliteCrew" }],
   openGraph: {
-    title: "ServiceMarket — Expert Home Services",
+    title: "EliteCrew — Expert Home Services",
     description: "Book verified AC technicians, electricians, and home appliance experts in minutes.",
-    url: "https://servicemarket.example.com",
-    siteName: "ServiceMarket",
+    url: "https://elitecrew.example.com",
+    siteName: "EliteCrew",
     images: [
       {
         url: "/icon.png",
@@ -37,7 +37,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ServiceMarket — Expert Home Services",
+    title: "EliteCrew — Expert Home Services",
     description: "Book verified AC technicians, electricians, and home appliance experts in minutes.",
     images: ["/icon.png"],
   },

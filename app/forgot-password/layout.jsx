@@ -1,6 +1,6 @@
 export const metadata = {
   title: "Forgot Password",
-  description: "Reset your ServiceMarket account password securely.",
+  description: "Reset your EliteCrew account password securely.",
 };
 
 export default function ForgotPasswordLayout({ children }) {

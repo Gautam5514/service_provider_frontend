@@ -5,7 +5,7 @@ export default function AboutPage() {
     <InfoPageShell
       eyebrow="Company"
       title="Expert home service, built around trust."
-      description="ServiceMarket connects customers with verified local professionals for AC, fridge, fan, TV, electrical, cooler, and appliance work."
+      description="EliteCrew connects customers with verified local professionals for AC, fridge, fan, TV, electrical, cooler, and appliance work."
       cta={{ label: "Book Service", href: "/services/ac" }}
       secondaryCta={{ label: "Join Provider", href: "/provider" }}
       sections={[

@@ -79,11 +79,11 @@ export default function MyBookingsPage() {
             <Link href="/" className="flex items-center gap-2">
               <img 
                 src="/logo-transparent.png" 
-                alt="ServiceMarket" 
+                alt="EliteCrew" 
                 className="w-6 h-6 object-contain" 
               />
               <span className="text-base font-extrabold tracking-tight text-black">
-                Service<span className="font-light text-zinc-500">Market</span>
+                Elite<span className="font-light text-zinc-500">Crew</span>
               </span>
             </Link>
             <span className="hidden sm:inline text-zinc-200">|</span>

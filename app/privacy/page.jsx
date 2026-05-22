@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     <InfoPageShell
       eyebrow="Legal"
       title="Privacy Policy"
-      description="ServiceMarket uses account, booking, location, and service data to run the marketplace, match jobs, protect users, and support completed work."
+      description="EliteCrew uses account, booking, location, and service data to run the marketplace, match jobs, protect users, and support completed work."
       cta={{ label: "Contact Support", href: "/contact" }}
       sections={[
         {

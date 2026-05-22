@@ -43,7 +43,7 @@ export default function InfoPageShell({
           <Link href="/" className="flex items-center gap-3">
             <Image
               src="/logo-transparent.png"
-              alt="ServiceMarket"
+              alt="EliteCrew"
               width={36}
               height={36}
               className="h-9 w-9 object-contain"
@@ -134,7 +134,7 @@ export default function InfoPageShell({
               <Link href="/" className="mb-4 flex items-center gap-2.5">
                 <Image
                   src="/logo-transparent.png"
-                  alt="ServiceMarket"
+                  alt="EliteCrew"
                   width={32}
                   height={32}
                   className="h-8 w-8 object-contain"
@@ -171,7 +171,7 @@ export default function InfoPageShell({
 
           <div className="flex flex-col items-center justify-between gap-3 border-t border-zinc-100 pt-7 sm:flex-row">
             <p className="text-[10px] font-medium text-zinc-400">
-              © 2026 ServiceMarket · All rights reserved.
+              © 2026 EliteCrew · All rights reserved.
             </p>
             <p className="text-[10px] font-medium text-zinc-300">
               Built with care for India&apos;s homes.

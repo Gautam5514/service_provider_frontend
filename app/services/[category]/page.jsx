@@ -308,11 +308,11 @@ export default function ServiceCategoryPage({ params }) {
             <Link href="/" className="flex items-center gap-2 group">
               <img 
                 src="/logo-transparent.png" 
-                alt="ServiceMarket" 
+                alt="EliteCrew" 
                 className="w-7 h-7 object-contain transition-transform duration-500 group-hover:rotate-[15deg]" 
               />
               <span className="text-base font-black tracking-tight text-black">
-                Service<span className="font-light text-zinc-400">Market</span>
+                Elite<span className="font-light text-zinc-400">Crew</span>
               </span>
             </Link>
           </div>

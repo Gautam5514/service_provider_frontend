@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
 
   return {
     title: `Book ${svc.name}`,
-    description: `Book ${svc.name} online with ServiceMarket. Verified professionals, transparent pricing, and instant confirmation.`,
+    description: `Book ${svc.name} online with EliteCrew. Verified professionals, transparent pricing, and instant confirmation.`,
   };
 }
 

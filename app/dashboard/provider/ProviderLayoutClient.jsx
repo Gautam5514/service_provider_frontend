@@ -64,11 +64,11 @@ export default function ProviderLayout({ children }) {
               <div className="flex items-center gap-2.5 overflow-hidden animate-reveal-right">
                 <img 
                   src="/logo-transparent.png" 
-                  alt="ServiceMarket" 
+                  alt="EliteCrew" 
                   className="w-7 h-7 object-contain brightness-0 invert flex-shrink-0" 
                 />
                 <span className="text-sm font-black tracking-tight text-white whitespace-nowrap">
-                  Service<span className="text-zinc-500 font-light">Market</span>
+                  Elite<span className="text-zinc-500 font-light">Crew</span>
                 </span>
               </div>
               <button 
@@ -165,11 +165,11 @@ export default function ProviderLayout({ children }) {
             <div className="flex items-center gap-2">
               <img 
                 src="/logo-transparent.png" 
-                alt="ServiceMarket" 
+                alt="EliteCrew" 
                 className="w-6 h-6 object-contain brightness-0 invert" 
               />
               <span className="text-sm font-black text-white tracking-tight">
-                Service<span className="text-zinc-500 font-light">Market</span>
+                Elite<span className="text-zinc-500 font-light">Crew</span>
               </span>
             </div>
             <div className="flex items-center gap-3">

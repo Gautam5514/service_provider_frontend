@@ -216,7 +216,7 @@ export default function BookingDetailPage({ params }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </Link>
-            <img src="/logo-transparent.png" alt="ServiceMarket" className="w-8 h-8 object-contain brightness-0 invert" />
+            <img src="/logo-transparent.png" alt="EliteCrew" className="w-8 h-8 object-contain brightness-0 invert" />
             <div className="flex-1">
               <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-400">{booking.bookingNumber}</p>
               <p className="text-sm font-extrabold text-white truncate">{booking.serviceName}</p>
@@ -289,7 +289,7 @@ export default function BookingDetailPage({ params }) {
                   <div>
                     <p className="text-base font-black text-emerald-950 mb-1">Service Completed</p>
                     <p className="text-xs font-semibold text-emerald-700 leading-relaxed">
-                      Your job has been finalized successfully. Thank you for booking with ServiceMarket! You can view or print your tax invoice and rate your service provider below.
+                      Your job has been finalized successfully. Thank you for booking with EliteCrew! You can view or print your tax invoice and rate your service provider below.
                     </p>
                   </div>
                 </div>
@@ -541,8 +541,8 @@ export default function BookingDetailPage({ params }) {
                 <div>
                   <p className="text-[9px] font-bold tracking-[0.35em] uppercase text-zinc-400 mb-3">Tax Invoice</p>
                   <div className="flex items-center gap-4 mb-2">
-                    <img src="/logo-transparent.png" alt="ServiceMarket" className="w-10 h-10 object-contain brightness-0 invert" />
-                    <h2 className="text-3xl font-black tracking-tight text-white">ServiceMarket</h2>
+                    <img src="/logo-transparent.png" alt="EliteCrew" className="w-10 h-10 object-contain brightness-0 invert" />
+                    <h2 className="text-3xl font-black tracking-tight text-white">EliteCrew</h2>
                   </div>
                   <p className="text-xs font-semibold text-zinc-400 max-w-sm leading-relaxed">
                     Official invoice for completed service, payment record, and provider proof.
@@ -585,7 +585,7 @@ export default function BookingDetailPage({ params }) {
                   </p>
                   <p className="text-lg font-black text-black mb-1">{providerName || "Assigned technician"}</p>
                   {providerPhone && <p className="text-xs font-bold text-zinc-500 mb-2">{providerPhone}</p>}
-                  <p className="text-xs font-semibold text-zinc-500 leading-relaxed">Verified ServiceMarket professional for this booking.</p>
+                  <p className="text-xs font-semibold text-zinc-500 leading-relaxed">Verified EliteCrew professional for this booking.</p>
                 </div>
               </div>
 
