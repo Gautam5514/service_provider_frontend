@@ -111,10 +111,10 @@ export default function MyBookingsPage() {
         
         {/* Floating Tabs */}
         <div className="-mt-7 relative z-20 mb-8">
-          <div className="bg-white p-1.5 rounded-2xl border border-zinc-200 shadow-sm flex overflow-x-auto scrollbar-hide">
+          <div className="bg-white p-1.5 rounded-lg border border-zinc-200 shadow-sm flex overflow-x-auto scrollbar-hide">
             {TABS.map(t => (
               <button key={t.key} onClick={() => setTab(t.key)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-[10px] font-bold tracking-widest uppercase transition-all whitespace-nowrap ${tab === t.key ? "bg-black text-white shadow-md" : "text-zinc-500 hover:text-black hover:bg-zinc-50"}`}>
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-md text-[10px] font-bold tracking-widest uppercase transition-all whitespace-nowrap ${tab === t.key ? "bg-black text-white shadow-md" : "text-zinc-500 hover:text-black hover:bg-zinc-50"}`}>
                 {t.label}
                 <span className={`px-2 py-0.5 rounded-full text-[9px] ${tab === t.key ? "bg-white/20 text-white" : "bg-zinc-100 text-zinc-500"}`}>
                   {counts[t.key]}
@@ -126,27 +126,27 @@ export default function MyBookingsPage() {
 
         {/* Error */}
         {error && (
-          <div className="text-center py-20 bg-white border border-red-100 rounded-2xl">
+          <div className="text-center py-20 bg-white border border-red-100 rounded-lg">
             <p className="text-red-500 font-bold tracking-widest uppercase text-xs mb-4">Failed to load bookings</p>
-            <button onClick={load} className="bg-red-500 text-white px-6 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:bg-red-600 transition-colors rounded-full">Retry</button>
+            <button onClick={load} className="bg-red-500 text-white px-6 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:bg-red-600 transition-colors rounded-lg">Retry</button>
           </div>
         )}
 
         {/* Loading */}
         {loading && (
           <div className="space-y-4">
-            {[...Array(3)].map((_,i) => <div key={i} className="bg-white border border-zinc-200 rounded-2xl h-32 animate-pulse" />)}
+            {[...Array(3)].map((_,i) => <div key={i} className="bg-white border border-zinc-200 rounded-lg h-32 animate-pulse" />)}
           </div>
         )}
 
         {/* Empty */}
         {!loading && !error && visible.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 bg-white border border-dashed border-zinc-300 rounded-2xl">
+          <div className="flex flex-col items-center justify-center py-24 bg-white border border-dashed border-zinc-300 rounded-lg">
             <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4">
               <Calendar size={24} className="text-zinc-300" />
             </div>
             <p className="text-zinc-400 font-bold tracking-widest uppercase text-xs mb-4">No bookings found</p>
-            <Link href="/" className="bg-black text-white px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-md">Browse Services</Link>
+            <Link href="/" className="bg-black text-white px-6 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-md">Browse Services</Link>
           </div>
         )}
 
@@ -163,11 +163,11 @@ export default function MyBookingsPage() {
 
               return (
                 <Link key={b._id} href={`/bookings/${b._id}`} className="block group">
-                  <div className="bg-white border border-zinc-200 rounded-2xl p-5 md:p-6 hover:border-black hover:shadow-xl transition-all duration-300 flex flex-col md:flex-row gap-5 relative overflow-hidden">
+                  <div className="bg-white border border-zinc-200 rounded-lg p-5 md:p-6 hover:border-black hover:shadow-xl transition-all duration-300 flex flex-col md:flex-row gap-5 relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-zinc-200 group-hover:bg-black transition-colors" />
                     
                     {/* Icon */}
-                    <div className="w-14 h-14 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-black group-hover:border-black transition-all duration-300 shadow-sm">
+                    <div className="w-14 h-14 rounded-md bg-zinc-50 border border-zinc-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-black group-hover:border-black transition-all duration-300 shadow-sm">
                       {meta ? <meta.icon size={22} className="text-zinc-400 group-hover:text-white transition-colors" /> : <Wrench size={22} className="text-zinc-400 group-hover:text-white transition-colors" />}
                     </div>
 

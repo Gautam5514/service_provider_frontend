@@ -191,13 +191,9 @@ export default function AdminCouponsPage() {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <button onClick={load}
-              className="flex items-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase transition-colors">
-              <RefreshCw size={11} /> Refresh
-            </button>
             <button
               onClick={() => { setShowForm(v => !v); setFormError(""); setForm(BLANK); }}
-              className={`flex items-center gap-2 px-5 py-2.5 text-[10px] font-bold tracking-widest uppercase transition-colors ${
+              className={`flex items-center gap-2 px-5 py-2.5 text-[10px] font-bold tracking-widest uppercase transition-colors rounded-lg ${
                 showForm
                   ? "bg-white/10 border border-white/20 text-white hover:bg-white/15"
                   : "bg-white text-black hover:bg-zinc-100"
@@ -218,7 +214,7 @@ export default function AdminCouponsPage() {
             { label: "Total Uses",     value: totalUses,                    sub: "All-time redemptions"    },
             { label: "Inactive",       value: coupons.length - activeCount, sub: "Expired or deactivated"  },
           ].map(s => (
-            <div key={s.label} className="bg-white border border-zinc-100 p-5">
+            <div key={s.label} className="bg-white border border-zinc-100 p-5 rounded-lg">
               <p className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight mb-0.5">{s.value}</p>
               <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-400">{s.label}</p>
               <p className="text-[10px] text-zinc-400 mt-0.5">{s.sub}</p>
@@ -228,7 +224,7 @@ export default function AdminCouponsPage() {
 
         {/* ── Create form ─────────────────────────────────────────────── */}
         {showForm && (
-          <div className="bg-white border border-zinc-200 p-6 md:p-8">
+          <div className="bg-white border border-zinc-200 p-6 md:p-8 rounded-lg">
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h2 className="text-base font-black text-zinc-900">New Coupon</h2>
@@ -418,20 +414,20 @@ export default function AdminCouponsPage() {
 
         {/* ── Coupon list ──────────────────────────────────────────────── */}
         {loading ? (
-          <div className="bg-white border border-zinc-100 p-14 text-center">
+          <div className="bg-white border border-zinc-100 p-14 text-center rounded-lg">
             <div className="w-7 h-7 border-2 border-zinc-800 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-400">Loading coupons…</p>
           </div>
 
         ) : coupons.length === 0 ? (
-          <div className="bg-white border border-zinc-100 p-14 text-center">
+          <div className="bg-white border border-zinc-100 p-14 text-center rounded-lg">
             <Tag size={38} className="text-zinc-200 mx-auto mb-4" />
             <p className="text-base font-black text-zinc-900 mb-2">No coupons yet</p>
             <p className="text-sm text-zinc-400 mb-6 max-w-xs mx-auto">
               Create your first discount code to attract customers and drive bookings.
             </p>
             <button onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 text-xs font-bold tracking-widest uppercase hover:bg-zinc-800 transition-colors">
+              className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 text-xs font-bold tracking-widest uppercase hover:bg-zinc-800 transition-colors rounded-lg">
               <Plus size={13} /> Create First Coupon
             </button>
           </div>
@@ -453,7 +449,7 @@ export default function AdminCouponsPage() {
 
                 return (
                   <div key={coupon._id}
-                    className={`bg-white border p-5 md:p-6 transition-all duration-200 ${live ? "border-zinc-200 hover:border-zinc-300 hover:shadow-sm" : "border-zinc-100 opacity-60"}`}>
+                    className={`bg-white border p-5 md:p-6 transition-all duration-200 rounded-lg ${live ? "border-zinc-200 hover:border-zinc-300 hover:shadow-sm" : "border-zinc-100 opacity-60"}`}>
                     <div className="flex flex-col md:flex-row md:items-center gap-5">
 
                       {/* ── Left: code + meta ───────────────────────────── */}

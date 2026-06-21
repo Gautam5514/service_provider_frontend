@@ -49,7 +49,7 @@ const DAYS_LABEL = { mon:"Mon", tue:"Tue", wed:"Wed", thu:"Thu", fri:"Fri", sat:
 function StatusBadge({ status }) {
   const s = STATUS_CONFIG[status] || STATUS_CONFIG.pending_profile;
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase border ${s.bg} ${s.text} ${s.border}`}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold tracking-widest uppercase border ${s.bg} ${s.text} ${s.border}`}>
       <span className={`w-2 h-2 rounded-full ${s.dot}`} />
       {s.label}
     </span>
@@ -58,7 +58,7 @@ function StatusBadge({ status }) {
 
 function Section({ title, icon, accent, children }) {
   return (
-    <div className="bg-white border border-zinc-200 overflow-hidden">
+    <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       <div className={`flex items-center gap-2.5 px-6 py-4 border-b border-zinc-100 ${accent || ""}`}>
         {icon && <span className="text-base">{icon}</span>}
         <h3 className="text-[11px] font-bold tracking-[0.15em] uppercase text-zinc-500">{title}</h3>
@@ -81,7 +81,7 @@ function Field({ label, value, mono, full }) {
 
 function Check({ ok, label }) {
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 rounded border ${ok ? "bg-emerald-50 border-emerald-200" : "bg-zinc-50 border-zinc-200"}`}>
+    <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${ok ? "bg-emerald-50 border-emerald-200" : "bg-zinc-50 border-zinc-200"}`}>
       <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-black ${ok ? "bg-emerald-500 text-white" : "bg-zinc-200 text-zinc-400"}`}>
         {ok ? "✓" : "·"}
       </span>
@@ -181,7 +181,7 @@ export default function ProviderReviewPage({ params }) {
 
       {/* ── Toast ─────────────────────────────────────────────────────────── */}
       {toast && (
-        <div className={`fixed top-4 right-4 z-50 px-5 py-3.5 text-xs font-bold tracking-widest uppercase shadow-lg border transition-all ${toast.ok ? "bg-emerald-50 border-emerald-300 text-emerald-800" : "bg-red-50 border-red-300 text-red-800"}`}>
+        <div className={`fixed top-4 right-4 z-50 px-5 py-3.5 rounded-lg text-xs font-bold tracking-widest uppercase shadow-lg border transition-all ${toast.ok ? "bg-emerald-50 border-emerald-300 text-emerald-800" : "bg-red-50 border-red-300 text-red-800"}`}>
           {toast.msg}
         </div>
       )}
@@ -197,11 +197,11 @@ export default function ProviderReviewPage({ params }) {
         </Link>
 
         {/* ── Hero header ───────────────────────────────────────────────────── */}
-        <div className="bg-white border border-zinc-200 p-6 md:p-8 mb-6">
+        <div className="bg-white border border-zinc-200 rounded-lg p-6 md:p-8 mb-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
             <div className="flex items-start gap-5">
               {/* Avatar initials */}
-              <div className="w-16 h-16 bg-black text-white flex items-center justify-center text-xl font-extrabold flex-shrink-0">
+              <div className="w-16 h-16 bg-black text-white rounded-md flex items-center justify-center text-xl font-extrabold flex-shrink-0">
                 {u.fullName?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
               </div>
               <div>
@@ -209,14 +209,14 @@ export default function ProviderReviewPage({ params }) {
                 <div className="flex flex-wrap items-center gap-2 mb-3">
                   <StatusBadge status={p.onboardingStatus} />
                   {u.emailVerified && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2.5 py-1">
                       ✓ Email Verified
                     </span>
                   )}
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase text-zinc-500 bg-zinc-100 border border-zinc-200 px-2.5 py-1">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-zinc-500 bg-zinc-100 border border-zinc-200 rounded-md px-2.5 py-1">
                     Step {p.onboardingStep || 1} / 7
                   </span>
-                  <span className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 border ${p.jobTier === "priority" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-zinc-100 text-zinc-500 border-zinc-200"}`}>
+                  <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase rounded-md px-2.5 py-1 border ${p.jobTier === "priority" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-zinc-100 text-zinc-500 border-zinc-200"}`}>
                     {p.jobTier?.replace("_", " ")} tier
                   </span>
                 </div>
@@ -235,12 +235,27 @@ export default function ProviderReviewPage({ params }) {
                 { label: "Services",   value: p.services?.length || 0 },
                 { label: "Documents",  value: docs.length },
                 { label: "Rating",     value: p.rating?.toFixed(1) || "—" },
-              ].map(stat => (
-                <div key={stat.label} className="text-center border border-zinc-200 px-5 py-3 min-w-[72px]">
-                  <p className="text-2xl font-extrabold text-black">{stat.value}</p>
-                  <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-400 mt-0.5">{stat.label}</p>
-                </div>
-              ))}
+                { label: "Jobs",       value: p.totalJobsCompleted || 0, href: `/admin/providers/${id}/jobs` },
+              ].map(stat => {
+                const inner = (
+                  <>
+                    <p className="text-2xl font-extrabold text-black">{stat.value}</p>
+                    <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-400 mt-0.5">
+                      {stat.label}{stat.href ? " ↗" : ""}
+                    </p>
+                  </>
+                );
+                return stat.href ? (
+                  <Link key={stat.label} href={stat.href} title="View job history"
+                    className="text-center border border-zinc-200 rounded-md px-5 py-3 min-w-[72px] bg-zinc-50/50 hover:bg-zinc-100 hover:border-zinc-300 transition-colors">
+                    {inner}
+                  </Link>
+                ) : (
+                  <div key={stat.label} className="text-center border border-zinc-200 rounded-md px-5 py-3 min-w-[72px] bg-zinc-50/50">
+                    {inner}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -262,7 +277,7 @@ export default function ProviderReviewPage({ params }) {
               {p.about && (
                 <div className="col-span-2">
                   <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-400 mb-1">About</p>
-                  <p className="text-sm text-zinc-700 leading-relaxed bg-zinc-50 border border-zinc-200 p-3">{p.about}</p>
+                  <p className="text-sm text-zinc-700 leading-relaxed bg-zinc-50 border border-zinc-200 rounded-lg p-3">{p.about}</p>
                 </div>
               )}
             </div>
@@ -273,13 +288,13 @@ export default function ProviderReviewPage({ params }) {
             {p.services?.length > 0 ? (
               <div className="space-y-3">
                 {p.services.map((svc, i) => (
-                  <div key={i} className="border border-zinc-200 p-4 bg-zinc-50">
+                  <div key={i} className="border border-zinc-200 rounded-md p-4 bg-zinc-50">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="font-bold text-black text-sm">{svc.serviceName}</p>
                         <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-400 mt-0.5">{svc.category}</p>
                       </div>
-                      <span className={`text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 border ${
+                      <span className={`text-[10px] font-bold tracking-widest uppercase px-2.5 py-0.5 rounded-md border ${
                         svc.skillLevel === "expert"       ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
                         svc.skillLevel === "intermediate" ? "bg-blue-50 text-blue-700 border-blue-200" :
                                                             "bg-zinc-100 text-zinc-500 border-zinc-200"
@@ -307,7 +322,7 @@ export default function ProviderReviewPage({ params }) {
         <div className="mb-4">
           <Section title="KYC Documents" icon="📋" accent={missingMvp.length > 0 ? "bg-amber-50" : ""}>
             {missingMvp.length > 0 && (
-              <div className="flex items-center gap-2 mb-4 px-3 py-2.5 bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700">
+              <div className="flex items-center gap-2 mb-4 px-3.5 py-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700">
                 <span className="text-sm">⚠</span>
                 Missing required documents: {missingMvp.map(d => DOC_LABELS[d]).join(", ")}
               </div>
@@ -316,31 +331,45 @@ export default function ProviderReviewPage({ params }) {
             {docs.length === 0 ? (
               <p className="text-sm text-zinc-400 italic">No documents uploaded yet.</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {docs.map((doc) => {
                   const dsCfg = DOC_STATUS_CONFIG[doc.status] || DOC_STATUS_CONFIG.uploaded;
                   return (
-                    <div key={doc._id} className="border border-zinc-200 bg-zinc-50 p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="text-sm font-bold text-black">{DOC_LABELS[doc.docType] || doc.docType}</p>
-                          {doc.docNumberMasked && (
-                            <p className="text-xs text-zinc-400 font-mono mt-0.5">{doc.docNumberMasked}</p>
-                          )}
+                    <div key={doc._id} className="flex flex-col border border-zinc-200 bg-white rounded-lg p-4 hover:border-zinc-300 hover:shadow-sm transition-all">
+                      {/* Header: icon + label + status */}
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <span className="w-9 h-9 rounded-md bg-zinc-100 border border-zinc-200 flex items-center justify-center text-sm shrink-0">📄</span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-black leading-tight truncate">{DOC_LABELS[doc.docType] || doc.docType}</p>
+                            {doc.docNumberMasked && (
+                              <p className="text-xs text-zinc-400 font-mono mt-0.5 truncate">{doc.docNumberMasked}</p>
+                            )}
+                          </div>
                         </div>
-                        <span className={`text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 border ${dsCfg.bg} ${dsCfg.text} border-transparent`}>
+                        <span className={`shrink-0 text-[9px] font-bold tracking-wider uppercase px-2 py-1 rounded-md ${dsCfg.bg} ${dsCfg.text}`}>
                           {dsCfg.label}
                         </span>
                       </div>
+
                       {doc.expiryDate && (
                         <p className="text-[10px] text-zinc-400 mb-2">
                           Expiry: {new Date(doc.expiryDate).toLocaleDateString("en-IN")}
                         </p>
                       )}
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-200">
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${
-                          doc.requiredLevel === "mvp" ? "text-red-500" :
-                          doc.requiredLevel === "recommended" ? "text-amber-500" : "text-zinc-400"
+
+                      {doc.adminRemarks && (
+                        <p className="mb-3 text-xs text-red-600 bg-red-50 border border-red-100 rounded-md px-2.5 py-1.5">
+                          {doc.adminRemarks}
+                        </p>
+                      )}
+
+                      {/* Footer: required tag + view button */}
+                      <div className="flex items-center justify-between gap-2 mt-auto pt-3 border-t border-zinc-100">
+                        <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border ${
+                          doc.requiredLevel === "mvp" ? "text-red-600 bg-red-50 border-red-200" :
+                          doc.requiredLevel === "recommended" ? "text-amber-700 bg-amber-50 border-amber-200" :
+                          "text-zinc-500 bg-zinc-50 border-zinc-200"
                         }`}>
                           {doc.requiredLevel === "mvp" ? "Required" :
                            doc.requiredLevel === "recommended" ? "Recommended" : "Optional"}
@@ -349,19 +378,14 @@ export default function ProviderReviewPage({ params }) {
                           href={doc.fileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest uppercase text-black hover:underline underline-offset-2"
+                          className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-white bg-black hover:bg-zinc-800 px-3 py-1.5 rounded-md transition-colors"
                         >
-                          View File
+                          View
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                           </svg>
                         </a>
                       </div>
-                      {doc.adminRemarks && (
-                        <p className="mt-2 text-xs text-red-600 bg-red-50 border border-red-100 px-2 py-1">
-                          {doc.adminRemarks}
-                        </p>
-                      )}
                     </div>
                   );
                 })}
@@ -382,7 +406,7 @@ export default function ProviderReviewPage({ params }) {
                   <Field label="IFSC Code"       value={bank.ifscCode} mono />
                   <Field label="UPI ID"          value={bank.upiId} />
                 </div>
-                <div className={`flex items-center gap-2 px-3 py-2.5 text-xs font-semibold border rounded ${bank.pennyDropVerified ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-zinc-100 border-zinc-200 text-zinc-500"}`}>
+                <div className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold border rounded-md ${bank.pennyDropVerified ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-zinc-100 border-zinc-200 text-zinc-500"}`}>
                   <span>{bank.pennyDropVerified ? "✓" : "·"}</span>
                   {bank.pennyDropVerified ? "Penny drop verified" : "Penny drop not verified"}
                   {bank.pennyDropVerifiedAt && (
@@ -416,7 +440,7 @@ export default function ProviderReviewPage({ params }) {
                     <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-400 mb-2">Available Days</p>
                     <div className="flex gap-1 flex-wrap">
                       {["mon","tue","wed","thu","fri","sat","sun"].map(day => (
-                        <span key={day} className={`px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase border ${
+                        <span key={day} className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase border ${
                           avail.availableDays.includes(day)
                             ? "bg-black text-white border-black"
                             : "bg-zinc-100 text-zinc-300 border-zinc-200"
@@ -428,7 +452,7 @@ export default function ProviderReviewPage({ params }) {
                   </div>
                 )}
                 {avail.acceptsUrgentJobs && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-1.5">
                     ⚡ Accepts urgent jobs
                   </span>
                 )}
@@ -488,7 +512,7 @@ export default function ProviderReviewPage({ params }) {
                 <div className="flex flex-wrap gap-2">
                   {workProofs.map((wp, i) => (
                     <a key={i} href={wp.fileUrl || wp.photoUrl} target="_blank" rel="noopener noreferrer"
-                      className="text-[10px] font-bold uppercase tracking-widest text-black bg-zinc-100 border border-zinc-200 px-2.5 py-1 hover:bg-black hover:text-white transition-colors">
+                      className="text-[10px] font-bold uppercase tracking-widest text-black bg-zinc-100 border border-zinc-200 rounded-md px-2.5 py-1 hover:bg-black hover:text-white transition-colors">
                       Proof {i + 1} ↗
                     </a>
                   ))}
@@ -504,7 +528,7 @@ export default function ProviderReviewPage({ params }) {
 
             {/* Confirm panel */}
             {confirming && (
-              <div className={`mb-4 p-4 border rounded-sm ${
+              <div className={`mb-4 p-4 border rounded-lg ${
                 confirming === "approved"  ? "bg-emerald-50 border-emerald-200" :
                 confirming === "rejected"  ? "bg-red-50 border-red-200" :
                 confirming === "suspended" ? "bg-orange-50 border-orange-200" :
@@ -526,14 +550,14 @@ export default function ProviderReviewPage({ params }) {
                     onChange={e => setRemarks(e.target.value)}
                     placeholder={confirming === "rejected" ? "Reason for rejection (optional but recommended)..." : "Reason for suspension..."}
                     rows={2}
-                    className="w-full text-sm border border-zinc-300 bg-white px-3 py-2 focus:outline-none focus:border-black resize-none mb-3"
+                    className="w-full text-sm border border-zinc-300 rounded-md bg-white px-3 py-2.5 focus:outline-none focus:border-black focus:ring-4 focus:ring-black/[0.06] transition-all resize-none mb-3"
                   />
                 )}
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleAction(confirming)}
                     disabled={actionLoading}
-                    className={`px-5 py-2 text-xs font-bold tracking-widest uppercase text-white disabled:opacity-50 ${
+                    className={`px-5 py-2.5 rounded-md text-xs font-bold tracking-widest uppercase text-white disabled:opacity-50 ${
                       confirming === "approved"  ? "bg-emerald-600 hover:bg-emerald-700" :
                       confirming === "rejected"  ? "bg-red-600 hover:bg-red-700" :
                       confirming === "suspended" ? "bg-orange-600 hover:bg-orange-700" : "bg-zinc-900 hover:bg-black"
@@ -543,7 +567,7 @@ export default function ProviderReviewPage({ params }) {
                   </button>
                   <button
                     onClick={() => { setConfirming(null); setRemarks(""); }}
-                    className="px-5 py-2 text-xs font-bold tracking-widest uppercase border border-zinc-300 text-zinc-600 hover:border-black hover:text-black transition-colors"
+                    className="px-5 py-2.5 rounded-md text-xs font-bold tracking-widest uppercase border border-zinc-300 text-zinc-600 hover:border-black hover:text-black transition-colors"
                   >
                     Cancel
                   </button>
@@ -566,13 +590,13 @@ export default function ProviderReviewPage({ params }) {
                     <>
                       <button
                         onClick={() => setConfirming("suspended")}
-                        className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase bg-orange-50 text-orange-700 border border-orange-300 hover:bg-orange-100 transition-colors"
+                        className="px-5 py-2.5 rounded-md text-xs font-bold tracking-widest uppercase bg-orange-50 text-orange-700 border border-orange-300 hover:bg-orange-100 transition-colors"
                       >
                         Suspend
                       </button>
                       <button
                         onClick={() => setConfirming("blocked")}
-                        className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 transition-colors"
+                        className="px-5 py-2.5 rounded-md text-xs font-bold tracking-widest uppercase bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 transition-colors"
                       >
                         Block
                       </button>
@@ -580,7 +604,7 @@ export default function ProviderReviewPage({ params }) {
                   ) : ["rejected", "suspended", "blocked"].includes(p.onboardingStatus) ? (
                     <button
                       onClick={() => setConfirming("approved")}
-                      className="px-6 py-2.5 text-xs font-bold tracking-widest uppercase bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                      className="px-6 py-2.5 rounded-md text-xs font-bold tracking-widest uppercase bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                     >
                       ✓ Approve
                     </button>
@@ -588,13 +612,13 @@ export default function ProviderReviewPage({ params }) {
                     <>
                       <button
                         onClick={() => setConfirming("rejected")}
-                        className="px-5 py-2.5 text-xs font-bold tracking-widest uppercase bg-white text-red-600 border border-red-300 hover:bg-red-50 transition-colors"
+                        className="px-5 py-2.5 rounded-md text-xs font-bold tracking-widest uppercase bg-white text-red-600 border border-red-300 hover:bg-red-50 transition-colors"
                       >
                         ✗ Reject
                       </button>
                       <button
                         onClick={() => setConfirming("approved")}
-                        className="px-6 py-2.5 text-xs font-bold tracking-widest uppercase bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                        className="px-6 py-2.5 rounded-md text-xs font-bold tracking-widest uppercase bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
                       >
                         ✓ Approve Provider
                       </button>

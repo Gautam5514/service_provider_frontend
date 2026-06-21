@@ -155,14 +155,14 @@ export default function SupportChatPage({ params }) {
       <div className="bg-zinc-950 text-white shrink-0">
         <div className="max-w-3xl mx-auto px-4 md:px-8 py-4 flex items-center gap-4">
           <Link href="/support"
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 text-zinc-400 hover:bg-white/15 hover:text-white transition-colors shrink-0">
+            className="w-8 h-8 flex items-center justify-center rounded-md bg-white/5 text-zinc-400 hover:bg-white/15 hover:text-white transition-colors shrink-0">
             <ArrowLeft size={15} />
           </Link>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-[9px] font-bold tracking-widests uppercase text-zinc-500">{ticket?.ticketNumber}</p>
-              <span className={`text-[9px] font-bold tracking-widests uppercase px-2 py-0.5 border rounded-full ${st.bg} ${st.text} ${st.border}`}>
+              <span className={`text-[9px] font-bold tracking-widests uppercase px-2 py-0.5 border rounded-md ${st.bg} ${st.text} ${st.border}`}>
                 {st.label}
               </span>
             </div>
@@ -181,7 +181,7 @@ export default function SupportChatPage({ params }) {
         <div className="max-w-3xl mx-auto px-4 md:px-8 py-6 space-y-3">
 
           {/* Ticket subject + opening info */}
-          <div className="bg-white border border-zinc-100 rounded-2xl p-4 text-center mb-2">
+          <div className="bg-white border border-zinc-100 rounded-lg p-4 text-center mb-2 shadow-sm">
             <p className="text-xs text-zinc-400 font-medium mb-1">Support request opened</p>
             <p className="text-sm font-extrabold text-zinc-900">{ticket?.subject}</p>
             <p className="text-[10px] text-zinc-400 mt-1">{ticket?.categoryLabel}</p>
@@ -219,7 +219,7 @@ export default function SupportChatPage({ params }) {
 
           {/* Closed/Resolved banner */}
           {isClosed && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center flex items-center justify-center gap-2">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center flex items-center justify-center gap-2">
               <CheckCircle2 size={16} className="text-emerald-600" />
               <p className="text-sm font-bold text-emerald-800">
                 This ticket has been {ticket.status}. Open a new ticket if you need further help.
@@ -260,14 +260,14 @@ export default function SupportChatPage({ params }) {
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder="Type your message… (Enter to send, Shift+Enter for new line)"
-                className="flex-1 border border-zinc-200 rounded-xl px-4 py-3 text-sm text-black focus:outline-none focus:border-black transition-colors resize-none placeholder:text-zinc-300 min-h-[44px]"
+                className="flex-1 border border-zinc-200 rounded-md px-4 py-3 text-sm text-black focus:outline-none focus:border-black transition-colors resize-none placeholder:text-zinc-300 min-h-[44px]"
                 style={{ height: "44px" }}
                 disabled={sending}
               />
               <button
                 onClick={handleSend}
                 disabled={sending || !newMsg.trim()}
-                className="w-11 h-11 bg-zinc-900 text-white rounded-xl flex items-center justify-center hover:bg-black transition-colors disabled:opacity-40 shrink-0"
+                className="w-11 h-11 bg-zinc-900 text-white rounded-md flex items-center justify-center hover:bg-black transition-colors disabled:opacity-40 shrink-0"
               >
                 {sending
                   ? <Loader2 size={16} className="animate-spin" />

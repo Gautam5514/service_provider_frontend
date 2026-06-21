@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getStoredUser, performLogout, validateSession, saveAuthSession, clearAuthSession } from "@/lib/auth";
@@ -16,10 +17,12 @@ import {
   CalendarCheck,
   CalendarDays,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Clock,
   CreditCard,
   Fan,
+  Flame,
   MapPin,
   Monitor,
   Plug,
@@ -28,7 +31,7 @@ import {
   Repeat2,
   Search,
   ShieldCheck,
-  Snowflake,
+  AirVent,
   Sparkles,
   Star,
   TrendingUp,
@@ -137,6 +140,15 @@ const INITIAL_TESTIMONIALS = [
     service: "Washing Machine",
     text:    "Very professional washing machine service. Explained the drum issue clearly and fixed it inside an hour. Recommended!",
   },
+  {
+    name:    "Arjun Nair",
+    city:    "Pune",
+    rating:  5,
+    avatar:  "AN",
+    category: "ac",
+    service: "AC Installation",
+    text:    "Flawless split-AC installation. The team arrived on time, mounted it perfectly, and walked me through the warranty. Truly five-star service.",
+  },
 ];
 
 const CITIES = [
@@ -144,22 +156,14 @@ const CITIES = [
   "Pune","Kolkata","Ahmedabad","Jaipur","Lucknow","Noida","Gurgaon",
 ];
 
-const CITY_LANDMARKS = {
-  Mumbai:    { label: "Mumbai",    state: "Maharashtra",   gradient: "bg-blue-950",    images: [{ landmark: "Gateway of India",   wiki: "Gateway_of_India"                   }, { landmark: "Marine Drive",        wiki: "Marine_Drive,_Mumbai"                }] },
-  Delhi:     { label: "New Delhi", state: "Delhi",         gradient: "bg-zinc-900",    images: [{ landmark: "India Gate",          wiki: "India_Gate"                         }, { landmark: "Red Fort",            wiki: "Red_Fort"                            }] },
-  Bangalore: { label: "Bengaluru", state: "Karnataka",     gradient: "bg-emerald-950", images: [{ landmark: "Vidhana Soudha",     wiki: "Vidhana_Soudha"                     }, { landmark: "Lalbagh Gardens",     wiki: "Lalbagh_Botanical_Garden"            }] },
-  Hyderabad: { label: "Hyderabad", state: "Telangana",     gradient: "bg-amber-950",   images: [{ landmark: "Charminar",           wiki: "Charminar"                          }, { landmark: "Golconda Fort",       wiki: "Golconda_Fort"                       }] },
-  Chennai:   { label: "Chennai",   state: "Tamil Nadu",    gradient: "bg-orange-950",  images: [{ landmark: "Marina Beach",        wiki: "Marina_Beach"                       }, { landmark: "Kapaleeshwarar",      wiki: "Kapaleeshwarar_temple"               }] },
-  Pune:      { label: "Pune",      state: "Maharashtra",   gradient: "bg-slate-900",   images: [{ landmark: "Shaniwar Wada",       wiki: "Shaniwar_Wada"                      }, { landmark: "Aga Khan Palace",     wiki: "Aga_Khan_Palace"                     }] },
-  Kolkata:   { label: "Kolkata",   state: "West Bengal",   gradient: "bg-indigo-950",  images: [{ landmark: "Victoria Memorial",   wiki: "Victoria_Memorial,_Kolkata"         }, { landmark: "Howrah Bridge",       wiki: "Howrah_Bridge"                       }] },
-  Ahmedabad: { label: "Ahmedabad", state: "Gujarat",       gradient: "bg-yellow-950",  images: [{ landmark: "Adalaj Stepwell",     wiki: "Adalaj"                             }, { landmark: "Sabarmati Ashram",    wiki: "Sabarmati_Ashram"                    }] },
-  Jaipur:    { label: "Jaipur",    state: "Rajasthan",     gradient: "bg-rose-950",    images: [{ landmark: "Hawa Mahal",           wiki: "Hawa_Mahal"                         }, { landmark: "Amber Fort",          wiki: "Amer_Fort"                           }] },
-  Lucknow:   { label: "Lucknow",   state: "Uttar Pradesh", gradient: "bg-teal-950",    images: [{ landmark: "Bara Imambara",        wiki: "Bara_Imambara"                      }, { landmark: "Rumi Darwaza",        wiki: "Rumi_Darwaza"                        }] },
-  Noida:     { label: "Noida",     state: "Uttar Pradesh", gradient: "bg-violet-950",  images: [{ landmark: "Akshardham Temple",    wiki: "Swaminarayan_Akshardham_(Delhi)"    }, { landmark: "Okhla Bird Sanctuary",wiki: "Okhla_Bird_Sanctuary"                }] },
-  Gurgaon:   { label: "Gurugram",  state: "Haryana",       gradient: "bg-fuchsia-950", images: [{ landmark: "Kingdom of Dreams",    wiki: "Kingdom_of_Dreams"                  }, { landmark: "Sultanpur Lake",      wiki: "Sultanpur_National_Park"             }] },
-};
+// Popular quick-pick chips for the place explorer. Any place worldwide can be
+// typed into the search box — these are just convenient starting points.
+const POPULAR_PLACES = [
+  "New Delhi", "Mumbai", "Bangalore", "Hyderabad", "Chennai", "Pune", "Kolkata", "Jaipur",
+];
 
-const DEFAULT_GRID_CITIES = ["Delhi", "Mumbai", "Bangalore", "Hyderabad"];
+// Fallback gradients for spot tiles that have no preview image.
+const TILE_GRADIENTS = ["bg-zinc-900", "bg-blue-950", "bg-emerald-950", "bg-rose-950"];
 
 const PROVIDER_PERKS = [
   { Icon: TrendingUp, text: "Earn ₹800–₹2,500 per job"        },
@@ -175,13 +179,36 @@ const EARNINGS = [
 ];
 
 const CATEGORY_ICONS = {
-  ac:        Snowflake,
+  ac:        AirVent,
   cooler:    Wind,
   fan:       Fan,
   tv:        Monitor,
   fridge:    Refrigerator,
   electrical:Zap,
   appliance: Plug,
+};
+
+// Local demand signals used to rank + enrich the category cards.
+// Ordered for a hot Indian summer (AC / cooler / fan lead the demand).
+const CATEGORY_INSIGHTS = {
+  ac:         { demand: 98, booked: "2.4k", rating: 4.9, eta: "in 60 min" },
+  cooler:     { demand: 91, booked: "1.8k", rating: 4.8, eta: "in 90 min" },
+  fan:        { demand: 84, booked: "1.2k", rating: 4.8, eta: "same day"  },
+  fridge:     { demand: 73, booked: "940",  rating: 4.7, eta: "same day"  },
+  electrical: { demand: 66, booked: "1.1k", rating: 4.8, eta: "in 60 min" },
+  appliance:  { demand: 58, booked: "760",  rating: 4.7, eta: "same day"  },
+  tv:         { demand: 49, booked: "540",  rating: 4.7, eta: "next day"  },
+};
+
+// Real service photography for the image-led category cards (Urban Company style).
+const CATEGORY_PHOTOS = {
+  ac:         "/images/ac_repair.png",
+  cooler:     "/images/cooler_repair.png",
+  fan:        "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=800&q=80",
+  tv:         "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=800&q=80",
+  fridge:     "https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=800&q=80",
+  electrical: "https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=800&q=80",
+  appliance:  "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80",
 };
 
 const SERVICE_IMAGES = {
@@ -196,16 +223,6 @@ const SERVICE_IMAGES = {
 };
 
 const DEFAULT_SERVICE_IMAGE = "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80";
-
-const CATEGORY_BACKGROUNDS = {
-  ac:         "/images/ac_repair.png",
-  cooler:     "/images/cooler_repair.png",
-  fan:        "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=300&q=80",
-  tv:         "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=300&q=80",
-  fridge:     "https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=300&q=80",
-  electrical: "https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=300&q=80",
-  appliance:  "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=300&q=80",
-};
 
 const CAT_STYLES = {
   ac: {
@@ -314,6 +331,8 @@ const DIAGNOSTICS_DATA = {
   ac: {
     name: "Air Conditioner",
     pulseColor: "bg-sky-400 border-sky-200",
+    image: "/images/ac.webp",
+    bg: "#212121",
     symptoms: [
       {
         id: "ac-s1",
@@ -347,6 +366,8 @@ const DIAGNOSTICS_DATA = {
   fridge: {
     name: "Refrigerator",
     pulseColor: "bg-cyan-400 border-cyan-200",
+    image: "/images/refrigerator.webp",
+    bg: "#0e1313",
     symptoms: [
       {
         id: "fridge-s1",
@@ -371,6 +392,8 @@ const DIAGNOSTICS_DATA = {
   electrical: {
     name: "Electrical Systems",
     pulseColor: "bg-amber-400 border-amber-200",
+    image: "/images/electricboard.webp",
+    bg: "#26272b",
     symptoms: [
       {
         id: "elec-s1",
@@ -416,90 +439,47 @@ function Overline({ children, light = false }) {
   );
 }
 
-// ─── Wikipedia image cache (module-level — survives re-renders) ────────────────
-const _wikiCache = {};
-
-async function fetchWikiImg(articleTitle) {
-  if (_wikiCache[articleTitle] !== undefined) return _wikiCache[articleTitle];
-
-  try {
-    const res  = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(articleTitle)}`,
-      { headers: { Accept: "application/json" } }
-    );
-    if (!res.ok) throw new Error("not ok");
-    const data = await res.json();
-
-    const thumb = data.thumbnail?.source
-      ? data.thumbnail.source.replace(/\/\d+px-/, "/800px-")
-      : null;
-    const url = thumb || data.originalimage?.source || null;
-
-    _wikiCache[articleTitle] = url;
-    return url;
-  } catch {
-    _wikiCache[articleTitle] = null;
-    return null;
-  }
-}
-
-// ─── CityImage ─────────────────────────────────────────────────────────────────
-function CityImage({ wiki, landmark, cityLabel, gradient }) {
-  const [fetchResult, setFetchResult] = useState(null);
-
-  useEffect(() => {
-    if (!wiki) return;
-
-    let cancelled = false;
-
-    fetchWikiImg(wiki).then(url => {
-      if (!cancelled) setFetchResult(url || false);
-    });
-
-    return () => {
-      cancelled = true;
-      setFetchResult(null);
-    };
-  }, [wiki]);
-
-  const isLoading = !!wiki && fetchResult === null;
-  const ready     = typeof fetchResult === "string" && fetchResult.length > 0;
-  const failed    = !wiki || fetchResult === false;
-  const imgUrl    = ready ? fetchResult : null;
+// ─── SpotTile ────────────────────────────────────────────────────────────────
+// One featured-place tile in the explorer grid. Image already resolved by the
+// backend; falls back to a textured gradient if missing or it fails to load.
+function SpotTile({ image, name, category, placeLabel, gradient, loading }) {
+  const [failed, setFailed] = useState(false);
+  const show = !!image && !failed;
 
   return (
-    <div className={`relative w-full h-full overflow-hidden ${ready ? "bg-zinc-900" : (gradient || "bg-zinc-900")}`}>
+    <div className={`relative w-full h-full min-h-0 overflow-hidden ${show ? "bg-zinc-900" : (gradient || "bg-zinc-900")}`}>
 
-      {isLoading && (
-        <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
-      )}
+      {loading && <div className="absolute inset-0 bg-zinc-800 animate-pulse" />}
 
-      {failed && (
+      {!show && !loading && (
         <div className="absolute inset-0 opacity-[0.07]"
           style={{ backgroundImage: "repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)", backgroundSize: "8px 8px" }} />
       )}
 
-      {ready && (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img
-          src={imgUrl}
-          alt={`${landmark} — ${cityLabel}`}
-          onError={() => setFetchResult(false)}
-          className="absolute inset-0 w-full h-full object-cover grayscale transition-transform duration-700 hover:scale-105"
-        />
+      {show && (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={image}
+            alt={`${name} — ${placeLabel}`}
+            referrerPolicy="no-referrer"
+            loading="lazy"
+            onError={() => setFailed(true)}
+            className="absolute inset-0 w-full h-full object-cover grayscale transition-transform duration-700 hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+        </>
       )}
 
-      {ready && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+      {!loading && (
+        <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-3">
+          <p className="text-[8px] font-bold tracking-[0.18em] uppercase text-zinc-400 mb-0.5">
+            {category || "Featured Spot"}
+          </p>
+          <p className="text-[13px] font-extrabold text-black tracking-tight leading-tight truncate">{name || placeLabel}</p>
+          <p className="text-[10px] text-zinc-500 font-medium truncate">{placeLabel}</p>
+        </div>
       )}
-
-      <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-3">
-        <p className="text-[8px] font-bold tracking-[0.18em] uppercase text-zinc-400 mb-0.5">
-          Featured City
-        </p>
-        <p className="text-[13px] font-extrabold text-black tracking-tight leading-tight">{cityLabel}</p>
-        <p className="text-[10px] text-zinc-500 font-medium truncate">{landmark}</p>
-      </div>
     </div>
   );
 }
@@ -549,44 +529,48 @@ export default function HomePage() {
     { value: stats ? `${stats.citiesCovered}+` : "25+",     label: "Cities",         Icon: MapPin        },
   ];
 
-  const [citySearch, setCitySearch] = useState("");
-  const [pinnedCity, setPinnedCity] = useState("Delhi");
+  // ─── Place explorer (OpenTripMap-powered) ──────────────────────────
+  const [citySearch,   setCitySearch]   = useState("");
+  const [exploreQuery, setExploreQuery] = useState("New Delhi");
+  const [explore, setExplore] = useState({ loading: true, error: false, place: { name: "New Delhi" }, spots: [] });
 
-  const searchMatchCity = useMemo(() => {
-    const q = citySearch.toLowerCase().trim();
-    if (!q) return null;
-    const exact = CITIES.find(c => c.toLowerCase() === q);
-    if (exact) return exact;
-    const prefix = CITIES.filter(c => c.toLowerCase().startsWith(q));
-    return prefix.length === 1 ? prefix[0] : null;
-  }, [citySearch]);
+  // Commit a search (chip / Find button / Enter). Loading is flagged here so we
+  // never call setState synchronously inside the fetch effect below.
+  const runExplore = (name) => {
+    const q = (name || "").trim();
+    if (!q) return;
+    setExplore(s => ({ ...s, loading: true, error: false }));
+    setExploreQuery(q);
+    setCitySearch("");
+  };
 
-  const activeCity = searchMatchCity || pinnedCity;
+  useEffect(() => {
+    if (!exploreQuery) return;
+    let cancelled = false;
+    fetch(`/api/places/explore?name=${encodeURIComponent(exploreQuery)}`, { cache: "no-store" })
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return;
+        if (!d || !d.success) {
+          setExplore({ loading: false, error: true, place: { name: exploreQuery }, spots: [] });
+          return;
+        }
+        setExplore({
+          loading: false,
+          error: false,
+          place: d.place || { name: exploreQuery },
+          spots: d.spots || [],
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setExplore({ loading: false, error: true, place: { name: exploreQuery }, spots: [] });
+      });
+    return () => { cancelled = true; };
+  }, [exploreQuery]);
 
-  const filteredCities = useMemo(
-    () => !citySearch.trim()
-      ? CITIES
-      : CITIES.filter(c => c.toLowerCase().includes(citySearch.toLowerCase())),
-    [citySearch],
-  );
-
-  const gridItems = useMemo(() => {
-    const city = CITY_LANDMARKS[activeCity];
-    if (city) {
-      return [
-        { kind: "img",  ...city.images[0], cityLabel: city.label, gradient: city.gradient },
-        { kind: "img",  ...city.images[1], cityLabel: city.label, gradient: city.gradient },
-        { kind: "info" },
-        { kind: "book" },
-      ];
-    }
-    return DEFAULT_GRID_CITIES.map(c => ({
-      kind:      "img",
-      ...CITY_LANDMARKS[c].images[0],
-      cityLabel: CITY_LANDMARKS[c].label,
-      gradient:  CITY_LANDMARKS[c].gradient,
-    }));
-  }, [activeCity]);
+  const placeLabel = explore.place?.name || exploreQuery;
+  const imageSpots = (explore.spots || []).filter(s => s.image).slice(0, 2);
+  const guideSpots = (explore.spots || []).slice(0, 5);
 
   // ─── Diagnostics Tab & Hotspot State ───────────────────────────────
   const [diagTab, setDiagTab] = useState("ac");
@@ -610,8 +594,6 @@ export default function HomePage() {
   // Seed with the static fallback immediately so the section is never empty,
   // then replace with live data from the API once it arrives.
   const [testimonials, setTestimonials] = useState(INITIAL_TESTIMONIALS);
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [ratingFilter, setRatingFilter] = useState(null);
 
   useEffect(() => {
     fetch("/api/testimonials")
@@ -619,6 +601,26 @@ export default function HomePage() {
       .then(d => { if (d.success && d.testimonials?.length) setTestimonials(d.testimonials); })
       .catch(() => {}); // silently fall back to INITIAL_TESTIMONIALS on error
   }, []);
+
+  // ─── Reviews carousel: show up to 6, auto-slide + manual nav ──────────
+  const reviews = useMemo(() => testimonials.slice(0, 6), [testimonials]);
+  const [reviewSlide, setReviewSlide] = useState(0);
+  const [reviewPaused, setReviewPaused] = useState(false);
+
+  // Clamp at render so a shrinking review list never points at a missing slide.
+  const activeSlide = reviews.length ? Math.min(reviewSlide, reviews.length - 1) : 0;
+
+  // Auto-advance every 5s unless the user is hovering/interacting.
+  useEffect(() => {
+    if (reviewPaused || reviews.length <= 1) return;
+    const id = setInterval(() => {
+      setReviewSlide(s => (s + 1) % reviews.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [reviewPaused, reviews.length]);
+
+  const goPrevReview = () => setReviewSlide((activeSlide - 1 + reviews.length) % reviews.length);
+  const goNextReview = () => setReviewSlide((activeSlide + 1) % reviews.length);
   
   // Custom Reviews drawer open/close
   const [isReviewDrawerOpen, setIsReviewDrawerOpen] = useState(false);
@@ -629,27 +631,6 @@ export default function HomePage() {
   const [formService, setFormService] = useState("AC Service");
   const [formText, setFormText] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
-
-  // Filtered reviews calculations
-  const filteredReviews = useMemo(() => {
-    return testimonials.filter(review => {
-      const matchCat = categoryFilter === "all" || review.category === categoryFilter;
-      const matchRating = !ratingFilter || review.rating === ratingFilter;
-      return matchCat && matchRating;
-    });
-  }, [testimonials, categoryFilter, ratingFilter]);
-
-  // Review star counts for distribution chart
-  const ratingDistribution = useMemo(() => {
-    const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    testimonials.forEach(r => {
-      if (counts[r.rating] !== undefined) counts[r.rating]++;
-    });
-    const total = testimonials.length || 1;
-    return Object.fromEntries(
-      Object.entries(counts).map(([star, count]) => [star, { count, pct: Math.round((count / total) * 100) }])
-    );
-  }, [testimonials]);
 
   const [submitError, setSubmitError] = useState("");
 
@@ -698,8 +679,8 @@ export default function HomePage() {
     <div className="min-h-screen bg-white font-sans selection:bg-black selection:text-white relative">
 
       {/* ── TOP ANNOUNCEMENT ─────────────────────────────────────────── */}
-      <div className="bg-zinc-950 border-b border-zinc-800 py-2 text-center">
-        <p className="text-[10px] font-semibold text-white/40 tracking-wide">
+      <div className="bg-zinc-950 border-b border-zinc-800 py-3.5 text-center">
+        <p className="text-[11px] md:text-xs font-semibold text-white/45 tracking-wide">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 align-middle mr-2 animate-pulse" />
           Now live in 25+ cities · Free service diagnosis on every visit · Pay after job done
         </p>
@@ -769,82 +750,126 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section className="relative bg-zinc-950 text-white overflow-hidden">
-        {/* Fine grid */}
-        <div className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right,#fff 1px,transparent 1px)," +
-              "linear-gradient(to bottom,#fff 1px,transparent 1px)",
-            backgroundSize: "48px 48px",
-          }}
-        />
-        {/* Glow */}
-        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[900px] h-[400px]"
-          style={{ background: "radial-gradient(ellipse at center, rgba(255,255,255,0.04) 0%, transparent 70%)" }}
-        />
+      {/* ── HERO (warm / light) ──────────────────────────────────────── */}
+      <section className="relative bg-gradient-to-b from-white via-white to-zinc-50 overflow-hidden border-b border-zinc-100">
+        {/* Soft warm ambient accents */}
+        <div className="pointer-events-none absolute -top-32 -right-24 w-[520px] h-[520px] bg-emerald-100/45 rounded-full blur-[130px]" />
+        <div className="pointer-events-none absolute bottom-0 -left-28 w-[420px] h-[420px] bg-amber-50 rounded-full blur-[120px]" />
 
-        <div className="relative max-w-7xl mx-auto px-4 md:px-10 pt-14 pb-10 md:pt-20 md:pb-14">
+        <div className="relative max-w-7xl mx-auto px-4 md:px-10 pt-4 pb-12 md:pt-6 md:pb-16">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
 
-          {/* Live badge */}
-          <div className="inline-flex items-center gap-2 border border-white/[0.12] bg-white/[0.05] px-3.5 py-1.5 mb-7">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-bold tracking-[0.25em] uppercase text-white/50">
-              Trusted Home Services
-            </span>
-          </div>
+            {/* LEFT — content */}
+            <div>
+              {/* Headline */}
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.6rem] font-black tracking-tight leading-[1.05] text-black mb-5">
+                Fix anything at home,{" "}
+                <span className="text-emerald-600">with experts you trust.</span>
+              </h1>
 
-          {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-extrabold tracking-tight leading-[1.04] max-w-4xl mb-5">
-            Expert home services,{" "}
-            <span className="text-white/30">at your doorstep.</span>
-          </h1>
+              <p className="text-zinc-500 text-base md:text-lg max-w-[520px] mb-7 leading-relaxed">
+                AC, fridge, washing machine, wiring &amp; more — book a background-verified
+                pro in minutes. Upfront prices, and you only pay once the job&rsquo;s done.
+              </p>
 
-          <p className="text-white/45 text-base md:text-lg max-w-[500px] mb-8 leading-relaxed">
-            Book KYC-verified technicians & appliance experts in minutes.
-            Transparent pricing — pay only after the job is done.
-          </p>
+              {/* Search box */}
+              <div className="mb-4">
+                <SmartSearch role={user?.role === "customer" ? "customer" : "public"} />
+              </div>
 
-          {/* Location picker */}
-          <div className="mb-8">
-            <LocationBar onLocationChange={setLocation} />
-          </div>
+              {/* Quick category chips */}
+              <div className="flex flex-wrap items-center gap-2 mb-7">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mr-0.5">Popular:</span>
+                {[
+                  { label: "AC Service",       href: "/services/ac" },
+                  { label: "Fridge",           href: "/services/fridge" },
+                  { label: "Electrician",      href: "/services/electrical" },
+                  { label: "Fan",              href: "/services/fan" },
+                  { label: "Washing Machine",  href: "/services/appliance" },
+                ].map(c => (
+                  <Link
+                    key={c.label}
+                    href={c.href}
+                    className="px-3 py-1.5 rounded-full border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:border-black hover:text-black hover:shadow-sm transition-all"
+                  >
+                    {c.label}
+                  </Link>
+                ))}
+              </div>
 
-          {/* CTAs */}
-          <div className="flex flex-wrap items-center gap-3 mb-14">
-            <Link href="/services/ac"
-              className="group inline-flex items-center gap-2 bg-white text-black px-7 py-3.5 text-xs font-bold tracking-widest uppercase hover:bg-zinc-100 transition-colors">
-              Book AC Service
-              <ArrowRight size={13} className="transition-transform duration-150 group-hover:translate-x-0.5" />
-            </Link>
-            <Link href="#categories"
-              className="inline-flex items-center gap-2 border border-white/20 text-white/70 px-7 py-3.5 text-xs font-bold tracking-widest uppercase hover:border-white/35 hover:text-white hover:bg-white/[0.04] transition-all">
-              Browse All Services
-            </Link>
-            {!user && (
-              <Link href="/provider"
-                className="hidden sm:block text-white/25 hover:text-white/50 text-[10px] font-bold tracking-widest uppercase transition-colors ml-2">
-                Earn as Provider →
-              </Link>
-            )}
-          </div>
+              {/* Location + browse */}
+              <div className="flex flex-wrap items-center gap-3 mb-9">
+                <LocationBar compact onLocationChange={setLocation} />
+                <Link
+                  href="#categories"
+                  className="group inline-flex items-center gap-2 bg-black text-white px-6 py-3 rounded-xl text-xs font-bold tracking-widest uppercase hover:bg-zinc-800 transition-colors"
+                >
+                  Browse All Services
+                  <ArrowRight size={13} className="transition-transform duration-150 group-hover:translate-x-0.5" />
+                </Link>
+              </div>
 
-          {/* Stats row */}
-          <div className="border-t border-white/[0.07] pt-8 grid grid-cols-2 sm:grid-cols-4 gap-y-6 gap-x-6">
-            {STATS.map(({ value, label, Icon }) => (
-              <div key={label} className="flex items-center gap-3">
-                <span className="w-9 h-9 shrink-0 border border-white/[0.10] bg-white/[0.05] flex items-center justify-center">
-                  <Icon size={15} className="text-white/40" strokeWidth={1.8} />
+              {/* Trust strip */}
+              <div className="flex flex-wrap items-center gap-x-7 gap-y-3 border-t border-zinc-100 pt-6">
+                {STATS.map(({ value, label, Icon }) => (
+                  <div key={label} className="flex items-center gap-2">
+                    <Icon size={16} className="text-emerald-500 shrink-0" strokeWidth={2} />
+                    <span className="text-sm font-black text-black">{value}</span>
+                    <span className="text-[11px] text-zinc-400 font-medium">{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* RIGHT — services showcase (4 real jobs we solve) */}
+            <div className="relative">
+              <div className="grid grid-cols-2 gap-3 md:gap-4 rounded-[2rem] bg-white p-3 md:p-4 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.35)] border border-zinc-100">
+                {[
+                  { src: "/hero/acrepair.webp",   label: "AC Repair & Service", href: "/services/ac" },
+                  { src: "/hero/fridges.webp",    label: "Fridge Repair",       href: "/services/fridge" },
+                  { src: "/hero/electrician.webp",label: "Electrical Work",     href: "/services/electrical" },
+                  { src: "/hero/washing.webp",    label: "Washing Machine",     href: "/services/appliance" },
+                ].map((item, i) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="group/tile relative block aspect-[4/5] rounded-2xl overflow-hidden bg-zinc-100"
+                  >
+                    <Image
+                      src={item.src}
+                      alt={item.label}
+                      fill
+                      priority={i < 2}
+                      sizes="(max-width: 1024px) 45vw, 24vw"
+                      className="object-cover transition-transform duration-700 group-hover/tile:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                    <span className="absolute bottom-2.5 left-3 right-3 text-white text-[11px] md:text-xs font-black tracking-tight leading-tight drop-shadow-sm">
+                      {item.label}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Floating rating card */}
+              <div className="absolute -top-4 right-4 sm:-right-4 bg-white rounded-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] border border-zinc-100 px-4 py-2.5 flex items-center gap-2">
+                <Star size={15} className="fill-amber-400 text-amber-400" />
+                <span className="text-sm font-black text-black">4.8</span>
+                <span className="text-[10px] text-zinc-400 font-bold">/5</span>
+              </div>
+
+              {/* Floating verified card */}
+              <div className="absolute -bottom-5 left-4 sm:-left-5 bg-white rounded-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] border border-zinc-100 px-4 py-3 flex items-center gap-3">
+                <span className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                  <ShieldCheck size={18} />
                 </span>
                 <div>
-                  <p className="text-xl font-extrabold text-white leading-none">{value}</p>
-                  <p className="text-[10px] text-white/30 font-semibold tracking-wider uppercase mt-0.5">
-                    {label}
-                  </p>
+                  <p className="text-[11px] font-black text-black leading-none">KYC-Verified Pro</p>
+                  <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Aadhaar + Police Check</p>
                 </div>
               </div>
-            ))}
+            </div>
+
           </div>
         </div>
       </section>
@@ -871,7 +896,7 @@ export default function HomePage() {
                 <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-zinc-50 border border-zinc-150 rounded-full">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <p className="text-[11px] font-bold text-zinc-500">
-                    Showing top-rated professionals in <span className="text-black">{location.city}</span>
+                    Ranked by what&rsquo;s most booked in <span className="text-black">{location.city}</span>
                   </p>
                 </div>
               )}
@@ -885,52 +910,86 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4 md:gap-5 lg:gap-6 mb-20">
-            {Object.entries(CATEGORY_META).map(([key, meta]) => {
-              const Icon  = CATEGORY_ICONS[key] || Sparkles;
-              const count = catCounts[key] || 0;
-              const bgUrl = CATEGORY_BACKGROUNDS[key];
-              const sty   = CAT_STYLES[key] || {};
-              return (
-                <Link key={key} href={`/services/${key}`} className="group relative">
-                  <div className={`h-full min-h-[185px] bg-zinc-950 p-6 flex flex-col items-center justify-center text-center transition-all duration-700 hover:-translate-y-2 cursor-pointer rounded-2xl smooth-lift relative overflow-hidden border border-zinc-900/60 ${sty.hoverBorder || 'hover:border-zinc-700'} ${sty.hoverGlow || ''}`}>
-                    
-                    {bgUrl && (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={bgUrl}
-                        alt={meta.label}
-                        className="absolute inset-0 w-full h-full object-cover opacity-20 filter grayscale contrast-125 transition-all duration-700 ease-out group-hover:scale-110 group-hover:opacity-40 group-hover:grayscale-0 pointer-events-none"
-                      />
-                    )}
-                    
-                    <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/20 via-zinc-950/60 to-zinc-950/95 pointer-events-none transition-all duration-700 group-hover:from-zinc-950/10 group-hover:via-zinc-950/50 group-hover:to-zinc-950/90" />
-                    
-                    <div className="absolute inset-0 border border-white/5 rounded-2xl pointer-events-none group-hover:border-white/10 transition-all duration-500" />
-                    
-                    <div className={`relative z-10 w-14 h-14 mb-5 flex items-center justify-center rounded-2xl border transition-all duration-500 shadow-sm ${sty.iconBg || 'bg-white/10 text-white/90 group-hover:bg-white group-hover:text-black'} ${sty.iconBorder || 'border-white/10'} group-hover:scale-110 group-hover:rotate-[6deg] group-hover:-translate-y-1`}>
-                      <Icon size={20} strokeWidth={1.8} className="transition-transform duration-500" />
-                    </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 mb-20">
+            {Object.entries(CATEGORY_META)
+              .sort(([a], [b]) => (CATEGORY_INSIGHTS[b]?.demand || 0) - (CATEGORY_INSIGHTS[a]?.demand || 0))
+              .map(([key, meta], idx) => {
+                const count    = catCounts[key] || 0;
+                const ins      = CATEGORY_INSIGHTS[key] || { demand: 50, booked: "100", rating: 4.7, eta: "same day" };
+                const services = SERVICE_CATALOG[key] || [];
+                const minPrice = services.length ? Math.min(...services.map(s => s.price)) : null;
+                const popular  = services.find(s => s.popular) || services[0];
+                const photo    = CATEGORY_PHOTOS[key];
+                return (
+                  <Link
+                    key={key}
+                    href={`/services/${key}`}
+                    className="group relative bg-white border border-zinc-150 rounded-[1.5rem] flex flex-col transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_30px_60px_-24px_rgba(0,0,0,0.28)] hover:border-zinc-200 overflow-hidden"
+                  >
+                    {/* Service photo */}
+                    <div className="relative h-44 overflow-hidden">
+                      {photo && (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={photo}
+                          alt={meta.label}
+                          loading="lazy"
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-110"
+                        />
+                      )}
+                      {/* Legibility gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/5" />
 
-                    <div className="relative z-10">
-                      <p className={`text-[11px] font-black text-white tracking-wider uppercase mb-1.5 transition-colors duration-300 ${sty.textHover || ''}`}>
-                        {meta.label}
-                      </p>
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className={`w-1.5 h-1.5 rounded-full transition-all duration-500 bg-zinc-600 ${sty.dotColor ? `group-hover:${sty.dotColor} group-hover:animate-pulse group-hover:scale-110` : 'group-hover:bg-white'}`} />
-                        <p className="text-[9px] font-bold text-zinc-400 tracking-widest uppercase transition-colors group-hover:text-zinc-200">
-                          {count} Options
-                        </p>
+                      {/* Demand tag */}
+                      {idx === 0 && (
+                        <span className="absolute top-3 left-3 z-10 bg-gradient-to-r from-orange-500 to-rose-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
+                          <Flame size={10} strokeWidth={2.5} /> Most booked
+                        </span>
+                      )}
+                      {idx === 1 && (
+                        <span className="absolute top-3 left-3 z-10 bg-black/90 backdrop-blur text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
+                          <TrendingUp size={10} strokeWidth={2.5} /> Trending
+                        </span>
+                      )}
+
+                      {/* Rating chip */}
+                      <span className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur text-black text-[10px] font-black px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
+                        <Star size={10} className="fill-amber-400 text-amber-400" /> {ins.rating}
+                      </span>
+
+                      {/* Title over photo */}
+                      <div className="absolute bottom-3.5 left-4 right-4 z-10">
+                        <p className="text-white font-black text-lg leading-tight tracking-tight drop-shadow-sm">{meta.label}</p>
+                        {popular && (
+                          <p className="text-white/75 text-[11px] font-semibold mt-0.5 truncate">{popular.name}</p>
+                        )}
                       </div>
                     </div>
 
-                    <div className={`absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-y-1 group-hover:translate-y-0 text-white/50 transition-colors duration-300 ${sty.accentColor ? `group-hover:${sty.accentColor}` : 'group-hover:text-white'}`}>
-                      <ArrowUpRight size={13} strokeWidth={2.5} />
+                    {/* Info strip: trust + speed (no confusing meters) */}
+                    <div className="px-4 pt-3 flex items-center gap-2 text-[10px] font-bold text-zinc-400">
+                      <span className="flex items-center gap-1 text-emerald-600">
+                        <Clock size={10} strokeWidth={2.5} /> {ins.eta}
+                      </span>
+                      <span className="w-1 h-1 rounded-full bg-zinc-200" />
+                      <span>{ins.booked} booked</span>
+                      <span className="w-1 h-1 rounded-full bg-zinc-200" />
+                      <span>{count} services</span>
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
+
+                    {/* Footer: price + book */}
+                    <div className="px-4 pt-2.5 pb-4 mt-auto flex items-center justify-between">
+                      <div className="leading-none">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Starts at</span>
+                        <p className="text-lg font-black text-black tracking-tight mt-0.5">{minPrice != null ? formatPrice(minPrice) : "—"}</p>
+                      </div>
+                      <span className="inline-flex items-center gap-1.5 bg-black text-white text-[10px] font-black uppercase tracking-wider px-4 py-3 rounded-xl shadow-md group-hover:gap-2.5 group-hover:bg-zinc-800 transition-all duration-300">
+                        Book <ArrowUpRight size={13} strokeWidth={2.5} />
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
           </div>
 
           {/* ─── NEW INTERACTIVE SYMPTOM DIAGNOSTICS MATCHER ───────────────── */}
@@ -967,108 +1026,61 @@ export default function HomePage() {
               </div>
 
               {/* Interactive Virtual Hotspot Display */}
-              <div className="md:col-span-5 lg:col-span-5 bg-zinc-900 border border-zinc-800 rounded-2xl h-[280px] relative overflow-hidden flex items-center justify-center p-8 group shadow-inner">
+              <div
+                className="md:col-span-5 lg:col-span-5 border border-zinc-800 rounded-2xl h-[280px] relative overflow-hidden flex items-center justify-center p-4 group transition-colors duration-500"
+                style={{
+                  backgroundColor: DIAGNOSTICS_DATA[diagTab]?.bg || "#18181b",
+                  boxShadow: `inset 0 0 70px 26px ${DIAGNOSTICS_DATA[diagTab]?.bg || "#18181b"}`,
+                }}
+              >
                 {/* Dark diagonal stripe back-hatch */}
                 <div className="absolute inset-0 opacity-[0.03]"
                   style={{ backgroundImage: "repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)", backgroundSize: "12px 12px" }} />
-                
-                {/* Appliance Outline Mockup rendering */}
-                <div className="relative w-full h-full flex flex-col items-center justify-center text-center">
-                  {diagTab === "ac" && (
-                    <div className="w-[180px] h-[55px] bg-white/5 border border-white/10 rounded-lg relative flex flex-col justify-between p-1.5 transition-all group-hover:scale-105 duration-500">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 absolute bottom-1 right-2 animate-pulse" />
-                      <div className="flex justify-between items-center text-[7px] text-white/30 font-bold px-1.5 uppercase tracking-widest">
-                        <span>Cooling Unit</span>
-                        <span>1.5 Ton</span>
-                      </div>
-                      <div className="w-full h-1 bg-white/10 rounded-full my-auto" />
-                      <div className="w-full h-2.5 bg-gradient-to-b from-white/10 to-transparent flex gap-0.5 justify-center items-center">
-                        <span className="w-0.5 h-1 bg-white/20 animate-pulse" />
-                        <span className="w-0.5 h-1 bg-white/20 animate-pulse delay-100" />
-                        <span className="w-0.5 h-1 bg-white/20 animate-pulse delay-200" />
-                      </div>
-                      
-                      {/* Nested hotspots for AC to guarantee perfect coordination on any display */}
-                      {DIAGNOSTICS_DATA.ac.symptoms.map(s => {
-                        const isActive = selectedSymptom?.id === s.id;
-                        return (
-                          <button
-                            key={s.id}
-                            onClick={() => setSelectedSymptom(s)}
-                            style={{ left: s.hotspot.x, top: s.hotspot.y }}
-                            className={`absolute w-8 h-8 rounded-full flex items-center justify-center cursor-pointer -translate-x-1/2 -translate-y-1/2 transition-all duration-300 z-10 ${isActive ? "scale-125" : "hover:scale-110"}`}
-                          >
-                            <span className={`absolute inset-0 rounded-full opacity-60 border animate-ping ${DIAGNOSTICS_DATA.ac.pulseColor}`} />
-                            <span className={`w-3.5 h-3.5 rounded-full border border-white shadow-md flex items-center justify-center text-[7px] font-black text-white transition-colors ${isActive ? "bg-white text-zinc-950" : "bg-black"}`}>
-                              !
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {diagTab === "fridge" && (
-                    <div className="w-[85px] h-[150px] bg-white/5 border border-white/10 rounded-lg relative flex flex-col p-1.5 gap-1 group-hover:scale-105 transition-all duration-500">
-                      {/* Freezer handle */}
-                      <div className="w-1 h-12 bg-white/30 rounded-full absolute top-6 right-1.5" />
-                      {/* Upper freezer compartment */}
-                      <div className="h-[55px] w-full border border-white/5 bg-white/[0.02] rounded flex items-center justify-center">
-                        <span className="text-[6px] text-white/20 font-bold uppercase tracking-widest">Freezer</span>
-                      </div>
-                      {/* Fresh food compartment */}
-                      <div className="flex-1 w-full border border-white/5 bg-white/[0.02] rounded flex items-center justify-center">
-                        <span className="text-[6px] text-white/20 font-bold uppercase tracking-widest">Fresh Zone</span>
-                      </div>
 
-                      {/* Nested hotspots for Fridge to guarantee perfect coordination on any display */}
-                      {DIAGNOSTICS_DATA.fridge.symptoms.map(s => {
-                        const isActive = selectedSymptom?.id === s.id;
-                        return (
-                          <button
-                            key={s.id}
-                            onClick={() => setSelectedSymptom(s)}
-                            style={{ left: s.hotspot.x, top: s.hotspot.y }}
-                            className={`absolute w-8 h-8 rounded-full flex items-center justify-center cursor-pointer -translate-x-1/2 -translate-y-1/2 transition-all duration-300 z-10 ${isActive ? "scale-125" : "hover:scale-110"}`}
-                          >
-                            <span className={`absolute inset-0 rounded-full opacity-60 border animate-ping ${DIAGNOSTICS_DATA.fridge.pulseColor}`} />
-                            <span className={`w-3.5 h-3.5 rounded-full border border-white shadow-md flex items-center justify-center text-[7px] font-black text-white transition-colors ${isActive ? "bg-white text-zinc-950" : "bg-black"}`}>
-                              !
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {diagTab === "electrical" && (
-                    <div className="w-[100px] h-[120px] bg-white/5 border border-white/10 rounded-xl relative flex flex-col p-3 gap-2 justify-between group-hover:scale-105 transition-all duration-500">
-                      <div className="grid grid-cols-3 gap-1">
-                        {[1,2,3,4,5,6].map(i => (
-                           <div key={i} className="h-5 bg-white/5 rounded border border-white/10 flex items-center justify-center p-0.5">
-                             <div className={`w-1 h-3 rounded ${i === 2 ? "bg-amber-400" : "bg-white/20"}`} />
-                           </div>
-                        ))}
-                      </div>
-                      <div className="text-[6px] text-white/25 font-bold uppercase tracking-wider text-center">Breaker Panel</div>
+                {/* Live status dot */}
+                <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Live Scan</span>
+                </div>
 
-                      {/* Nested hotspots for Electrical to guarantee perfect coordination on any display */}
-                      {DIAGNOSTICS_DATA.electrical.symptoms.map(s => {
-                        const isActive = selectedSymptom?.id === s.id;
-                        return (
-                          <button
-                            key={s.id}
-                            onClick={() => setSelectedSymptom(s)}
-                            style={{ left: s.hotspot.x, top: s.hotspot.y }}
-                            className={`absolute w-8 h-8 rounded-full flex items-center justify-center cursor-pointer -translate-x-1/2 -translate-y-1/2 transition-all duration-300 z-10 ${isActive ? "scale-125" : "hover:scale-110"}`}
-                          >
-                            <span className={`absolute inset-0 rounded-full opacity-60 border animate-ping ${DIAGNOSTICS_DATA.electrical.pulseColor}`} />
-                            <span className={`w-3.5 h-3.5 rounded-full border border-white shadow-md flex items-center justify-center text-[7px] font-black text-white transition-colors ${isActive ? "bg-white text-zinc-950" : "bg-black"}`}>
-                              !
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                {/* Appliance image with interactive diagnostic hotspots */}
+                <div className="relative w-full h-full">
+                  {Object.entries(DIAGNOSTICS_DATA).map(([key, data]) => {
+                    const isActiveTab = diagTab === key;
+                    return (
+                      <div
+                        key={key}
+                        className={`absolute inset-0 transition-all duration-500 ${isActiveTab ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
+                      >
+                        <Image
+                          src={data.image}
+                          alt={`${data.name} diagnostic view`}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 40vw"
+                          className="object-contain transition-transform duration-500 group-hover:scale-105"
+                        />
+
+                        {/* Diagnostic hotspots overlaid on the appliance */}
+                        {data.symptoms.map(s => {
+                          const isActive = selectedSymptom?.id === s.id;
+                          return (
+                            <button
+                              key={s.id}
+                              onClick={() => setSelectedSymptom(s)}
+                              aria-label={s.issue}
+                              style={{ left: s.hotspot.x, top: s.hotspot.y }}
+                              className={`absolute w-8 h-8 rounded-full flex items-center justify-center cursor-pointer -translate-x-1/2 -translate-y-1/2 transition-all duration-300 z-10 ${isActive ? "scale-125" : "hover:scale-110"}`}
+                            >
+                              <span className={`absolute inset-0 rounded-full opacity-60 border animate-ping ${data.pulseColor}`} />
+                              <span className={`w-3.5 h-3.5 rounded-full border border-white shadow-md flex items-center justify-center text-[7px] font-black text-white transition-colors ${isActive ? "bg-white text-zinc-950" : "bg-black"}`}>
+                                !
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1344,127 +1356,84 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Social Proof Dashboard Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-10 items-start mb-16">
-            {/* Interactive Sidebar: Star Filter & Breakdown */}
-            <div className="md:col-span-4 lg:col-span-4 bg-zinc-50 border border-zinc-150 p-6 rounded-[1.5rem] space-y-6 shadow-sm">
-              <div>
-                <h4 className="text-[11px] font-black tracking-widest uppercase text-black mb-1">Rating Breakdown</h4>
-                <p className="text-xs text-zinc-400 font-medium">Click on any tier below to filter testimonials.</p>
-              </div>
+          {/* Auto-sliding reviews carousel */}
+          <div
+            className="relative max-w-3xl mx-auto mb-4"
+            onMouseEnter={() => setReviewPaused(true)}
+            onMouseLeave={() => setReviewPaused(false)}
+          >
+            {/* Sliding viewport */}
+            <div className="overflow-hidden">
+              <div
+                className="flex transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+              >
+                {reviews.map((t, idx) => (
+                  <div key={idx} className="w-full shrink-0 px-1">
+                    <article className="relative bg-white border border-zinc-150 p-8 md:p-12 rounded-[2rem] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.12)] flex flex-col min-h-[300px]">
+                      <Quote className="absolute top-8 right-9 text-zinc-100" size={60} strokeWidth={1.5} />
 
-              <div className="space-y-3.5">
-                {[5, 4, 3, 2, 1].map(stars => {
-                  const dist = ratingDistribution[stars] || { count: 0, pct: 0 };
-                  const isSelected = ratingFilter === stars;
-                  return (
-                    <button
-                      key={stars}
-                      onClick={() => setRatingFilter(isSelected ? null : stars)}
-                      className={`w-full flex items-center gap-3 text-left group/star py-1 px-2 rounded-lg hover:bg-white transition-colors ${isSelected ? "bg-white border border-zinc-200 shadow-sm" : "border border-transparent"}`}
-                    >
-                      <span className="text-[10px] font-black tracking-tight text-zinc-600 w-3 shrink-0">{stars}★</span>
-                      <div className="flex-1 h-2 bg-zinc-200 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-black rounded-full transition-all duration-500" 
-                          style={{ width: `${dist.pct}%` }}
-                        />
+                      <div className="relative z-10 flex-1">
+                        <div className="flex items-center gap-2 mb-6">
+                          <Stars n={t.rating} size={15} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-zinc-200" />
+                          <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Verified Purchase</span>
+                        </div>
+                        <p className="text-lg md:text-2xl font-medium text-zinc-800 leading-relaxed tracking-tight">
+                          &ldquo;{t.text}&rdquo;
+                        </p>
                       </div>
-                      <span className="text-[9px] font-bold text-zinc-400 w-6 text-right shrink-0">{dist.pct}%</span>
-                      <span className="text-[8px] font-black uppercase text-zinc-300 group-hover/star:text-black w-7 text-right shrink-0 transition-colors">
-                        {isSelected ? "Clear" : "Filter"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
 
-              {/* Dynamic Service Categories Filters */}
-              <div className="pt-5 border-t border-zinc-200 space-y-3">
-                <h4 className="text-[10px] font-black tracking-widest uppercase text-black">Filter by Services</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { key: "all", val: "All Reviews" },
-                    { key: "ac", val: "AC Service" },
-                    { key: "fridge", val: "Fridge" },
-                    { key: "electrical", val: "Electrical" },
-                    { key: "appliance", val: "Appliances" },
-                  ].map(tab => (
-                    <button
-                      key={tab.key}
-                      onClick={() => setCategoryFilter(tab.key)}
-                      className={`px-3 py-1.5 text-[9px] font-black tracking-wider uppercase border transition-all ${categoryFilter === tab.key ? "bg-black border-black text-white" : "bg-white border-zinc-200 text-zinc-400 hover:border-black hover:text-black"}`}
-                    >
-                      {tab.val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Verified Badge Indicators */}
-              <div className="pt-5 border-t border-zinc-200 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500">
-                  <ShieldCheck size={16} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-black leading-none">100% Verified Work</p>
-                  <p className="text-[8px] text-zinc-400 font-bold uppercase mt-1 leading-none">Aadhaar & Geolocation Tracked</p>
-                </div>
+                      <div className="mt-8 pt-7 border-t border-zinc-100 flex items-center gap-4 relative z-10">
+                        <div className="w-12 h-12 rounded-full bg-zinc-950 text-white flex items-center justify-center text-sm font-black shadow-md shrink-0">
+                          {t.avatar}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-black text-black truncate">{t.name}</p>
+                          <div className="flex items-center gap-1.5 text-[9px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
+                            <span>{t.city}</span>
+                            <span className="w-1 h-1 rounded-full bg-zinc-200" />
+                            <span className="text-emerald-500">Verified</span>
+                          </div>
+                        </div>
+                        <div className="px-3 py-1.5 bg-zinc-50 rounded-lg border border-zinc-100 shrink-0">
+                          <p className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">{t.service}</p>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Testimonials List Grid */}
-            <div className="md:col-span-8 lg:col-span-8 space-y-6 max-h-[600px] overflow-y-auto pr-2 scrollbar-hide">
-              {filteredReviews.length > 0 ? (
-                filteredReviews.map((t, idx) => (
-                  <div key={idx}
-                    className="group relative bg-white border border-zinc-100 p-8 rounded-2xl transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:border-black flex flex-col min-h-[180px] animate-reveal-up"
-                    style={{ animationDelay: `${idx * 50}ms` }}
-                  >
-                    <span className="absolute top-6 right-8 text-7xl font-black text-zinc-50 group-hover:text-zinc-100 transition-colors pointer-events-none leading-none select-none">
-                      &ldquo;
-                    </span>
+            {/* Controls: prev / dots / next */}
+            <div className="flex items-center justify-center gap-6 mt-9">
+              <button
+                onClick={goPrevReview}
+                aria-label="Previous review"
+                className="w-11 h-11 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-500 hover:bg-black hover:text-white hover:border-black transition-all active:scale-95"
+              >
+                <ChevronLeft size={18} strokeWidth={2.5} />
+              </button>
 
-                    <div className="relative z-10 flex-1">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Stars n={t.rating} size={11} />
-                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-200" />
-                        <span className="text-[8px] font-black uppercase text-zinc-400 tracking-wider">Verified Purchase</span>
-                      </div>
-                      <p className="text-sm font-medium text-zinc-650 leading-relaxed group-hover:text-black transition-colors duration-300 italic">
-                        &ldquo;{t.text}&rdquo;
-                      </p>
-                    </div>
+              <div className="flex items-center gap-2">
+                {reviews.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setReviewSlide(idx)}
+                    aria-label={`Go to review ${idx + 1}`}
+                    className={`h-2 rounded-full transition-all duration-300 ${idx === activeSlide ? "w-7 bg-black" : "w-2 bg-zinc-300 hover:bg-zinc-400"}`}
+                  />
+                ))}
+              </div>
 
-                    <div className="mt-6 pt-6 border-t border-zinc-50 flex items-center gap-4 relative z-10">
-                      <div className="w-10 h-10 rounded-full bg-zinc-950 text-white flex items-center justify-center text-xs font-black shadow-md group-hover:scale-105 transition-transform duration-500">
-                        {t.avatar}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-black truncate">{t.name}</p>
-                        <div className="flex items-center gap-1.5 text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
-                          <span>{t.city}</span>
-                          <span className="w-1 h-1 rounded-full bg-zinc-200" />
-                          <span className="text-emerald-500">Verified</span>
-                        </div>
-                      </div>
-                      <div className="px-2.5 py-1 bg-zinc-50 rounded-md border border-zinc-100">
-                        <p className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">
-                          {t.service}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="absolute top-0 left-0 w-full h-[3px] bg-black scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-t-2xl" />
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-16 bg-zinc-50 rounded-2xl border border-zinc-100">
-                  <MessageSquare size={28} className="text-zinc-300 mx-auto mb-2" />
-                  <p className="text-xs font-bold text-zinc-400 uppercase">No matching reviews found</p>
-                  <p className="text-[10px] text-zinc-450 mt-1">Try clearing some filter criteria above.</p>
-                </div>
-              )}
+              <button
+                onClick={goNextReview}
+                aria-label="Next review"
+                className="w-11 h-11 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-500 hover:bg-black hover:text-white hover:border-black transition-all active:scale-95"
+              >
+                <ChevronRight size={18} strokeWidth={2.5} />
+              </button>
             </div>
           </div>
         </div>
@@ -1555,7 +1524,7 @@ export default function HomePage() {
               </p>
 
               {/* Search bar */}
-              <div className="flex max-w-sm mb-7 border border-zinc-200 bg-white focus-within:border-black transition-colors">
+              <div className="flex max-w-sm mb-7 border border-zinc-200 bg-white focus-within:border-black transition-colors rounded-xl overflow-hidden">
                 <span className="flex items-center pl-4 text-zinc-400 shrink-0">
                   <Search size={15} />
                 </span>
@@ -1563,149 +1532,139 @@ export default function HomePage() {
                   type="text"
                   value={citySearch}
                   onChange={e => setCitySearch(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") {
-                      const q = citySearch.toLowerCase().trim();
-                      const m = CITIES.find(c => c.toLowerCase().includes(q));
-                      if (m) { setPinnedCity(m); setCitySearch(""); }
-                    }
-                  }}
-                  placeholder="Search your state or district..."
+                  onKeyDown={e => { if (e.key === "Enter") runExplore(citySearch); }}
+                  placeholder="Search any city, town or district…"
                   className="flex-1 px-3 py-3.5 text-sm font-medium text-black placeholder:text-zinc-400 bg-transparent outline-none"
                 />
                 <button
-                  onClick={() => {
-                    const q = citySearch.toLowerCase().trim();
-                    if (!q) return;
-                    const m = CITIES.find(c => c.toLowerCase().includes(q));
-                    if (m) { setPinnedCity(m); setCitySearch(""); }
-                  }}
+                  onClick={() => runExplore(citySearch)}
                   className="bg-black text-white px-5 text-[10px] font-black tracking-widest uppercase hover:bg-zinc-800 transition-colors shrink-0"
                 >
                   Find
                 </button>
               </div>
 
-              {/* City chips */}
+              {/* Popular place chips */}
               <div className="flex flex-wrap gap-2">
-                {(filteredCities.length > 0 ? filteredCities : CITIES).slice(0, 8).map(city => (
-                  <button
-                    key={city}
-                    type="button"
-                    onClick={() => { setPinnedCity(city); setCitySearch(""); }}
-                    className={`px-4 py-2 text-[10px] font-black tracking-widest uppercase border transition-all ${
-                      activeCity === city
-                        ? "bg-black text-white border-black"
-                        : "bg-white border-zinc-200 text-zinc-400 hover:border-black hover:text-black"
-                    }`}
-                  >
-                    {city}
-                  </button>
-                ))}
-                {filteredCities.length === 0 && citySearch && (
-                  <p className="text-xs text-zinc-400 font-medium py-1.5">
-                    No city found — expanding there soon!
-                  </p>
-                )}
-                {!citySearch && (
-                  <span className="px-4 py-2 bg-zinc-50 border border-dashed border-zinc-200 text-[10px] font-black tracking-widest uppercase text-zinc-400 select-none">
-                    +{CITIES.length - 8} More
-                  </span>
-                )}
+                {POPULAR_PLACES.map(city => {
+                  const active = placeLabel.toLowerCase() === city.toLowerCase();
+                  return (
+                    <button
+                      key={city}
+                      type="button"
+                      onClick={() => runExplore(city)}
+                      className={`px-4 py-2 text-[10px] font-black tracking-widest uppercase border rounded-full transition-all ${
+                        active
+                          ? "bg-black text-white border-black"
+                          : "bg-white border-zinc-200 text-zinc-400 hover:border-black hover:text-black"
+                      }`}
+                    >
+                      {city}
+                    </button>
+                  );
+                })}
+                <span className="px-4 py-2 bg-zinc-50 border border-dashed border-zinc-200 text-[10px] font-black tracking-widest uppercase text-zinc-400 rounded-full select-none">
+                  + Anywhere
+                </span>
               </div>
 
-              {/* Active city pill */}
-              {activeCity && CITY_LANDMARKS[activeCity] && (
-                <div className="mt-6 flex items-center gap-3 py-3 px-4 border border-zinc-100 bg-zinc-50 max-w-sm">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-400">Now showing</p>
-                    <p className="text-sm font-extrabold text-black truncate">
-                      {CITY_LANDMARKS[activeCity].label}
-                      <span className="font-medium text-zinc-400 ml-1.5">
-                        · {CITY_LANDMARKS[activeCity].state}
-                      </span>
-                    </p>
-                  </div>
+              {/* Now-showing pill */}
+              <div className="mt-6 flex items-center gap-3 py-3 px-4 border border-zinc-100 bg-zinc-50 max-w-sm rounded-xl">
+                <span className={`w-2 h-2 rounded-full shrink-0 ${explore.loading ? "bg-amber-400 animate-pulse" : explore.error ? "bg-red-400" : "bg-emerald-400 animate-pulse"}`} />
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-400">
+                    {explore.loading ? "Locating…" : explore.error ? "Lookup failed" : "Now exploring"}
+                  </p>
+                  <p className="text-sm font-extrabold text-black truncate">
+                    {placeLabel}
+                    {explore.place?.country && (
+                      <span className="font-medium text-zinc-400 ml-1.5">· {explore.place.country}</span>
+                    )}
+                  </p>
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* ── Right: 2×2 landmark grid ── */}
+            {/* ── Right: live place explorer grid ── */}
             <div className="relative">
               <div className="absolute -inset-3 bg-zinc-100 rounded-[1.5rem] -rotate-1 pointer-events-none" />
 
-              <div className="relative grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden shadow-2xl shadow-zinc-300/60 h-[440px]">
-                {gridItems.map((item, i) => {
-                  if (item.kind === "img") {
-                    return (
-                      <CityImage
-                        key={`${activeCity}-${i}`}
-                        url={item.url}
-                        landmark={item.landmark}
-                        cityLabel={item.cityLabel}
-                        gradient={item.gradient}
-                      />
-                    );
-                  }
+              <div className="relative grid grid-cols-2 grid-rows-2 gap-0.5 rounded-2xl overflow-hidden shadow-2xl shadow-zinc-300/60 h-[440px]">
 
-                  if (item.kind === "info") {
-                    const city = CITY_LANDMARKS[activeCity];
-                    return (
-                      <div key="info" className="relative bg-zinc-950 p-5 flex flex-col justify-between overflow-hidden">
-                        <div className="absolute inset-0 opacity-[0.07]"
-                          style={{ backgroundImage: "radial-gradient(circle at 1.5px 1.5px,#fff 1px,transparent 0)", backgroundSize: "14px 14px" }} />
-                        <div className="relative">
-                          <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-500 mb-3">
-                            City Guide
-                          </p>
-                          <p className="text-xl font-extrabold text-white leading-tight">
-                            {city?.label}
-                          </p>
-                          <p className="text-sm text-zinc-400 mt-0.5 font-medium">{city?.state}</p>
-                        </div>
-                        <div className="relative space-y-2 mt-3">
-                          {city?.images.map(img => (
-                            <div key={img.landmark} className="flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                              <span className="text-[11px] text-zinc-400 font-medium truncate">{img.landmark}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  }
+                {/* Two featured spot images */}
+                <SpotTile
+                  key={`tile0-${imageSpots[0]?.image || placeLabel}`}
+                  loading={explore.loading}
+                  image={imageSpots[0]?.image}
+                  name={imageSpots[0]?.name}
+                  category={imageSpots[0]?.category}
+                  placeLabel={placeLabel}
+                  gradient={TILE_GRADIENTS[0]}
+                />
+                <SpotTile
+                  key={`tile1-${imageSpots[1]?.image || placeLabel}`}
+                  loading={explore.loading}
+                  image={imageSpots[1]?.image}
+                  name={imageSpots[1]?.name}
+                  category={imageSpots[1]?.category}
+                  placeLabel={placeLabel}
+                  gradient={TILE_GRADIENTS[1]}
+                />
 
-                  if (item.kind === "book") {
-                    const city = CITY_LANDMARKS[activeCity];
-                    return (
-                      <div key="book" className="bg-black p-5 flex flex-col justify-between">
-                        <div>
-                          <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-600 mb-3">
-                            Available in {city?.label}
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {["AC", "Fridge", "Fan", "TV", "Electrical", "Cooler"].map(s => (
-                              <span key={s}
-                                className="px-2 py-1 text-[9px] font-bold uppercase tracking-wide border border-white/10 text-white/40">
-                                {s}
-                              </span>
-                            ))}
-                          </div>
+                {/* City guide */}
+                <div className="relative bg-zinc-950 p-5 flex flex-col justify-between overflow-hidden">
+                  <div className="absolute inset-0 opacity-[0.07]"
+                    style={{ backgroundImage: "radial-gradient(circle at 1.5px 1.5px,#fff 1px,transparent 0)", backgroundSize: "14px 14px" }} />
+                  <div className="relative">
+                    <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-500 mb-3">
+                      Place Guide
+                    </p>
+                    <p className="text-xl font-extrabold text-white leading-tight truncate">{placeLabel}</p>
+                    <p className="text-sm text-zinc-400 mt-0.5 font-medium">
+                      {explore.place?.country || "Famous nearby spots"}
+                    </p>
+                  </div>
+                  <div className="relative space-y-2 mt-3">
+                    {explore.loading ? (
+                      [0, 1, 2].map(i => <div key={i} className="h-3 bg-white/10 rounded animate-pulse" style={{ width: `${70 - i * 12}%` }} />)
+                    ) : guideSpots.length > 0 ? (
+                      guideSpots.map((s, i) => (
+                        <div key={`${s.name}-${i}`} className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span className="text-[11px] text-zinc-400 font-medium truncate">{s.name}</span>
                         </div>
-                        <Link
-                          href="/services/ac"
-                          className="flex items-center gap-1.5 mt-4 text-[10px] font-bold tracking-widest uppercase text-white hover:text-zinc-300 transition-colors group"
-                        >
-                          Book in {city?.label}
-                          <ArrowRight size={11} className="transition-transform group-hover:translate-x-0.5" />
-                        </Link>
-                      </div>
-                    );
-                  }
+                      ))
+                    ) : (
+                      <p className="text-[11px] text-zinc-500 font-medium leading-relaxed">
+                        We&apos;re mapping this area — service is still available here.
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-                  return null;
-                })}
+                {/* Book panel */}
+                <div className="bg-black p-5 flex flex-col justify-between">
+                  <div>
+                    <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-600 mb-3">
+                      Available in {placeLabel}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["AC", "Fridge", "Fan", "TV", "Electrical", "Cooler"].map(s => (
+                        <span key={s}
+                          className="px-2 py-1 text-[9px] font-bold uppercase tracking-wide border border-white/10 text-white/40 rounded-md">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <Link
+                    href="/services/ac"
+                    className="flex items-center gap-1.5 mt-4 text-[10px] font-bold tracking-widest uppercase text-white hover:text-zinc-300 transition-colors group"
+                  >
+                    Book in {placeLabel}
+                    <ArrowRight size={11} className="transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
               </div>
             </div>
 

@@ -11,7 +11,6 @@ import {
   ClipboardCheck,
   CreditCard,
   History,
-  MousePointer2,
   Search,
   ShieldCheck,
   Sparkles,
@@ -19,7 +18,7 @@ import {
   Wrench,
   X,
   // Premium visual icons
-  Snowflake,
+  AirVent,
   Fan,
   Refrigerator,
   Zap,
@@ -616,37 +615,37 @@ export default function SmartSearch({ role: roleProp, compact = false, className
             )}
           </div>
         ) : (
-          <div className="relative rounded-full bg-gradient-to-b from-zinc-700 via-zinc-950 to-black p-[2px] shadow-[0_12px_28px_rgba(0,0,0,0.22),inset_0_2px_4px_rgba(255,255,255,0.18)]">
-            <div className="relative rounded-full bg-white shadow-[inset_0_2px_5px_rgba(0,0,0,0.16)] focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:shadow-[0_0_20px_rgba(99,102,241,0.25)] transition-all duration-300">
-              
-              {/* Search icon button */}
-              <div className="absolute left-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-zinc-950 text-white shadow-[0_4px_12px_rgba(0,0,0,0.35)] md:h-11 md:w-11">
-                <Search size={20} strokeWidth={2.8} />
-              </div>
+          <div className="group relative rounded-full bg-white border border-zinc-200 shadow-[0_14px_38px_-14px_rgba(0,0,0,0.30)] focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/12 focus-within:shadow-[0_18px_46px_-12px_rgba(16,185,129,0.40)] transition-all duration-300">
 
-              <input
-                ref={inputRef}
-                role="searchbox"
-                aria-label={cfg.label}
-                aria-autocomplete="list"
-                aria-controls="sm-results"
-                aria-activedescendant={activeIdx >= 0 ? `sm-result-${activeIdx}` : undefined}
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setOpen(true);
-                  setActiveIdx(-1);
-                }}
-                onFocus={() => setOpen(true)}
-                onKeyDown={onKeyDown}
-                placeholder={cfg.placeholder}
-                autoComplete="off"
-                spellCheck={false}
-                className="h-12 w-full rounded-full bg-transparent pl-14 pr-14 text-sm font-black text-zinc-900 outline-none placeholder:text-zinc-400 md:h-14 md:pl-16 md:pr-16 md:text-base"
-              />
+            {/* Left search icon */}
+            <div className="pointer-events-none absolute left-1.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-zinc-950 text-white shadow-[0_4px_12px_rgba(0,0,0,0.35)] md:h-12 md:w-12">
+              <Search size={20} strokeWidth={2.8} />
+            </div>
 
-              {/* Clear (×) or cursor icon on the right */}
-              {query ? (
+            <input
+              ref={inputRef}
+              role="searchbox"
+              aria-label={cfg.label}
+              aria-autocomplete="list"
+              aria-controls="sm-results"
+              aria-activedescendant={activeIdx >= 0 ? `sm-result-${activeIdx}` : undefined}
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setOpen(true);
+                setActiveIdx(-1);
+              }}
+              onFocus={() => setOpen(true)}
+              onKeyDown={onKeyDown}
+              placeholder={cfg.placeholder}
+              autoComplete="off"
+              spellCheck={false}
+              className="h-14 w-full rounded-full bg-transparent pl-16 pr-32 text-sm font-bold text-zinc-900 outline-none placeholder:text-zinc-400 md:h-16 md:pr-40 md:text-base"
+            />
+
+            {/* Right controls: clear + Search button */}
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              {query && (
                 <button
                   type="button"
                   aria-label="Clear search"
@@ -657,20 +656,20 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                     setActiveIdx(-1);
                     inputRef.current?.focus();
                   }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                  className="rounded-full p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
                 >
                   <X size={18} />
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  aria-label="Open search"
-                  onClick={() => { setOpen(true); inputRef.current?.focus(); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rotate-[-18deg] text-zinc-500 drop-shadow-[0_4px_2px_rgba(0,0,0,0.25)] hover:text-indigo-600 transition-colors"
-                >
-                  <MousePointer2 size={26} fill="currentColor" strokeWidth={1.8} />
-                </button>
               )}
+              <button
+                type="button"
+                aria-label="Search"
+                onClick={() => { setOpen(true); inputRef.current?.focus(); }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2.5 text-[11px] font-black uppercase tracking-wider text-white shadow-[0_8px_18px_-5px_rgba(16,185,129,0.6)] hover:bg-emerald-700 active:scale-95 transition-all md:px-6 md:py-3.5 md:text-xs"
+              >
+                <Search size={14} strokeWidth={3} />
+                <span className="hidden sm:inline">Search</span>
+              </button>
             </div>
           </div>
         )}
@@ -831,7 +830,7 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                         className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-cyan-50/20 hover:bg-cyan-50/50 hover:border-cyan-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5"
                       >
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-100/70 text-cyan-600 group-hover:scale-105 transition-transform shrink-0">
-                          <Snowflake size={18} />
+                          <AirVent size={18} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 min-w-0">

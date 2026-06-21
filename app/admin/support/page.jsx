@@ -122,20 +122,16 @@ export default function AdminSupportPage() {
               </p>
             )}
           </div>
-          <button onClick={load}
-            className="flex items-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white px-4 py-2.5 text-[10px] font-bold tracking-widests uppercase transition-colors rounded-xl">
-            <RefreshCw size={12} /> Refresh
-          </button>
         </div>
       </div>
 
       <div className="px-6 md:px-12 -mt-8 max-w-7xl mx-auto relative z-10 space-y-5">
 
         {/* Status filter */}
-        <div className="flex flex-wrap gap-1 bg-white rounded-2xl border border-zinc-100 p-1 w-fit shadow-sm">
+        <div className="flex flex-wrap gap-1 bg-white rounded-lg border border-zinc-100 p-1 w-fit shadow-sm">
           {STATUS_TABS.map(tab => (
             <button key={tab.key} onClick={() => setStatusTab(tab.key)}
-              className={`flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold tracking-widests uppercase rounded-xl transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold tracking-widests uppercase rounded-md transition-all ${
                 statusTab === tab.key ? "bg-zinc-900 text-white" : "text-zinc-400 hover:text-zinc-700"
               }`}>
               {tab.label}
@@ -150,18 +146,18 @@ export default function AdminSupportPage() {
         {loading && (
           <div className="space-y-3">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-zinc-100 h-20 animate-pulse" />
+              <div key={i} className="bg-white rounded-lg border border-zinc-100 h-20 animate-pulse" />
             ))}
           </div>
         )}
 
         {/* Error */}
         {!loading && error && (
-          <div className="bg-white border border-red-200 rounded-2xl p-8 text-center">
+          <div className="bg-white border border-red-200 rounded-lg p-8 text-center">
             <AlertCircle size={28} className="text-red-400 mx-auto mb-3" />
             <p className="font-bold text-zinc-900 mb-3">Failed to load support tickets</p>
             <button onClick={load}
-              className="flex items-center gap-2 mx-auto text-[10px] font-bold tracking-widests uppercase bg-black text-white px-5 py-2.5 rounded-full">
+              className="flex items-center gap-2 mx-auto text-[10px] font-bold tracking-widests uppercase bg-black text-white px-5 py-2.5 rounded-md">
               <RefreshCw size={11} /> Retry
             </button>
           </div>
@@ -169,7 +165,7 @@ export default function AdminSupportPage() {
 
         {/* Empty */}
         {!loading && !error && tickets.length === 0 && (
-          <div className="bg-white border border-dashed border-zinc-200 rounded-2xl p-14 text-center">
+          <div className="bg-white border border-dashed border-zinc-200 rounded-lg p-14 text-center">
             <CheckCircle2 size={36} className="text-zinc-200 mx-auto mb-4" />
             <p className="font-extrabold text-zinc-900 mb-1">All clear!</p>
             <p className="text-sm text-zinc-400">No support tickets in this category.</p>
@@ -188,10 +184,10 @@ export default function AdminSupportPage() {
                 const hasUnread = (ticket.unreadByAdmin || 0) > 0;
                 return (
                   <Link key={ticket._id} href={`/admin/support/${ticket._id}`}>
-                    <div className={`group bg-white border rounded-2xl p-5 hover:border-zinc-300 hover:shadow-md transition-all duration-200 cursor-pointer ${hasUnread ? "border-amber-200" : "border-zinc-100"}`}>
+                    <div className={`group bg-white border rounded-lg p-5 hover:border-zinc-300 hover:shadow-md transition-all duration-200 cursor-pointer ${hasUnread ? "border-amber-200" : "border-zinc-100"}`}>
                       <div className="flex items-start gap-4">
                         {/* Icon */}
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${hasUnread ? "bg-amber-50 border border-amber-100" : "bg-zinc-50 border border-zinc-100"}`}>
+                        <div className={`w-10 h-10 rounded-md flex items-center justify-center shrink-0 ${hasUnread ? "bg-amber-50 border border-amber-100" : "bg-zinc-50 border border-zinc-100"}`}>
                           <MessageSquare size={17} className={hasUnread ? "text-amber-600" : "text-zinc-400"} />
                         </div>
 

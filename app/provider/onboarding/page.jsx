@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getStoredUser } from "@/lib/auth";
 import api from "@/lib/api";
 import { refreshLocation } from "@/lib/location";
-import { Loader2, MapPin, Navigation } from "lucide-react";
+import { Loader2, MapPin, Navigation, ChevronDown } from "lucide-react";
 
 const STEPS = [
   { id: 1, label: "Basic Profile" },
@@ -22,7 +22,7 @@ const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const DAY_LABELS = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
 
 const inputCls =
-  "w-full bg-transparent border-b border-zinc-300 pb-2 pt-1 text-sm font-semibold text-black focus:outline-none focus:border-black transition-colors placeholder:text-zinc-500";
+  "w-full bg-white border border-zinc-300 rounded-lg px-3.5 py-2.5 text-sm font-semibold text-black focus:outline-none focus:border-black focus:ring-4 focus:ring-black/[0.06] transition-all placeholder:text-zinc-400 disabled:opacity-50";
 
 function FileUpload({ value, onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -60,7 +60,7 @@ function FileUpload({ value, onChange }) {
   return (
     <div className="mt-1">
       {value ? (
-        <div className="flex items-center justify-between border border-zinc-200 px-3 py-2.5 bg-zinc-50">
+        <div className="flex items-center justify-between border border-zinc-200 rounded-lg px-3 py-2.5 bg-zinc-50">
           <div className="flex items-center">
             <svg className="w-4 h-4 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
             <span className="text-[10px] font-bold uppercase tracking-widest text-green-700">Uploaded</span>
@@ -71,7 +71,7 @@ function FileUpload({ value, onChange }) {
           </div>
         </div>
       ) : (
-        <div className="relative border border-dashed border-zinc-300 p-4 hover:border-black transition-colors cursor-pointer text-center bg-zinc-50/50">
+        <div className="relative border border-dashed border-zinc-300 rounded-lg p-4 hover:border-black transition-colors cursor-pointer text-center bg-zinc-50/50">
           <input type="file" onChange={handleUpload} accept="image/*,.pdf" disabled={uploading} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" />
           {uploading ? (
             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 animate-pulse">Uploading...</span>
@@ -94,12 +94,39 @@ function StepHeader({ title, subtitle }) {
   );
 }
 
-function Field({ label, hint, children }) {
+function Field({ label, hint, noBadge, children }) {
+  // "*" at the end of a label marks the field mandatory; everything else is optional.
+  const required = /\*\s*$/.test(label);
+  const clean = label.replace(/\s*\*+\s*$/, "");
   return (
     <div className="space-y-1.5">
-      <label className="block text-[10px] font-bold tracking-widest uppercase text-zinc-500">{label}</label>
+      <label className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-zinc-500">
+        <span>{clean}</span>
+        {required ? (
+          <span className="text-[8px] font-black tracking-wide normal-case text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-md">Required</span>
+        ) : !noBadge ? (
+          <span className="text-[8px] font-black tracking-wide normal-case text-zinc-400 bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded-md">Optional</span>
+        ) : null}
+      </label>
       {children}
       {hint && <p className="text-[9px] text-zinc-400 mt-1">{hint}</p>}
+    </div>
+  );
+}
+
+// Standard dropdown — native select styled to match inputs, with a clear chevron
+// so users instantly recognise it as a picker.
+function Select({ value, onChange, children }) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={onChange}
+        className={`${inputCls} appearance-none pr-9 cursor-pointer`}
+      >
+        {children}
+      </select>
+      <ChevronDown size={15} strokeWidth={2.5} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400" />
     </div>
   );
 }
@@ -397,6 +424,39 @@ export default function ProviderOnboardingPage() {
 
   const allAgreed = Object.values(agreement).every(Boolean);
 
+  // ─── How much of the CURRENT section is filled (drives the progress bar) ────
+  function stepFillPercent(step) {
+    const pct = (done, total) => (total ? Math.round((done / total) * 100) : 100);
+    if (step === 1) {
+      const c = [profile.dateOfBirth, profile.city.trim(), profile.serviceArea.trim(), profile.workingRadiusKm];
+      return pct(c.filter(Boolean).length, c.length);
+    }
+    if (step === 2) {
+      let done = 0, total = 0;
+      services.forEach((s) => { total += 2; if (s.serviceName.trim()) done++; if (String(s.experienceYears) !== "") done++; });
+      return pct(done, total);
+    }
+    if (step === 3) {
+      const c = [documents.aadhaar?.fileUrl, documents.pan?.fileUrl, documents.selfie?.fileUrl];
+      return pct(c.filter(Boolean).length, c.length);
+    }
+    if (step === 4) return 100; // optional section — always ready to proceed
+    if (step === 5) {
+      const c = [bankDetails.accountHolderName.trim(), bankDetails.accountNumber, bankDetails.ifscCode];
+      return pct(c.filter(Boolean).length, c.length);
+    }
+    if (step === 6) {
+      const c = [availability.availableDays.length > 0, availability.workingHoursFrom, availability.workingHoursTo, availability.travelRadiusKm];
+      return pct(c.filter(Boolean).length, c.length);
+    }
+    if (step === 7) {
+      const v = Object.values(agreement);
+      return pct(v.filter(Boolean).length, v.length);
+    }
+    return 0;
+  }
+  const sectionFill = stepFillPercent(currentStep);
+
   const useCurrentLocation = async () => {
     setLocating(true);
     setError("");
@@ -475,12 +535,25 @@ export default function ProviderOnboardingPage() {
               </div>
             ))}
           </div>
+
+          {/* Current-section fill meter */}
+          <div className="mt-3 flex items-center gap-3">
+            <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ease-out ${sectionFill === 100 ? "bg-emerald-500" : "bg-zinc-900"}`}
+                style={{ width: `${sectionFill}%` }}
+              />
+            </div>
+            <span className="text-[10px] font-bold tracking-wide uppercase text-zinc-500 tabular-nums shrink-0">
+              {sectionFill === 100 ? "Section ready" : `${sectionFill}% filled`}
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-10">
         {error && (
-          <div className="mb-6 p-4 border border-red-200 bg-red-50 text-red-700 text-xs font-semibold leading-relaxed">
+          <div className="mb-6 p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 text-xs font-semibold leading-relaxed">
             {error.includes("\n") ? (
               <ul className="space-y-1.5">
                 {error.split("\n").filter(Boolean).map((e, i) => (
@@ -499,12 +572,15 @@ export default function ProviderOnboardingPage() {
           </div>
         )}
 
-        <div className="bg-white border border-zinc-200 p-8 md:p-10 shadow-sm">
+        <div className="bg-white border border-zinc-200 rounded-2xl p-8 md:p-10 shadow-sm">
+
+          {/* Animated step container — re-keys on step change to replay the slide */}
+          <div key={currentStep} className="onb-step">
 
           {/* ── STEP 1: Basic Profile ───────────────────────────────────── */}
           {currentStep === 1 && (
             <div>
-              <StepHeader title="Basic Profile" subtitle="Tell us who you are. Fields marked * are required." />
+              <StepHeader title="Basic Profile" subtitle="Tell us who you are. Fields tagged Required must be filled — the rest are optional." />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Field label="Date of Birth *">
                   <input type="date" value={profile.dateOfBirth}
@@ -526,9 +602,9 @@ export default function ProviderOnboardingPage() {
                     onChange={(e) => setProfile((p) => ({ ...p, workingRadiusKm: e.target.value }))}
                     className={inputCls} />
                 </Field>
-                <div className="md:col-span-2 border border-zinc-200 bg-zinc-50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="md:col-span-2 border border-zinc-200 rounded-xl bg-zinc-50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-white border border-zinc-200 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 bg-white border border-zinc-200 rounded-lg flex items-center justify-center shrink-0">
                       <MapPin size={18} />
                     </div>
                     <div>
@@ -547,21 +623,20 @@ export default function ProviderOnboardingPage() {
                     type="button"
                     onClick={useCurrentLocation}
                     disabled={locating}
-                    className="inline-flex items-center justify-center gap-2 bg-black text-white px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-800 disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 bg-black text-white rounded-lg px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-800 disabled:opacity-50"
                   >
                     {locating ? <Loader2 size={13} className="animate-spin" /> : <Navigation size={13} />}
                     {locating ? "Detecting" : "Use Current Location"}
                   </button>
                 </div>
                 <Field label="Gender">
-                  <select value={profile.gender}
-                    onChange={(e) => setProfile((p) => ({ ...p, gender: e.target.value }))}
-                    className={inputCls + " appearance-none"}>
-                    <option value="">Select (optional)</option>
+                  <Select value={profile.gender}
+                    onChange={(e) => setProfile((p) => ({ ...p, gender: e.target.value }))}>
+                    <option value="">Select gender</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="other">Other</option>
-                  </select>
+                  </Select>
                 </Field>
                 <Field label="Emergency Contact" hint="Recommended — must be a 10-digit mobile number">
                   <input
@@ -601,7 +676,7 @@ export default function ProviderOnboardingPage() {
                     <textarea rows={3} placeholder="I have 5+ years of AC repair experience..."
                       value={profile.about}
                       onChange={(e) => setProfile((p) => ({ ...p, about: e.target.value }))}
-                      className="w-full bg-transparent border border-zinc-200 p-3 text-sm text-black focus:outline-none focus:border-black transition-colors placeholder:text-zinc-300 resize-none" />
+                      className="w-full bg-white border border-zinc-300 rounded-lg p-3 text-sm text-black focus:outline-none focus:border-black focus:ring-4 focus:ring-black/[0.06] transition-all placeholder:text-zinc-400 resize-none" />
                   </Field>
                 </div>
               </div>
@@ -611,10 +686,10 @@ export default function ProviderOnboardingPage() {
           {/* ── STEP 2: Services & Skills ───────────────────────────────── */}
           {currentStep === 2 && (
             <div>
-              <StepHeader title="Services & Skills" subtitle="Add every service you offer. At least one is required *." />
+              <StepHeader title="Services & Skills" subtitle="Add every service you offer. At least one service is required." />
               <div className="space-y-5">
                 {services.map((svc, i) => (
-                  <div key={i} className="border border-zinc-200 p-6">
+                  <div key={i} className="border border-zinc-200 rounded-xl p-6">
                     <div className="flex justify-between items-center mb-5">
                       <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-500">
                         Service {i + 1}
@@ -631,13 +706,12 @@ export default function ProviderOnboardingPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <Field label="Category *">
-                        <select value={svc.category}
-                          onChange={(e) => setServices((s) => s.map((x, idx) => idx === i ? { ...x, category: e.target.value } : x))}
-                          className={inputCls + " appearance-none"}>
+                        <Select value={svc.category}
+                          onChange={(e) => setServices((s) => s.map((x, idx) => idx === i ? { ...x, category: e.target.value } : x))}>
                           {SERVICE_CATEGORIES.map((c) => (
                             <option key={c} value={c}>{c.toUpperCase()}</option>
                           ))}
-                        </select>
+                        </Select>
                       </Field>
                       <Field label="Service Name *">
                         <input type="text" placeholder="e.g. AC Repair, Fan Installation"
@@ -651,13 +725,12 @@ export default function ProviderOnboardingPage() {
                           className={inputCls} />
                       </Field>
                       <Field label="Skill Level *">
-                        <select value={svc.skillLevel}
-                          onChange={(e) => setServices((s) => s.map((x, idx) => idx === i ? { ...x, skillLevel: e.target.value } : x))}
-                          className={inputCls + " appearance-none"}>
+                        <Select value={svc.skillLevel}
+                          onChange={(e) => setServices((s) => s.map((x, idx) => idx === i ? { ...x, skillLevel: e.target.value } : x))}>
                           <option value="beginner">Beginner</option>
                           <option value="intermediate">Intermediate</option>
                           <option value="expert">Expert</option>
-                        </select>
+                        </Select>
                       </Field>
                       <Field label="Previous Company / Employer" hint="Optional">
                         <input type="text" placeholder="e.g. ABC Service Centre"
@@ -684,7 +757,7 @@ export default function ProviderOnboardingPage() {
                 ))}
                 <button type="button"
                   onClick={() => setServices((s) => [...s, emptyService()])}
-                  className="w-full border border-dashed border-zinc-300 py-4 text-[10px] font-bold tracking-widest uppercase text-zinc-500 hover:border-black hover:text-black transition-colors">
+                  className="w-full border border-dashed border-zinc-300 rounded-xl py-4 text-[10px] font-bold tracking-widest uppercase text-zinc-500 hover:border-black hover:text-black transition-colors">
                   + Add Another Service
                 </button>
               </div>
@@ -694,8 +767,8 @@ export default function ProviderOnboardingPage() {
           {/* ── STEP 3: KYC Documents ───────────────────────────────────── */}
           {currentStep === 3 && (
             <div>
-              <StepHeader title="KYC Documents" subtitle="Aadhaar, PAN and Live Selfie are required *." />
-              <div className="mb-6 p-4 bg-zinc-50 border border-zinc-200 text-xs text-zinc-600 leading-relaxed">
+              <StepHeader title="KYC Documents" subtitle="Aadhaar, PAN and Live Selfie are required. Address proof is optional." />
+              <div className="mb-6 p-4 rounded-xl bg-zinc-50 border border-zinc-200 text-xs text-zinc-600 leading-relaxed">
                 Documents are stored securely and reviewed only by our verification team. We never share them with customers.
               </div>
               <div className="space-y-5">
@@ -705,20 +778,20 @@ export default function ProviderOnboardingPage() {
                   { key: "selfie", label: "Live Selfie *", required: true, hasMask: false },
                   { key: "address_proof", label: "Address Proof", required: false, hasMask: false, note: "Recommended — required for home-entry job tier" },
                 ].map(({ key, label, hasMask, maskPlaceholder, note }) => (
-                  <div key={key} className="border border-zinc-200 p-5">
+                  <div key={key} className="border border-zinc-200 rounded-xl p-5">
                     <div className="flex items-center justify-between mb-4">
                       <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-500">{label}</p>
                       {note && <p className="text-[9px] text-zinc-400">{note}</p>}
                     </div>
                     <div className={`grid gap-4 ${hasMask ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
-                      <Field label="File Upload">
-                        <FileUpload 
+                      <Field label="File Upload" noBadge>
+                        <FileUpload
                           value={documents[key]?.fileUrl || ""}
                           onChange={(url) => setDocuments((d) => ({ ...d, [key]: { ...d[key], fileUrl: url } }))}
                         />
                       </Field>
                       {hasMask && (
-                        <Field label="Document Number" hint={key === "aadhaar" ? "12-digit Aadhaar number" : "PAN format: ABCDE1234F"}>
+                        <Field label="Document Number" noBadge hint={key === "aadhaar" ? "12-digit Aadhaar number" : "PAN format: ABCDE1234F"}>
                           <input
                             type="text"
                             placeholder={maskPlaceholder}
@@ -770,7 +843,7 @@ export default function ProviderOnboardingPage() {
               <StepHeader title="Work Proofs" subtitle="Show your past work. Recommended — you can also skip this step." />
               <div className="space-y-4">
                 {workProofs.map((proof, i) => (
-                  <div key={i} className="border border-zinc-200 p-5 space-y-4">
+                  <div key={i} className="border border-zinc-200 rounded-xl p-5 space-y-4">
                     <div className="flex justify-between items-center">
                       <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-500">Proof {i + 1}</p>
                       <button onClick={() => setWorkProofs((w) => w.filter((_, idx) => idx !== i))}
@@ -780,15 +853,14 @@ export default function ProviderOnboardingPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Field label="Proof Type">
-                        <select value={proof.proofType}
-                          onChange={(e) => setWorkProofs((w) => w.map((x, idx) => idx === i ? { ...x, proofType: e.target.value } : x))}
-                          className={inputCls + " appearance-none"}>
+                        <Select value={proof.proofType}
+                          onChange={(e) => setWorkProofs((w) => w.map((x, idx) => idx === i ? { ...x, proofType: e.target.value } : x))}>
                           <option value="work_photo">Work Photo</option>
                           <option value="certificate">Certificate</option>
                           <option value="experience_letter">Experience Letter</option>
                           <option value="job_id_card">Job ID Card</option>
                           <option value="reference_contact">Reference Contact</option>
-                        </select>
+                        </Select>
                       </Field>
                       {proof.proofType !== "reference_contact" ? (
                         <Field label="File Upload">
@@ -824,7 +896,7 @@ export default function ProviderOnboardingPage() {
                 ))}
                 <button type="button"
                   onClick={() => setWorkProofs((w) => [...w, { proofType: "work_photo", fileUrl: "", title: "" }])}
-                  className="w-full border border-dashed border-zinc-300 py-4 text-[10px] font-bold tracking-widest uppercase text-zinc-500 hover:border-black hover:text-black transition-colors">
+                  className="w-full border border-dashed border-zinc-300 rounded-xl py-4 text-[10px] font-bold tracking-widest uppercase text-zinc-500 hover:border-black hover:text-black transition-colors">
                   + Add Work Proof
                 </button>
               </div>
@@ -834,7 +906,7 @@ export default function ProviderOnboardingPage() {
           {/* ── STEP 5: Bank Details ────────────────────────────────────── */}
           {currentStep === 5 && (
             <div>
-              <StepHeader title="Bank & Payout Details" subtitle="Your earnings will be credited here. Fields marked * are required." />
+              <StepHeader title="Bank & Payout Details" subtitle="Your earnings will be credited here. Fields tagged Required must be filled — the rest are optional." />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Field label="Account Holder Name *">
                   <input type="text" placeholder="As per bank records" value={bankDetails.accountHolderName}
@@ -901,16 +973,15 @@ export default function ProviderOnboardingPage() {
           {/* ── STEP 6: Availability ────────────────────────────────────── */}
           {currentStep === 6 && (
             <div>
-              <StepHeader title="Availability & Working Model" subtitle="Help us match you with the right jobs. Fields marked * are required." />
+              <StepHeader title="Availability & Working Model" subtitle="Help us match you with the right jobs. Fields tagged Required must be filled — the rest are optional." />
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Field label="Working Type *">
-                    <select value={availability.workingType}
-                      onChange={(e) => setAvailability((a) => ({ ...a, workingType: e.target.value }))}
-                      className={inputCls + " appearance-none"}>
+                    <Select value={availability.workingType}
+                      onChange={(e) => setAvailability((a) => ({ ...a, workingType: e.target.value }))}>
                       <option value="full_time">Full-time</option>
                       <option value="part_time">Part-time</option>
-                    </select>
+                    </Select>
                   </Field>
                   <Field label="Travel Radius (km) *">
                     <input type="number" min="1" max="100" value={availability.travelRadiusKm}
@@ -942,7 +1013,7 @@ export default function ProviderOnboardingPage() {
                             ? a.availableDays.filter((d) => d !== day)
                             : [...a.availableDays, day],
                         }))}
-                        className={`px-4 py-2 text-[10px] font-bold tracking-widest uppercase border transition-colors ${
+                        className={`px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest uppercase border transition-colors ${
                           availability.availableDays.includes(day)
                             ? "bg-black text-white border-black"
                             : "bg-white text-zinc-500 border-zinc-300 hover:border-black hover:text-black"
@@ -970,16 +1041,15 @@ export default function ProviderOnboardingPage() {
 
                 {availability.hasOwnVehicle && (
                   <Field label="Vehicle Type">
-                    <select value={availability.vehicleType}
-                      onChange={(e) => setAvailability((a) => ({ ...a, vehicleType: e.target.value }))}
-                      className={inputCls + " appearance-none"}>
+                    <Select value={availability.vehicleType}
+                      onChange={(e) => setAvailability((a) => ({ ...a, vehicleType: e.target.value }))}>
                       <option value="">Select type</option>
                       <option value="bike">Bike</option>
                       <option value="scooter">Scooter</option>
                       <option value="car">Car</option>
                       <option value="cycle">Cycle</option>
                       <option value="other">Other</option>
-                    </select>
+                    </Select>
                   </Field>
                 )}
 
@@ -995,7 +1065,7 @@ export default function ProviderOnboardingPage() {
           {/* ── STEP 7: Agreement ───────────────────────────────────────── */}
           {currentStep === 7 && (
             <div>
-              <StepHeader title="Safety & Legal Agreement" subtitle="All boxes must be checked to complete your application *." />
+              <StepHeader title="Safety & Legal Agreement" subtitle="All boxes must be checked to complete your application." />
               <div className="space-y-3">
                 {[
                   { key: "termsAccepted", label: "I accept the Platform Terms & Conditions" },
@@ -1007,7 +1077,7 @@ export default function ProviderOnboardingPage() {
                   { key: "bgvConsent", label: "I consent to background & identity verification (Aadhaar / PAN / Police records)" },
                 ].map(({ key, label }) => (
                   <label key={key}
-                    className="flex items-start gap-3 p-4 border border-zinc-200 cursor-pointer hover:border-black transition-colors group">
+                    className="flex items-start gap-3 p-4 rounded-lg border border-zinc-200 cursor-pointer hover:border-black transition-colors group">
                     <div className="relative mt-0.5 shrink-0">
                       <input type="checkbox" checked={agreement[key]}
                         onChange={(e) => setAgreement((a) => ({ ...a, [key]: e.target.checked }))}
@@ -1031,6 +1101,8 @@ export default function ProviderOnboardingPage() {
             </div>
           )}
 
+          </div>{/* /onb-step */}
+
           {/* ── Navigation ──────────────────────────────────────────────── */}
           <div className="mt-10 pt-8 border-t border-zinc-200 flex justify-between items-center">
             <div>
@@ -1051,7 +1123,7 @@ export default function ProviderOnboardingPage() {
               <button
                 onClick={handleNext}
                 disabled={loading || (currentStep === 7 && !allAgreed)}
-                className="bg-black text-white px-8 py-3 text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                className="bg-black text-white rounded-lg px-8 py-3 text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                 {loading
                   ? "Saving..."
                   : currentStep === 7

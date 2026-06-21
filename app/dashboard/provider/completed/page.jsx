@@ -70,8 +70,8 @@ export default function ProviderCompletedOrdersPage() {
         {/* Summary cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {summaryCards.map(({ label, value, icon: Icon, color, bg, border }) => (
-            <div key={label} className={`bg-white rounded-2xl border ${border} p-5`}>
-              <div className={`w-10 h-10 ${bg} ${border} border rounded-xl flex items-center justify-center mb-4`}>
+            <div key={label} className={`bg-white rounded-lg border ${border} p-5`}>
+              <div className={`w-10 h-10 ${bg} ${border} border rounded-md flex items-center justify-center mb-4`}>
                 <Icon size={18} className={color} strokeWidth={1.8} />
               </div>
               <p className="text-2xl font-black text-zinc-900 mb-0.5">{loading ? "—" : value}</p>
@@ -84,15 +84,15 @@ export default function ProviderCompletedOrdersPage() {
         {loading && (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-zinc-100 h-24 animate-pulse" />
+              <div key={i} className="bg-white rounded-lg border border-zinc-100 h-24 animate-pulse" />
             ))}
           </div>
         )}
 
         {/* Empty */}
         {!loading && jobs.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-dashed border-zinc-200">
-            <div className="w-16 h-16 rounded-2xl bg-zinc-100 flex items-center justify-center mb-5">
+          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-lg border border-dashed border-zinc-200">
+            <div className="w-16 h-16 rounded-md bg-zinc-100 flex items-center justify-center mb-5">
               <Award size={28} className="text-zinc-300" />
             </div>
             <p className="text-zinc-400 font-bold tracking-widests uppercase text-xs mb-2">No history yet</p>
@@ -110,12 +110,12 @@ export default function ProviderCompletedOrdersPage() {
             </p>
             {jobs.map(job => (
               <div key={job._id}
-                className="group bg-white rounded-2xl border border-zinc-100 hover:border-zinc-200 hover:shadow-sm transition-all duration-200 overflow-hidden">
+                className="group bg-white rounded-lg border border-zinc-100 hover:border-zinc-200 hover:shadow-sm transition-all duration-200 overflow-hidden">
                 {/* Green top accent */}
                 <div className="h-0.5 bg-emerald-400 w-full" />
                 <div className="p-5 flex gap-4">
                   {/* Icon */}
-                  <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
+                  <div className="w-11 h-11 rounded-md bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
                     <Wrench size={18} className="text-emerald-600" strokeWidth={1.8} />
                   </div>
 

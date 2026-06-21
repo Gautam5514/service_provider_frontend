@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
-import { Fan, Monitor, Pencil, Plug, Plus, Refrigerator, Save, Snowflake, Trash2, Wind, Wrench, X, Zap } from "lucide-react";
+import { AirVent, Fan, Monitor, Pencil, Plug, Plus, Refrigerator, Save, Trash2, Wind, Wrench, X, Zap } from "lucide-react";
 
 const CATEGORIES = [
-  { key: "ac", label: "AC", Icon: Snowflake },
+  { key: "ac", label: "AC", Icon: AirVent },
   { key: "fan", label: "Fan", Icon: Fan },
   { key: "fridge", label: "Fridge", Icon: Refrigerator },
   { key: "cooler", label: "Cooler", Icon: Wind },
@@ -193,25 +193,22 @@ export default function AdminServicesPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button onClick={openCreate} className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white hover:bg-zinc-800">
+            <button onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-black px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white hover:bg-zinc-800">
               <Plus size={14} /> Create Service
-            </button>
-            <button onClick={load} className="rounded-full border border-zinc-200 bg-white px-5 py-3 text-[10px] font-black uppercase tracking-widest text-zinc-700 hover:border-black">
-              Refresh
             </button>
           </div>
         </div>
 
         <div className="space-y-4">
-            <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => setCategory("all")}
-                  className={`rounded-2xl px-4 py-2 text-[10px] font-black uppercase tracking-widest ${category === "all" ? "bg-black text-white" : "bg-zinc-100 text-zinc-500"}`}>
+                  className={`rounded-lg px-4 py-2 text-[10px] font-black uppercase tracking-widest ${category === "all" ? "bg-black text-white" : "bg-zinc-100 text-zinc-500"}`}>
                   All {counts.all || 0}
                 </button>
                 {categoryOptions.map(({ key, label, Icon }) => (
                   <button key={key} onClick={() => setCategory(key)}
-                    className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-[10px] font-black uppercase tracking-widest ${category === key ? "bg-black text-white" : "bg-zinc-100 text-zinc-500 hover:text-black"}`}>
+                    className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-[10px] font-black uppercase tracking-widest ${category === key ? "bg-black text-white" : "bg-zinc-100 text-zinc-500 hover:text-black"}`}>
                     <Icon size={13} /> {label} {counts[key] || 0}
                   </button>
                 ))}
@@ -219,9 +216,9 @@ export default function AdminServicesPage() {
             </div>
 
             {loading ? (
-              <div className="rounded-3xl border border-zinc-200 bg-white p-10 text-center text-xs font-black uppercase tracking-widest text-zinc-400">Loading services...</div>
+              <div className="rounded-lg border border-zinc-200 bg-white p-10 text-center text-xs font-black uppercase tracking-widest text-zinc-400">Loading services...</div>
             ) : visible.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-zinc-300 bg-white p-16 text-center">
+              <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-16 text-center">
                 <p className="text-sm font-black text-zinc-900">No services in this category</p>
                 <p className="mt-1 text-xs font-semibold text-zinc-400">Use the form to add your first service.</p>
               </div>
@@ -231,9 +228,9 @@ export default function AdminServicesPage() {
                   const categoryMeta = categoryOptions.find((item) => item.key === service.category);
                   const Icon = categoryMeta?.Icon || Wrench;
                   return (
-                    <div key={service._id} className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-zinc-300">
-                      <div className="mb-4 flex items-start gap-4">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-zinc-700">
+                    <div key={service._id} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-zinc-300">
+                       <div className="mb-4 flex items-start gap-4">
+                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 text-zinc-700">
                           <Icon size={18} />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -265,16 +262,16 @@ export default function AdminServicesPage() {
                       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                         <div className="flex gap-2">
                         <button onClick={() => openEdit(service)}
-                          className="inline-flex items-center gap-2 rounded-full border border-zinc-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:border-black hover:text-black">
+                          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:border-black hover:text-black">
                           <Pencil size={13} /> Edit
                         </button>
                         <button onClick={() => toggleService(service)}
-                          className="rounded-full border border-zinc-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:border-black hover:text-black">
+                          className="rounded-lg border border-zinc-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:border-black hover:text-black">
                           {service.active ? "Hide" : "Activate"}
                         </button>
                         </div>
                         <button onClick={() => deleteService(service)}
-                          className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-100">
+                          className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-100">
                           <Trash2 size={13} /> Delete
                         </button>
                       </div>

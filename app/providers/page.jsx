@@ -86,7 +86,7 @@ export default function ProvidersPage() {
               placeholder="Search by name, city, or service…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-white border border-zinc-200 pl-9 pr-4 py-2.5 text-sm text-black focus:outline-none focus:border-black transition-colors rounded-xl"
+              className="w-full bg-white border border-zinc-200 pl-9 pr-4 py-2.5 text-sm text-black focus:outline-none focus:border-black transition-colors rounded-lg"
             />
           </div>
           {/* City */}
@@ -97,13 +97,9 @@ export default function ProvidersPage() {
               placeholder="Filter by city…"
               value={cityFilter}
               onChange={e => setCityFilter(e.target.value)}
-              className="w-full sm:w-44 bg-white border border-zinc-200 pl-9 pr-4 py-2.5 text-sm text-black focus:outline-none focus:border-black transition-colors rounded-xl"
+              className="w-full sm:w-44 bg-white border border-zinc-200 pl-9 pr-4 py-2.5 text-sm text-black focus:outline-none focus:border-black transition-colors rounded-lg"
             />
           </div>
-          <button onClick={load}
-            className="flex items-center gap-2 bg-white border border-zinc-200 px-4 py-2.5 text-[10px] font-bold tracking-widests uppercase text-zinc-500 hover:border-black hover:text-black transition-colors rounded-xl">
-            <RefreshCw size={12} /> Refresh
-          </button>
         </div>
 
         {/* ── Category chips ── */}
@@ -132,14 +128,14 @@ export default function ProvidersPage() {
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[0,1,2,3,4,5].map(i => (
-              <div key={i} className="bg-white border border-zinc-200 rounded-2xl p-5 animate-pulse h-44" />
+              <div key={i} className="bg-white border border-zinc-200 rounded-lg p-5 animate-pulse h-44" />
             ))}
           </div>
         )}
 
         {/* ── Empty state ── */}
         {!loading && filtered.length === 0 && (
-          <div className="bg-white border border-dashed border-zinc-200 rounded-2xl p-14 text-center">
+          <div className="bg-white border border-dashed border-zinc-200 rounded-lg p-14 text-center">
             <Wrench size={36} className="text-zinc-200 mx-auto mb-4" />
             <p className="text-base font-extrabold text-zinc-900 mb-2">No professionals found</p>
             <p className="text-sm text-zinc-400">Try a different city or remove the category filter.</p>
@@ -160,10 +156,10 @@ export default function ProvidersPage() {
 
               return (
                 <div key={p._id}
-                  className="group bg-white border border-zinc-200 rounded-2xl p-5 hover:border-black hover:shadow-md transition-all duration-200">
+                  className="group bg-white border border-zinc-200 rounded-lg p-5 hover:border-black hover:shadow-md transition-all duration-200">
                   {/* Avatar + name */}
                   <div className="flex items-start gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white text-sm font-black flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="w-12 h-12 rounded-md bg-zinc-950 text-white text-sm font-black flex items-center justify-center shrink-0 shadow-sm">
                       {initials}
                     </div>
                     <div className="flex-1 min-w-0">

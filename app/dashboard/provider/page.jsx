@@ -171,10 +171,10 @@ export default function ProviderDashboardHome() {
 
         {/* Live job broadcast banner */}
         {availableJobs.length > 0 && (
-          <div className="relative overflow-hidden rounded-2xl bg-zinc-900 text-white p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+          <div className="relative overflow-hidden rounded-lg bg-zinc-900 text-white p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
             <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-emerald-500/15 blur-2xl pointer-events-none" />
             <div className="flex items-center gap-4 relative">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-md bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
                 <BellRing size={20} className="text-emerald-400" />
               </div>
               <div>
@@ -186,7 +186,7 @@ export default function ProviderDashboardHome() {
               </div>
             </div>
             <Link href="/dashboard/provider/orders?view=pool"
-              className="relative flex items-center gap-2 bg-white text-black px-5 py-2.5 text-[10px] font-bold tracking-widests uppercase rounded-full hover:bg-zinc-100 transition-colors whitespace-nowrap">
+              className="relative flex items-center gap-2 bg-white text-black px-5 py-2.5 text-[10px] font-bold tracking-widests uppercase rounded-lg hover:bg-zinc-100 transition-colors whitespace-nowrap">
               Open Job Pool <ArrowRight size={12} />
             </Link>
           </div>
@@ -194,7 +194,7 @@ export default function ProviderDashboardHome() {
 
         {/* Pool message (no jobs) */}
         {availableJobs.length === 0 && poolMessage && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl text-sm font-semibold flex items-start gap-3">
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg text-sm font-semibold flex items-start gap-3">
             <Zap size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
             {poolMessage}
           </div>
@@ -203,10 +203,10 @@ export default function ProviderDashboardHome() {
         {/* ── Stat cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {statCards.map(({ label, value, icon: Icon, color, bg, border, hot, sub }) => (
-            <div key={label} className={`relative bg-white rounded-2xl border overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${hot ? "border-emerald-200 shadow-sm shadow-emerald-100" : "border-zinc-100"}`}>
+            <div key={label} className={`relative bg-white rounded-lg border overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${hot ? "border-emerald-200 shadow-sm shadow-emerald-100" : "border-zinc-100"}`}>
               {hot && <div className="absolute top-0 left-0 right-0 h-0.5 bg-emerald-400" />}
               <div className="p-5">
-                <div className={`w-10 h-10 ${bg} ${border} border rounded-xl flex items-center justify-center mb-4`}>
+                <div className={`w-10 h-10 ${bg} ${border} border rounded-md flex items-center justify-center mb-4`}>
                   <Icon size={18} className={color} strokeWidth={1.8} />
                 </div>
                 <p className={`text-3xl font-black tracking-tight mb-0.5 ${hot ? "text-emerald-600" : "text-zinc-900"}`}>{value}</p>
@@ -219,7 +219,7 @@ export default function ProviderDashboardHome() {
 
         {/* ── Real Earnings Summary ── */}
         {earnings && (
-          <div className="bg-white rounded-2xl border border-zinc-100 overflow-hidden shadow-sm">
+          <div className="bg-white rounded-lg border border-zinc-100 overflow-hidden shadow-sm">
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 bg-zinc-50/50">
               <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500">Earnings Overview</p>
               <Link href="/dashboard/provider/completed"
@@ -235,7 +235,7 @@ export default function ProviderDashboardHome() {
                 { label: "Jobs Done",   value: earnings.jobCount,                                                                      Icon: CheckCircle2,  color: "text-amber-500",   bg: "bg-amber-50" },
               ].map(({ label, value, Icon, color, bg }) => (
                 <div key={label} className="px-5 py-4 text-center">
-                  <div className={`w-8 h-8 ${bg} rounded-xl flex items-center justify-center mx-auto mb-2`}>
+                  <div className={`w-8 h-8 ${bg} rounded-md flex items-center justify-center mx-auto mb-2`}>
                     <Icon size={15} className={color} strokeWidth={1.8} />
                   </div>
                   <p className="text-xl font-black text-zinc-900 tracking-tight">{loading ? "—" : value}</p>
@@ -254,9 +254,9 @@ export default function ProviderDashboardHome() {
         {/* Quick actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link href="/dashboard/provider/orders"
-            className="group flex items-center justify-between bg-white border border-zinc-100 rounded-2xl p-5 hover:border-zinc-300 hover:shadow-sm transition-all duration-200">
+            className="group flex items-center justify-between bg-white border border-zinc-100 rounded-lg p-5 hover:border-zinc-300 hover:shadow-sm transition-all duration-200">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-zinc-100 rounded-xl flex items-center justify-center group-hover:bg-zinc-900 transition-colors">
+              <div className="w-10 h-10 bg-zinc-100 rounded-md flex items-center justify-center group-hover:bg-zinc-900 transition-colors">
                 <ClipboardList size={18} className="text-zinc-500 group-hover:text-white transition-colors" strokeWidth={1.8} />
               </div>
               <div>
@@ -268,9 +268,9 @@ export default function ProviderDashboardHome() {
           </Link>
 
           <Link href="/dashboard/provider/profile"
-            className="group flex items-center justify-between bg-white border border-zinc-100 rounded-2xl p-5 hover:border-zinc-300 hover:shadow-sm transition-all duration-200">
+            className="group flex items-center justify-between bg-white border border-zinc-100 rounded-lg p-5 hover:border-zinc-300 hover:shadow-sm transition-all duration-200">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-zinc-100 rounded-xl flex items-center justify-center group-hover:bg-zinc-900 transition-colors">
+              <div className="w-10 h-10 bg-zinc-100 rounded-md flex items-center justify-center group-hover:bg-zinc-900 transition-colors">
                 <TrendingUp size={18} className="text-zinc-500 group-hover:text-white transition-colors" strokeWidth={1.8} />
               </div>
               <div>
@@ -284,7 +284,7 @@ export default function ProviderDashboardHome() {
 
         {/* Incomplete onboarding CTA */}
         {onboardStep < 7 && !isApproved && (
-          <div className="relative overflow-hidden bg-zinc-900 rounded-2xl p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="relative overflow-hidden bg-zinc-900 rounded-lg p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-white/5 blur-2xl pointer-events-none" />
             <div className="relative">
               <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-500 mb-2">Action Required</p>
@@ -294,7 +294,7 @@ export default function ProviderDashboardHome() {
               </p>
             </div>
             <Link href="/provider/onboarding"
-              className="relative flex items-center gap-2 bg-white text-black px-6 py-3 text-[10px] font-bold tracking-widest uppercase rounded-full hover:bg-zinc-100 transition-colors whitespace-nowrap flex-shrink-0">
+              className="relative flex items-center gap-2 bg-white text-black px-6 py-3 text-[10px] font-bold tracking-widest uppercase rounded-lg hover:bg-zinc-100 transition-colors whitespace-nowrap flex-shrink-0">
               Resume Setup <ArrowRight size={12} />
             </Link>
           </div>

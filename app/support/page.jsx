@@ -27,14 +27,18 @@ export default function SupportListPage() {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(false);
 
-  useEffect(() => {
+  const load = () => {
     const user = getStoredUser();
     if (!user) { router.replace("/login?redirect=/support"); return; }
+    setLoading(true);
+    setError(false);
     api.get("/support")
       .then(({ data }) => { if (data.success) setTickets(data.tickets); })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [router]);
+  };
+
+  useEffect(() => { load(); }, [router]);
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans selection:bg-black selection:text-white pb-16">
@@ -57,7 +61,7 @@ export default function SupportListPage() {
           </p>
           <button
             onClick={() => document.querySelector("[aria-label='Support']")?.click()}
-            className="flex items-center gap-2 bg-black text-white px-4 py-2 text-[10px] font-bold tracking-widests uppercase hover:bg-zinc-800 transition-colors rounded-xl"
+            className="flex items-center gap-2 bg-black text-white px-4 py-2 text-[10px] font-bold tracking-widests uppercase hover:bg-zinc-800 transition-colors rounded-md"
           >
             <Plus size={12} /> New Ticket
           </button>
@@ -66,24 +70,24 @@ export default function SupportListPage() {
         {loading && (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white border border-zinc-100 rounded-2xl h-20 animate-pulse" />
+              <div key={i} className="bg-white border border-zinc-100 rounded-lg h-20 animate-pulse" />
             ))}
           </div>
         )}
 
         {error && (
-          <div className="bg-white border border-red-200 rounded-2xl p-8 text-center">
+          <div className="bg-white border border-red-200 rounded-lg p-8 text-center">
             <AlertCircle size={32} className="text-red-400 mx-auto mb-3" />
             <p className="font-bold text-zinc-900 mb-4">Could not load tickets</p>
-            <button onClick={() => window.location.reload()}
-              className="flex items-center gap-2 mx-auto text-[10px] font-bold tracking-widests uppercase bg-black text-white px-5 py-2.5 rounded-full hover:bg-zinc-800 transition-colors">
+            <button onClick={load}
+              className="flex items-center gap-2 mx-auto text-[10px] font-bold tracking-widests uppercase bg-black text-white px-5 py-2.5 rounded-md hover:bg-zinc-800 transition-colors">
               <RefreshCw size={11} /> Retry
             </button>
           </div>
         )}
 
         {!loading && !error && tickets.length === 0 && (
-          <div className="bg-white border border-dashed border-zinc-200 rounded-2xl p-14 text-center">
+          <div className="bg-white border border-dashed border-zinc-200 rounded-lg p-14 text-center">
             <MessageSquare size={36} className="text-zinc-200 mx-auto mb-4" />
             <p className="font-extrabold text-zinc-900 mb-2">No support tickets yet</p>
             <p className="text-sm text-zinc-400 mb-6 max-w-xs mx-auto">
@@ -97,10 +101,10 @@ export default function SupportListPage() {
           const hasUnread = (ticket.unreadByCustomer || 0) > 0;
           return (
             <Link key={ticket._id} href={`/support/${ticket._id}`}>
-              <div className={`group bg-white border rounded-2xl p-5 hover:border-zinc-300 hover:shadow-md transition-all duration-200 cursor-pointer ${hasUnread ? "border-blue-200" : "border-zinc-100"}`}>
+              <div className={`group bg-white border rounded-lg p-5 hover:border-zinc-300 hover:shadow-md transition-all duration-200 cursor-pointer ${hasUnread ? "border-blue-200" : "border-zinc-100"}`}>
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${hasUnread ? "bg-blue-50 border border-blue-100" : "bg-zinc-50 border border-zinc-100"}`}>
+                  <div className={`w-10 h-10 rounded-md flex items-center justify-center shrink-0 ${hasUnread ? "bg-blue-50 border border-blue-100" : "bg-zinc-50 border border-zinc-100"}`}>
                     <MessageSquare size={17} className={hasUnread ? "text-blue-600" : "text-zinc-400"} />
                   </div>
 
@@ -108,12 +112,12 @@ export default function SupportListPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className="text-[9px] font-bold tracking-widests uppercase text-zinc-400">{ticket.ticketNumber}</span>
-                      <span className={`inline-flex items-center gap-1 text-[9px] font-bold tracking-widests uppercase px-2 py-0.5 rounded-full border ${st.bg} ${st.text} ${st.border}`}>
+                      <span className={`inline-flex items-center gap-1 text-[9px] font-bold tracking-widests uppercase px-2 py-0.5 rounded-md border ${st.bg} ${st.text} ${st.border}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                         {st.label}
                       </span>
                       {hasUnread && (
-                        <span className="text-[9px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                        <span className="text-[9px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-md">
                           {ticket.unreadByCustomer} new
                         </span>
                       )}

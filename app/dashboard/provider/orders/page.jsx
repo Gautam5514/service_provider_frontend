@@ -43,7 +43,7 @@ function MyJobCard({ job }) {
   const st = STATUS_CONFIG[job.status] || STATUS_CONFIG.cancelled;
   return (
     <Link href={`/dashboard/provider/orders/${job._id}`}>
-      <div className={`group bg-white rounded-2xl border transition-all duration-200 hover:shadow-md overflow-hidden cursor-pointer ${
+      <div className={`group bg-white rounded-lg border transition-all duration-200 hover:shadow-md overflow-hidden cursor-pointer ${
         job.status === "pending"
           ? "border-amber-200 hover:border-amber-300 shadow-sm shadow-amber-50"
           : "border-zinc-100 hover:border-zinc-300"
@@ -52,7 +52,7 @@ function MyJobCard({ job }) {
         {isActive(job.status)     && <div className="h-0.5 bg-blue-500 w-full" />}
 
         <div className="p-5 flex gap-4">
-          <div className="w-11 h-11 rounded-xl bg-zinc-100 text-zinc-500 flex items-center justify-center flex-shrink-0 group-hover:bg-zinc-900 group-hover:text-white transition-all duration-200">
+          <div className="w-11 h-11 rounded-md bg-zinc-100 text-zinc-500 flex items-center justify-center flex-shrink-0 group-hover:bg-zinc-900 group-hover:text-white transition-all duration-200">
             <Wrench size={18} strokeWidth={1.8} />
           </div>
 
@@ -97,6 +97,7 @@ function MyJobCard({ job }) {
 // ─── Pool card — expandable confirm UX ────────────────────────────────────────
 // Clicking "Confirm Job" expands the card showing full details + payout.
 // "Claim This Job" → API call → router.push to job detail (no extra steps).
+// function PoolJobCard({ job, onClaimed }) {
 function PoolJobCard({ job, onClaimed }) {
   const [expanded, setExpanded] = useState(false);
   const [claiming, setClaiming] = useState(false);
@@ -120,12 +121,12 @@ function PoolJobCard({ job, onClaimed }) {
   };
 
   return (
-    <div className={`bg-white rounded-2xl border transition-all duration-300 overflow-hidden ${
+    <div className={`bg-white rounded-lg border transition-all duration-300 overflow-hidden ${
       expanded ? "border-zinc-300 shadow-lg" : "border-zinc-100 hover:border-zinc-300"
     }`}>
       {/* ── Collapsed row ──────────────────────────────────────────────── */}
       <div className="p-5 flex gap-4">
-        <div className="w-11 h-11 rounded-xl bg-zinc-100 text-zinc-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-11 h-11 rounded-md bg-zinc-100 text-zinc-500 flex items-center justify-center flex-shrink-0">
           <Wrench size={18} strokeWidth={1.8} />
         </div>
 
@@ -172,7 +173,7 @@ function PoolJobCard({ job, onClaimed }) {
 
           {/* Full details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 space-y-2.5">
+            <div className="bg-zinc-50 border border-zinc-100 rounded-lg p-4 space-y-2.5">
               <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-400">Job Details</p>
               <div className="space-y-1.5 text-xs text-zinc-600">
                 <p className="flex items-center gap-2">
@@ -199,7 +200,7 @@ function PoolJobCard({ job, onClaimed }) {
             </div>
 
             {/* Payout breakdown */}
-            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
               <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-emerald-700 mb-2.5">Your Earnings</p>
               <div className="space-y-1.5 text-xs">
                 <div className="flex justify-between text-zinc-600">
@@ -227,7 +228,7 @@ function PoolJobCard({ job, onClaimed }) {
 
           {/* Error */}
           {err && (
-            <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold px-4 py-3 rounded-xl">
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold px-4 py-3 rounded-md">
               <AlertTriangle size={14} className="shrink-0 mt-px" />
               {err}
             </div>
@@ -237,14 +238,14 @@ function PoolJobCard({ job, onClaimed }) {
           <div className="flex gap-3">
             <button
               onClick={() => { setExpanded(false); setErr(""); }}
-              className="px-5 py-3 border border-zinc-200 text-zinc-500 text-[10px] font-bold tracking-widest uppercase rounded-xl hover:border-zinc-400 hover:text-zinc-700 transition-colors"
+              className="px-5 py-3 border border-zinc-200 text-zinc-500 text-[10px] font-bold tracking-widest uppercase rounded-md hover:border-zinc-400 hover:text-zinc-700 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleClaim}
               disabled={claiming}
-              className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 text-[11px] font-extrabold tracking-widest uppercase rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-60 shadow-lg shadow-emerald-200"
+              className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 text-[11px] font-extrabold tracking-widest uppercase rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-60 shadow-lg shadow-emerald-200"
             >
               {claiming
                 ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Claiming…</>
@@ -350,19 +351,12 @@ export default function ProviderOrdersPage() {
                   {counts.pending} incoming
                 </span>
               )}
-              <button
-                onClick={() => { loadMyJobs(); if (view === "pool") loadPool(); }}
-                className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all"
-                title="Refresh"
-              >
-                <RefreshCw size={15} />
-              </button>
             </div>
           </div>
 
           {/* Pool alert banner */}
           {poolJobs.length > 0 && (
-            <div className="mt-6 flex items-center justify-between gap-4 bg-white/[0.04] border border-white/[0.08] rounded-xl px-5 py-3.5">
+            <div className="mt-6 flex items-center justify-between gap-4 bg-white/[0.04] border border-white/[0.08] rounded-lg px-5 py-3.5">
               <div className="flex items-center gap-3">
                 <BellRing size={16} className="text-emerald-400 shrink-0" />
                 <p className="text-sm font-bold text-white">
@@ -384,13 +378,13 @@ export default function ProviderOrdersPage() {
       <div className="px-6 md:px-12 py-6 space-y-5">
 
         {/* ── View switcher ─────────────────────────────────────────────── */}
-        <div className="flex bg-white rounded-2xl border border-zinc-100 p-1 w-fit shadow-sm">
+        <div className="flex bg-white rounded-lg border border-zinc-100 p-1 w-fit shadow-sm">
           {[
             { key: "my",   label: "My Jobs",        count: myJobs.length   },
             { key: "pool", label: "Available Jobs",  count: poolJobs.length },
           ].map(v => (
             <button key={v.key} onClick={() => setView(v.key)}
-              className={`flex items-center gap-2 px-5 py-2.5 text-[11px] font-bold tracking-wide rounded-xl transition-all duration-200 ${
+              className={`flex items-center gap-2 px-5 py-2.5 text-[11px] font-bold tracking-wide rounded-lg transition-all duration-200 ${
                 view === v.key ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-700"
               }`}>
               {v.label}
@@ -409,10 +403,10 @@ export default function ProviderOrdersPage() {
         {view === "my" && (
           <>
             {/* Sub-tabs */}
-            <div className="flex gap-1 bg-white rounded-2xl border border-zinc-100 p-1 w-fit shadow-sm">
+            <div className="flex gap-1 bg-white rounded-lg border border-zinc-100 p-1 w-fit shadow-sm">
               {MY_TABS.map(t => (
                 <button key={t.key} onClick={() => setMyTab(t.key)}
-                  className={`flex items-center gap-2 px-4 py-2 text-[10px] font-bold tracking-widest uppercase rounded-xl transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-4 py-2 text-[10px] font-bold tracking-widest uppercase rounded-md transition-all duration-200 ${
                     myTab === t.key ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-600"
                   }`}>
                   {t.label}
@@ -428,13 +422,13 @@ export default function ProviderOrdersPage() {
             {loadingMy && (
               <div className="space-y-3">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-zinc-100 h-24 animate-pulse" />
+                  <div key={i} className="bg-white rounded-lg border border-zinc-100 h-24 animate-pulse" />
                 ))}
               </div>
             )}
 
             {!loadingMy && visibleMyJobs.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-zinc-200">
+              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-lg border border-dashed border-zinc-200">
                 <ClipboardList size={40} className="text-zinc-200 mb-4" />
                 <p className="text-zinc-400 font-bold tracking-widests uppercase text-xs mb-2">
                   No {myTab === "all" ? "" : myTab + " "}jobs
@@ -443,7 +437,7 @@ export default function ProviderOrdersPage() {
                   {myTab === "all" ? "You have no assigned jobs yet." : "No jobs in this category right now."}
                 </p>
                 <button onClick={() => setView("pool")}
-                  className="flex items-center gap-2 text-[10px] font-bold tracking-widests uppercase bg-zinc-900 text-white px-5 py-2.5 rounded-full hover:bg-black transition-colors">
+                  className="flex items-center gap-2 text-[10px] font-bold tracking-widests uppercase bg-zinc-900 text-white px-5 py-2.5 rounded-lg hover:bg-black transition-colors">
                   Browse Available Jobs <ArrowRight size={11} />
                 </button>
               </div>
@@ -461,7 +455,7 @@ export default function ProviderOrdersPage() {
         {view === "pool" && (
           <>
             {/* How it works */}
-            <div className="bg-white rounded-2xl border border-zinc-100 p-5 flex items-start gap-3 shadow-sm">
+            <div className="bg-white rounded-lg border border-zinc-100 p-5 flex items-start gap-3 shadow-sm">
               <Zap size={16} className="text-emerald-500 shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-bold text-zinc-900 mb-0.5">How the job pool works</p>
@@ -475,13 +469,13 @@ export default function ProviderOrdersPage() {
             {loadingPool && (
               <div className="space-y-3">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-zinc-100 h-24 animate-pulse" />
+                  <div key={i} className="bg-white rounded-lg border border-zinc-100 h-24 animate-pulse" />
                 ))}
               </div>
             )}
 
             {!loadingPool && poolMsg && poolJobs.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 bg-amber-50 rounded-2xl border border-amber-200">
+              <div className="flex flex-col items-center justify-center py-20 bg-amber-50 rounded-lg border border-amber-200">
                 <AlertTriangle size={40} className="text-amber-400 mb-4" />
                 <p className="text-amber-700 font-bold text-sm mb-2 text-center">{poolMsg}</p>
                 <p className="text-amber-600 text-xs text-center max-w-sm">
@@ -491,16 +485,12 @@ export default function ProviderOrdersPage() {
             )}
 
             {!loadingPool && !poolMsg && poolJobs.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-zinc-200">
+              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-lg border border-dashed border-zinc-200">
                 <CheckCircle2 size={40} className="text-zinc-200 mb-4" />
                 <p className="text-zinc-400 font-bold tracking-widests uppercase text-xs mb-2">No open jobs right now</p>
-                <p className="text-zinc-300 text-xs text-center max-w-xs mb-5">
+                <p className="text-zinc-300 text-xs text-center max-w-xs">
                   All matching jobs have been claimed. Refreshes every 20 seconds.
                 </p>
-                <button onClick={loadPool}
-                  className="flex items-center gap-2 text-[10px] font-bold tracking-widests uppercase bg-zinc-900 text-white px-5 py-2.5 rounded-full hover:bg-black transition-colors">
-                  <RefreshCw size={11} /> Refresh Pool
-                </button>
               </div>
             )}
 
