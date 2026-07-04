@@ -65,7 +65,7 @@ export function AdminSidebar() {
         <img
           src="/logo-transparent.png"
           alt="EliteCrew"
-          className="w-7 h-7 object-contain brightness-0 invert flex-shrink-0"
+          className="w-7 h-7 object-contain flex-shrink-0"
         />
         <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden overflow-hidden">
           <span className="text-sm font-black tracking-tight text-white whitespace-nowrap">

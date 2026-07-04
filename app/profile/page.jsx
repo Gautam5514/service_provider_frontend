@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import BrandLoader from "@/components/BrandLoader";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
@@ -158,11 +159,7 @@ export default function ProfilePage() {
   };
 
   if (!ready) {
-    return (
-      <div className="min-h-screen bg-[#f7f7f8] flex items-center justify-center">
-        <Loader2 size={22} className="animate-spin text-zinc-400" />
-      </div>
-    );
+    return <BrandLoader fullScreen />;
   }
 
   return (

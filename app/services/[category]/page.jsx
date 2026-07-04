@@ -5,6 +5,8 @@ import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORY_META, SERVICE_CATALOG, formatPrice } from "@/lib/services";
 import SmartSearch from "@/components/SmartSearch";
+import api from "@/lib/api";
+import BrandLoader from "@/components/BrandLoader";
 import { 
   ArrowLeft, Clock, Check, ArrowRight, Sparkles, 
   ChevronRight, Shield, Star, Award, Zap, HelpCircle 
@@ -190,7 +192,8 @@ export default function ServiceCategoryPage({ params }) {
   const router = useRouter();
 
   const meta     = CATEGORY_META[category];
-  const services = SERVICE_CATALOG[category];
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // State Hooks for Interactive Upgrades
   const [cart, setCart] = useState({});
@@ -199,13 +202,74 @@ export default function ServiceCategoryPage({ params }) {
   const [openFaq, setOpenFaq] = useState(null);
   const [highlightedService, setHighlightedService] = useState(null);
 
+  useEffect(() => {
+    let active = true;
+    
+    const adaptDbService = (dbSvc) => ({
+      ...dbSvc,
+      slug: dbSvc.slug,
+      name: dbSvc.name,
+      price: dbSvc.basePrice,
+      unit: dbSvc.priceUnit || "per_visit",
+      duration: dbSvc.estimatedDurationMinutes ? `${dbSvc.estimatedDurationMinutes} min` : "60 min",
+      popular: dbSvc.isPopular || false,
+      includes: dbSvc.whatIsIncluded || [],
+      images: dbSvc.images || [],
+    });
+
+    api.get("/services")
+      .then(({ data }) => {
+        if (!active) return;
+        if (data?.success && data?.services) {
+          const filtered = data.services
+            .filter((s) => s.category === category && s.active !== false)
+            .map(adaptDbService);
+          
+          const staticPresets = (SERVICE_CATALOG[category] || []).map(s => ({
+            ...s,
+            estimatedDurationMinutes: s.duration ? (parseInt(s.duration, 10) || 60) : 60,
+            basePrice: s.price,
+            priceUnit: s.unit,
+            whatIsIncluded: s.includes,
+            isPopular: s.popular,
+            active: true
+          }));
+
+          const merged = [...filtered];
+          staticPresets.forEach(preset => {
+            if (!merged.some(s => s.slug === preset.slug)) {
+              merged.push(preset);
+            }
+          });
+          
+          setServices(merged);
+        } else {
+          setServices(SERVICE_CATALOG[category] || []);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch live services, using static catalog:", err);
+        if (active) setServices(SERVICE_CATALOG[category] || []);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [category]);
+
   // Initialize active hotspot on load
   useEffect(() => {
     const blueprint = APPLIANCE_BLUEPRINTS[category];
     if (blueprint && blueprint.hotspots.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveSpot(blueprint.hotspots[0]);
     }
   }, [category]);
+
+  if (loading) {
+    return <BrandLoader />;
+  }
 
   if (!meta || !services) {
     return (
@@ -549,7 +613,9 @@ export default function ServiceCategoryPage({ params }) {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((svc, idx) => {
-            const imageUrl = SERVICE_IMAGES[svc.slug] || DEFAULT_SERVICE_IMAGE;
+            const imageUrl = (svc.images && svc.images.length > 0)
+              ? svc.images[0]
+              : (SERVICE_IMAGES[svc.slug] || DEFAULT_SERVICE_IMAGE);
             const qty = cart[svc.slug] || 0;
             const isHighlighted = highlightedService === svc.slug;
 

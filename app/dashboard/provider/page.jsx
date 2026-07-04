@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import BrandLoader from "@/components/BrandLoader";
 import { useEffect, useState, useMemo } from "react";
 import api from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
@@ -49,14 +50,7 @@ export default function ProviderDashboardHome() {
   }, [user]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f7f7f8] flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">Loading dashboard…</p>
-        </div>
-      </div>
-    );
+    return <BrandLoader fullScreen label="Loading dashboard…" />;
   }
 
   const activeJobs    = jobs.filter(j => isActiveJob(j.status));

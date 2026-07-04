@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import BrandLoader from "@/components/BrandLoader";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
@@ -84,11 +85,7 @@ export default function RateBookingPage({ params }) {
     }
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans">
-      <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  if (loading) return <BrandLoader fullScreen />;
 
   if (done) return (
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans px-5">

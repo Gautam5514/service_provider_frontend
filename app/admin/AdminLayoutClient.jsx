@@ -97,7 +97,7 @@ export default function AdminLayout({ children }) {
         <div className="md:hidden bg-zinc-950 px-4 py-3 sticky top-0 z-30 shrink-0 space-y-3">
           <div className="h-8 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img src="/logo-transparent.png" alt="EliteCrew" className="w-6 h-6 object-contain brightness-0 invert" />
+              <img src="/logo-transparent.png" alt="EliteCrew" className="w-6 h-6 object-contain" />
               <span className="text-sm font-black text-white tracking-tight">
                 Elite<span className="text-zinc-500 font-light">Crew</span>
                 <span className="ml-2 text-[8px] font-bold tracking-[0.2em] uppercase bg-white/10 text-white/70 px-1.5 py-0.5 rounded">Admin</span>

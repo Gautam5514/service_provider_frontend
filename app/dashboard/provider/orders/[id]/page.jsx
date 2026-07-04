@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useRef, useState } from "react";
+import BrandLoader from "@/components/BrandLoader";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -134,14 +135,7 @@ export default function ProviderOrderDetailPage({ params }) {
     } finally { setActing(false); }
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#f7f7f8] flex items-center justify-center">
-      <div className="text-center space-y-3">
-        <div className="w-8 h-8 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">Loading Job…</p>
-      </div>
-    </div>
-  );
+  if (loading) return <BrandLoader fullScreen label="Loading job…" />;
 
   if (!job) return (
     <div className="min-h-screen bg-[#f7f7f8] p-10 flex flex-col items-center justify-center">

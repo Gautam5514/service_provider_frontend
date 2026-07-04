@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
-import { AirVent, Fan, Monitor, Pencil, Plug, Plus, Refrigerator, Save, Trash2, Wind, Wrench, X, Zap } from "lucide-react";
+import { AirVent, Fan, Monitor, Pencil, Plug, Plus, Refrigerator, Save, Sparkles, Trash2, Wind, Wrench, X, Zap } from "lucide-react";
 
 const CATEGORIES = [
   { key: "ac", label: "AC", Icon: AirVent },
@@ -12,6 +12,8 @@ const CATEGORIES = [
   { key: "tv", label: "TV", Icon: Monitor },
   { key: "electrical", label: "Electrical", Icon: Zap },
   { key: "appliance", label: "Appliance", Icon: Plug },
+  { key: "cleaning", label: "Cleaning", Icon: Sparkles },
+  { key: "other", label: "Others", Icon: Wrench },
 ];
 
 function titleize(value = "") {
@@ -39,6 +41,8 @@ const PRESETS = {
   tv: ["TV Repair", "TV Wall Mounting", "LED Panel Repair"],
   electrical: ["Electrical Work", "Wiring & Cabling", "Switch Board Repair"],
   appliance: ["Appliance Repair", "Washing Machine Repair", "Geyser Repair"],
+  cleaning: ["Bathroom Cleaning", "Kitchen Cleaning", "Full Home Cleaning", "Sofa Cleaning"],
+  other: ["Plumbing Work", "Painting", "Pest Control", "Carpentry"],
 };
 
 const EMPTY_FORM = {
@@ -50,6 +54,7 @@ const EMPTY_FORM = {
   isPopular: false,
   active: true,
   whatIsIncluded: "Diagnosis\nBasic repair\nTest run",
+  images: [],
 };
 
 function formatPrice(value) {
@@ -65,6 +70,37 @@ export default function AdminServicesPage() {
   const [message, setMessage] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingService, setEditingService] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage("Image exceeds 2MB limit.");
+      return;
+    }
+
+    setUploadingImage(true);
+    setMessage("");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const { data } = await api.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (data.success) {
+        updateForm("images", [data.fileUrl]);
+        setMessage("Image uploaded successfully.");
+      }
+    } catch (error) {
+      setMessage(error.response?.data?.message || "Image upload failed.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -122,6 +158,7 @@ export default function AdminServicesPage() {
       isPopular: Boolean(service.isPopular),
       active: Boolean(service.active),
       whatIsIncluded: (service.whatIsIncluded || []).join("\n") || "Diagnosis\nBasic repair\nTest run",
+      images: service.images || [],
     });
     setMessage("");
     setEditorOpen(true);
@@ -144,6 +181,7 @@ export default function AdminServicesPage() {
         basePrice: Number(form.basePrice),
         estimatedDurationMinutes: Number(form.estimatedDurationMinutes),
         whatIsIncluded: form.whatIsIncluded.split("\n").map((item) => item.trim()).filter(Boolean),
+        images: form.images || [],
       };
       const { data } = editingService
         ? await api.put(`/admin/services/${editingService._id}`, payload)
@@ -230,8 +268,13 @@ export default function AdminServicesPage() {
                   return (
                     <div key={service._id} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-zinc-300">
                        <div className="mb-4 flex items-start gap-4">
-                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 text-zinc-700">
-                          <Icon size={18} />
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 text-zinc-700 overflow-hidden relative">
+                          {service.images && service.images.length > 0 ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={service.images[0]} alt={service.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <Icon size={18} />
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="mb-1 flex flex-wrap items-center gap-2">
@@ -302,7 +345,8 @@ export default function AdminServicesPage() {
               </button>
             </div>
 
-            <div className="grid flex-1 content-start gap-3 overflow-hidden px-5 py-4">
+            {/* min-h-0 lets the flex child shrink so the body scrolls instead of clipping */}
+            <div className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto px-5 py-4">
               <label className="block">
                 <span className="mb-1.5 block text-[9px] font-black uppercase tracking-widest text-zinc-400">Category</span>
                 <input
@@ -333,6 +377,38 @@ export default function AdminServicesPage() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <span className="mb-1.5 block text-[9px] font-black uppercase tracking-widest text-zinc-400">Service Image</span>
+                {form.images && form.images.length > 0 ? (
+                  <div className="relative h-32 w-full overflow-hidden border border-zinc-200 bg-zinc-50 rounded-lg group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={form.images[0]} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => updateForm("images", [])}
+                      className="absolute top-2 right-2 bg-black/75 hover:bg-black p-1.5 text-white rounded-full shadow-md transition"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative border border-dashed border-zinc-300 hover:border-black rounded-lg p-6 bg-zinc-50/50 text-center transition-colors cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="absolute inset-0 w-full h-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                    />
+                    {uploadingImage ? (
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 animate-pulse">Uploading image...</span>
+                    ) : (
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-655">+ Upload Service Image (Max 2MB)</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               <label className="block">

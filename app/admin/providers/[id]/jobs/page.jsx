@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import BrandLoader from "@/components/BrandLoader";
 import Link from "next/link";
 import api from "@/lib/api";
 import { ArrowLeft, Star, Briefcase, IndianRupee, CheckCircle2, Clock, XCircle, MapPin, Calendar, User } from "lucide-react";
@@ -56,11 +57,7 @@ export default function ProviderJobsPage({ params }) {
     fetch();
   }, [id]);
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  if (loading) return <BrandLoader fullScreen />;
 
   if (error || !data) return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">

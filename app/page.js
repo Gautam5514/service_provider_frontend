@@ -1825,11 +1825,12 @@ export default function HomePage() {
               <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400 mb-4">Company</p>
               <ul className="space-y-2.5">
                 {[
-                  ["About Us",             "/about"],
-                  ["How It Works",         "/how-it-works"],
-                  ["Our Professionals",    "/providers"],
-                  ["Become a Provider",    "/register"],
-                  ["Blog",                 "/blog"],
+                  ["About Us",                   "/about"],
+                  ["How It Works",               "/how-it-works"],
+                  ["Our Professionals",          "/providers"],
+                  ["Register as a Professional", "/professional/register"],
+                  ["Partner Login",              "/professional/login"],
+                  ["Blog",                       "/blog"],
                 ].map(([label, href]) => (
                   <li key={label}>
                     <Link href={href}
@@ -1862,7 +1863,29 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-7 border-t border-zinc-100">
+          {/* Professional / partner CTA band */}
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl bg-black text-white px-6 py-5">
+            <div className="text-center sm:text-left">
+              <p className="text-sm font-extrabold">Are you a service professional?</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Join EliteCrew Partner and get verified jobs near you.</p>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <Link
+                href="/professional/register"
+                className="bg-white text-black px-5 py-2.5 text-[11px] font-bold tracking-widest uppercase hover:bg-zinc-200 transition-colors"
+              >
+                Register as a Professional
+              </Link>
+              <Link
+                href="/professional/login"
+                className="text-white/80 text-[11px] font-bold tracking-widest uppercase hover:text-white transition-colors"
+              >
+                Partner Login
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 pt-7 border-t border-zinc-100">
             <p className="text-[10px] text-zinc-400 font-medium">
               © {new Date().getFullYear()} EliteCrew · All rights reserved.
             </p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useRef, useState } from "react";
+import BrandLoader from "@/components/BrandLoader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
@@ -140,11 +141,7 @@ export default function SupportChatPage({ params }) {
 
   const isClosed = ticket?.status === "resolved" || ticket?.status === "closed";
 
-  if (loading) return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
-      <Loader2 size={28} className="text-zinc-400 animate-spin" />
-    </div>
-  );
+  if (loading) return <BrandLoader fullScreen />;
 
   const st = STATUS_CONFIG[ticket?.status] || STATUS_CONFIG.open;
 

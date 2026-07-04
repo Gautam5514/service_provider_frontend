@@ -23,6 +23,7 @@ import {
   UserCircle2,
   CheckCircle2,
   LogOut,
+  Store,
 } from "lucide-react";
 
 const navItems = [
@@ -60,7 +61,7 @@ export function ProviderSidebar() {
         <img
           src="/logo-transparent.png"
           alt="EliteCrew"
-          className="w-7 h-7 object-contain brightness-0 invert flex-shrink-0"
+          className="w-7 h-7 object-contain flex-shrink-0"
         />
         <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden overflow-hidden">
           <span className="text-sm font-black tracking-tight text-white whitespace-nowrap">
@@ -125,7 +126,18 @@ export function ProviderSidebar() {
           </div>
         )}
 
-        <SidebarMenu className="mt-1">
+        <SidebarMenu className="mt-1 gap-1.5">
+          {/* Cross-link to the customer site — book a service or register as a customer */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              render={<Link href="/" />}
+              tooltip="Register as a Customer"
+              className="rounded-lg text-zinc-400 hover:!bg-white/[0.07] hover:!text-white transition-colors h-10 px-3"
+            >
+              <Store size={16} strokeWidth={1.8} className="mr-1.5 shrink-0" />
+              <span className="text-[13px]">Register as a Customer</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}

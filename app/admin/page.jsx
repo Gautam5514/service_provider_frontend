@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import BrandLoader from "@/components/BrandLoader";
 import { useCallback, useEffect, useRef, useState } from "react";
 import api from "@/lib/api";
 import { Users, AlertTriangle, CheckCircle2, TrendingUp, Calendar, RefreshCw, Star, Activity, ArrowUpRight, IndianRupee } from "lucide-react";
@@ -183,14 +184,7 @@ export default function AdminDashboardHome() {
     </div>
   );
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#f7f7f8] flex items-center justify-center">
-      <div className="text-center space-y-3">
-        <div className="w-8 h-8 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">Loading metrics…</p>
-      </div>
-    </div>
-  );
+  if (loading) return <BrandLoader fullScreen label="Loading metrics…" />;
 
   const { stats, dailyCounts, categoryRevenue, topProviders } = data;
 

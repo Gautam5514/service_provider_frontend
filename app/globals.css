@@ -57,9 +57,12 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Opacity ONLY — never transform the body. A retained transform makes <body>
+   the containing block for position:fixed, which pins full-screen overlays
+   (Razorpay checkout, modals) to the document top instead of the viewport. */
 @keyframes pageFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 ::selection {

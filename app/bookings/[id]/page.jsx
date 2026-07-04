@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import BrandLoader from "@/components/BrandLoader";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -8,7 +9,8 @@ import api from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
 import { formatPrice } from "@/lib/services";
 import { getSocket, ensureSocket } from "@/lib/socket";
-import { BellRing, CheckCircle2, ClipboardList, KeyRound, MapPin, Navigation, Phone, Wrench, Calendar, CreditCard, Clock } from "lucide-react";
+import { loadRazorpay, openRazorpayCheckout } from "@/lib/razorpay";
+import { BellRing, CheckCircle2, ClipboardList, KeyRound, MapPin, Navigation, Phone, Wrench, Calendar, CreditCard, Clock, Loader2, ShieldCheck } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import SmartSearch from "@/components/SmartSearch";
 
@@ -48,11 +50,17 @@ export default function BookingDetailPage({ params }) {
   const router        = useRouter();
   const searchParams  = useSearchParams();
   const isNew         = searchParams.get("new") === "1";
+  const justPaid      = searchParams.get("paid") === "1";
 
   const [booking,          setBooking]          = useState(null);
   const [loading,          setLoading]          = useState(true);
   const [cancelling,       setCancelling]       = useState(false);
-  const [toast,            setToast]            = useState(isNew ? { msg: "Booking confirmed! 🎉", ok: true } : null);
+  const [toast,            setToast]            = useState(
+    justPaid ? { msg: "Payment successful! 🎉", ok: true }
+    : isNew   ? { msg: "Booking confirmed! 🎉", ok: true }
+    : null
+  );
+  const [paying,           setPaying]           = useState(false);
   const [providerLocation, setProviderLocation] = useState(null);
   const [showDispute,      setShowDispute]      = useState(false);
   const [disputeForm,      setDisputeForm]      = useState({ reason: "", description: "" });
@@ -111,6 +119,45 @@ export default function BookingDetailPage({ params }) {
     if (toast) { const t = setTimeout(() => setToast(null), 4000); return () => clearTimeout(t); }
   }, [toast]);
 
+  // Retry / complete an online payment for a booking that isn't paid yet
+  // (e.g. the customer dismissed the sheet during checkout).
+  const handlePayNow = async () => {
+    setPaying(true);
+    try {
+      const ok = await loadRazorpay();
+      if (!ok) throw new Error("Couldn't load the payment window. Check your connection and try again.");
+
+      const { data: orderData } = await api.post("/payments/order", { bookingId: id });
+      if (!orderData?.success) throw new Error(orderData?.message || "Couldn't start the payment.");
+
+      const result = await openRazorpayCheckout({
+        keyId: orderData.keyId,
+        order: orderData.order,
+        prefill: orderData.prefill,
+        name: "EliteCrew",
+        description: `Booking ${orderData.booking?.number || ""}`.trim(),
+      });
+
+      if (result.status === "dismissed") { setToast({ msg: "Payment cancelled. You can pay anytime.", ok: false }); return; }
+      if (result.status === "failed")    { setToast({ msg: result.error || "Payment failed. Please try again.", ok: false }); return; }
+
+      const { data: verifyData } = await api.post("/payments/verify", {
+        bookingId: id,
+        razorpay_order_id:   result.payment.razorpay_order_id,
+        razorpay_payment_id: result.payment.razorpay_payment_id,
+        razorpay_signature:  result.payment.razorpay_signature,
+      });
+      if (!verifyData?.success) throw new Error(verifyData?.message || "We couldn't confirm your payment.");
+
+      setBooking(verifyData.booking);
+      setToast({ msg: "Payment successful! 🎉", ok: true });
+    } catch (e) {
+      setToast({ msg: e.response?.data?.message || e.message || "Payment failed. Please try again.", ok: false });
+    } finally {
+      setPaying(false);
+    }
+  };
+
   const handleCancel = async () => {
     if (!confirm("Cancel this booking?")) return;
     setCancelling(true);
@@ -138,11 +185,7 @@ export default function BookingDetailPage({ params }) {
     } finally { setDisputeLoading(false); }
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans">
-      <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  if (loading) return <BrandLoader fullScreen />;
 
   if (!booking) return (
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans">
@@ -158,6 +201,11 @@ export default function BookingDetailPage({ params }) {
   const isCancelled    = ["cancelled","disputed"].includes(booking.status);
   const canCancel      = ["pending","accepted"].includes(booking.status);
   const isCompleted    = booking.status === "completed";
+  // Show a "Pay now" prompt when an online booking hasn't been paid yet and is
+  // still live (not cancelled). COD bookings settle at completion, so skip them.
+  const needsPayment   = booking.paymentMethod === "online"
+                          && booking.paymentStatus === "unpaid"
+                          && !isCancelled;
 
   const scheduledDate = new Date(booking.scheduledDate).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   const slotLabel     = booking.scheduledTimeSlot
@@ -216,7 +264,7 @@ export default function BookingDetailPage({ params }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </Link>
-            <img src="/logo-transparent.png" alt="EliteCrew" className="w-8 h-8 object-contain brightness-0 invert" />
+            <img src="/logo-transparent.png" alt="EliteCrew" className="w-8 h-8 object-contain" />
             <div className="flex-1">
               <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-400">{booking.bookingNumber}</p>
               <p className="text-sm font-extrabold text-white truncate">{booking.serviceName}</p>
@@ -232,6 +280,30 @@ export default function BookingDetailPage({ params }) {
 
       {/* ── Main Content Container (Widescreen Bento Grid) ── */}
       <div className="px-6 md:px-10 lg:px-12 py-10 w-full max-w-[1600px] mx-auto space-y-6">
+
+        {/* Pay-now banner — unpaid online booking (e.g. checkout was dismissed) */}
+        {needsPayment && (
+          <div className="bg-zinc-950 text-white rounded-2xl px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4 print:hidden">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <CreditCard size={20} className="mt-0.5 flex-shrink-0 text-amber-400" />
+              <div className="min-w-0">
+                <p className="text-sm font-extrabold">Payment pending</p>
+                <p className="text-xs text-zinc-400 mt-0.5 flex items-center gap-1.5">
+                  <ShieldCheck size={12} className="text-emerald-400" />
+                  Complete your secure payment of {formatPrice(booking.pricing?.totalAmount || 0)} to confirm this booking.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handlePayNow}
+              disabled={paying}
+              className="inline-flex items-center justify-center gap-2 bg-white text-black px-6 py-3 text-xs font-bold tracking-widest uppercase hover:bg-zinc-200 transition-colors disabled:opacity-50 rounded-full whitespace-nowrap"
+            >
+              {paying && <Loader2 size={14} className="animate-spin" />}
+              {paying ? "Processing…" : `Pay ${formatPrice(booking.pricing?.totalAmount || 0)}`}
+            </button>
+          </div>
+        )}
 
         {/* Row 1: Split Alerts & Live GPS Tracking Map */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
@@ -541,7 +613,7 @@ export default function BookingDetailPage({ params }) {
                 <div>
                   <p className="text-[9px] font-bold tracking-[0.35em] uppercase text-zinc-400 mb-3">Tax Invoice</p>
                   <div className="flex items-center gap-4 mb-2">
-                    <img src="/logo-transparent.png" alt="EliteCrew" className="w-10 h-10 object-contain brightness-0 invert" />
+                    <img src="/logo-transparent.png" alt="EliteCrew" className="w-10 h-10 object-contain" />
                     <h2 className="text-3xl font-black tracking-tight text-white">EliteCrew</h2>
                   </div>
                   <p className="text-xs font-semibold text-zinc-400 max-w-sm leading-relaxed">

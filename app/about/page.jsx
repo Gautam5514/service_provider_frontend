@@ -7,7 +7,7 @@ export default function AboutPage() {
       title="Expert home service, built around trust."
       description="EliteCrew connects customers with verified local professionals for AC, fridge, fan, TV, electrical, cooler, and appliance work."
       cta={{ label: "Book Service", href: "/services/ac" }}
-      secondaryCta={{ label: "Join as a Provider", href: "/register" }}
+      secondaryCta={{ label: "Join as a Provider", href: "/professional/register" }}
       sections={[
         {
           kicker: "Mission",

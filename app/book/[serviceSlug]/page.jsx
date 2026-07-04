@@ -1,15 +1,17 @@
 "use client";
 
 import { use, useEffect, useState, Suspense } from "react";
+import BrandLoader from "@/components/BrandLoader";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
 import { refreshLocation } from "@/lib/location";
-import { getServiceBySlug, getCategoryForSlug, CATEGORY_META, TIME_SLOTS, formatPrice } from "@/lib/services";
+import { SERVICE_CATALOG, CATEGORY_META, TIME_SLOTS, formatPrice } from "@/lib/services";
 import SmartSearch from "@/components/SmartSearch";
 import LocationPicker from "@/components/LocationPicker";
-import { Loader2, Navigation, CreditCard, Calendar, Clock, MapPin } from "lucide-react";
+import { loadRazorpay, openRazorpayCheckout } from "@/lib/razorpay";
+import { Loader2, Navigation, CreditCard, Banknote, Calendar, Clock, MapPin, ShieldCheck } from "lucide-react";
 
 const PLATFORM_FEE_RATE = 0.10;
 const GST_RATE          = 0.18;
@@ -33,14 +35,87 @@ function BookingPageContent({ params }) {
   const searchParams = useSearchParams();
   const cartParam = searchParams.get("cart");
 
-  const svc      = getServiceBySlug(serviceSlug);
-  const category = getCategoryForSlug(serviceSlug);
-  const meta     = category ? CATEGORY_META[category] : null;
+  const [allServices, setAllServices] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    const adaptDbService = (dbSvc) => ({
+      ...dbSvc,
+      slug: dbSvc.slug,
+      name: dbSvc.name,
+      price: dbSvc.basePrice,
+      unit: dbSvc.priceUnit || "per_visit",
+      duration: dbSvc.estimatedDurationMinutes ? `${dbSvc.estimatedDurationMinutes} min` : "60 min",
+      popular: dbSvc.isPopular || false,
+      includes: dbSvc.whatIsIncluded || [],
+      images: dbSvc.images || [],
+    });
+
+    api.get("/services")
+      .then(({ data }) => {
+        if (!active) return;
+        if (data?.success && data?.services) {
+          const adapted = data.services.map(adaptDbService);
+          const staticAll = [];
+          for (const list of Object.values(SERVICE_CATALOG)) {
+            staticAll.push(...list);
+          }
+          const merged = [...adapted];
+          staticAll.forEach(p => {
+            if (!merged.some(m => m.slug === p.slug)) {
+              merged.push({
+                ...p,
+                estimatedDurationMinutes: p.duration ? (parseInt(p.duration, 10) || 60) : 60,
+                basePrice: p.price,
+                priceUnit: p.unit,
+                whatIsIncluded: p.includes,
+                isPopular: p.popular,
+                active: true,
+                images: []
+              });
+            }
+          });
+          setAllServices(merged);
+        } else {
+          const staticAll = [];
+          for (const list of Object.values(SERVICE_CATALOG)) {
+            staticAll.push(...list);
+          }
+          setAllServices(staticAll);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load services database:", err);
+        if (!active) return;
+        const staticAll = [];
+        for (const list of Object.values(SERVICE_CATALOG)) {
+          staticAll.push(...list);
+        }
+        setAllServices(staticAll);
+      })
+      .finally(() => {
+        if (active) setLoadingServices(false);
+      });
+
+    return () => { active = false; };
+  }, []);
+
+  const svc = allServices.find(s => s.slug === serviceSlug);
+  const category = svc?.category || "";
+  const meta = category ? CATEGORY_META[category] : null;
 
   const [step,    setStep]    = useState(1);
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
   const [error,   setError]   = useState("");
+
+  // Payment: "online" (Razorpay) or "cash_on_delivery". Defaults to online, but
+  // we fall back to COD-only if the server reports payments aren't configured.
+  const [payMethod,     setPayMethod]     = useState("online");
+  const [onlineEnabled, setOnlineEnabled] = useState(true);
+  const [payingStage,   setPayingStage]   = useState(null); // null | "booking" | "opening" | "verifying"
 
   // Step 1
   const [selectedDate, setSelectedDate] = useState("");
@@ -60,21 +135,17 @@ function BookingPageContent({ params }) {
   const [couponResult,  setCouponResult]  = useState(null); // { discount, finalAmount, message, error }
 
   // Cart parsing and state
-  const [cartItems, setCartItems] = useState(() => {
-    if (svc) {
-      return [{ service: svc, quantity: 1 }];
-    }
-    return [];
-  });
+  const [cartItems, setCartItems] = useState([]);
 
   useEffect(() => {
+    if (loadingServices) return;
     if (cartParam) {
       const items = [];
       const segments = cartParam.split(",");
       for (const segment of segments) {
         const [slug, qtyStr] = segment.split(":");
         if (slug) {
-          const service = getServiceBySlug(slug);
+          const service = allServices.find(s => s.slug === slug);
           const quantity = parseInt(qtyStr, 10) || 1;
           if (service) {
             items.push({ service, quantity });
@@ -82,10 +153,27 @@ function BookingPageContent({ params }) {
         }
       }
       if (items.length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCartItems(items);
       }
+    } else if (svc) {
+      setCartItems([{ service: svc, quantity: 1 }]);
     }
-  }, [cartParam]);
+  }, [cartParam, svc, allServices, loadingServices]);
+
+  // Is online payment configured on the server? If not, offer COD only.
+  useEffect(() => {
+    let alive = true;
+    api.get("/payments/config")
+      .then(({ data }) => {
+        if (!alive) return;
+        const enabled = !!data?.enabled;
+        setOnlineEnabled(enabled);
+        if (!enabled) setPayMethod("cash_on_delivery");
+      })
+      .catch(() => { if (alive) { setOnlineEnabled(false); setPayMethod("cash_on_delivery"); } });
+    return () => { alive = false; };
+  }, []);
 
   // Pricing calculations based on all cart items
   const basePrice   = cartItems.reduce((acc, item) => acc + (item.service?.price || 0) * item.quantity, 0);
@@ -184,6 +272,45 @@ function BookingPageContent({ params }) {
     }
   };
 
+  // Runs the online payment for an already-created booking. Returns true only
+  // when the payment is verified by the server. Any failure/cancel leaves the
+  // booking in place (unpaid) so the customer can retry from the booking page.
+  const payForBooking = async (bookingId) => {
+    setPayingStage("opening");
+    const ok = await loadRazorpay();
+    if (!ok) throw new Error("Couldn't load the payment window. Check your connection and try again.");
+
+    const { data: orderData } = await api.post("/payments/order", { bookingId });
+    if (!orderData?.success) throw new Error(orderData?.message || "Couldn't start the payment.");
+
+    const result = await openRazorpayCheckout({
+      keyId: orderData.keyId,
+      order: orderData.order,
+      prefill: orderData.prefill,
+      name: "EliteCrew",
+      description: `Booking ${orderData.booking?.number || ""}`.trim(),
+    });
+
+    if (result.status === "dismissed") {
+      // Not an error — user chose to close the sheet. Booking is saved.
+      throw { soft: true, message: "Payment cancelled. Your booking is saved — you can pay anytime from My Bookings." };
+    }
+    if (result.status === "failed") {
+      throw { soft: true, message: `${result.error} Your booking is saved — you can retry from My Bookings.` };
+    }
+
+    // Success path — confirm with the server before we trust it.
+    setPayingStage("verifying");
+    const { data: verifyData } = await api.post("/payments/verify", {
+      bookingId,
+      razorpay_order_id:   result.payment.razorpay_order_id,
+      razorpay_payment_id: result.payment.razorpay_payment_id,
+      razorpay_signature:  result.payment.razorpay_signature,
+    });
+    if (!verifyData?.success) throw new Error(verifyData?.message || "We couldn't confirm your payment.");
+    return true;
+  };
+
   const handleBook = async () => {
     const user = getStoredUser();
     if (!user) {
@@ -193,7 +320,10 @@ function BookingPageContent({ params }) {
     }
     if (user.role !== "customer") { setError("Only customers can book services."); return; }
 
-    setLoading(true); setError("");
+    const method = onlineEnabled ? payMethod : "cash_on_delivery";
+
+    setLoading(true); setError(""); setPayingStage("booking");
+    let createdId = null;
     try {
       // Optionally save this address
       if (showNewAddressForm && saveThisAddress && address.text && address.city) {
@@ -220,16 +350,34 @@ function BookingPageContent({ params }) {
         scheduledTimeSlot: selectedSlot,
         address,
         pricing: { basePrice },
-        paymentMethod: "cash_on_delivery",
+        paymentMethod: method,
         couponCode: couponResult?.discount ? couponCode.trim() : undefined,
       });
-      if (data.success) router.push(`/bookings/${data.booking._id}?new=1`);
+      if (!data.success) throw new Error(data.message || "Couldn't create your booking.");
+      createdId = data.booking._id;
+
+      // Cash on delivery → done. Online → run Razorpay before we leave the page.
+      if (method === "online") {
+        await payForBooking(createdId);
+        router.push(`/bookings/${createdId}?paid=1`);
+      } else {
+        router.push(`/bookings/${createdId}?new=1`);
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong. Please try again.");
+      // A "soft" error (cancelled / failed payment) still created a booking —
+      // send the customer to it so they can retry payment there, not lose it.
+      if (err?.soft && createdId) {
+        router.push(`/bookings/${createdId}?new=1`);
+        return;
+      }
+      setError(err?.response?.data?.message || err?.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
+      setPayingStage(null);
     }
   };
+
+  if (loadingServices) return <BrandLoader />;
 
   if (!svc || !meta) return (
     <div className="min-h-screen bg-white flex items-center justify-center font-sans">
@@ -462,13 +610,50 @@ function BookingPageContent({ params }) {
                       { label: "Date",    value: days.find(d => fmtDateISO(d) === selectedDate) ? fmtDate(days.find(d => fmtDateISO(d) === selectedDate)) : selectedDate },
                       { label: "Time",    value: TIME_SLOTS.find(s => s.value === selectedSlot)?.label || selectedSlot },
                       { label: "Address", value: `${address.text}, ${address.city}${address.pincode ? " – " + address.pincode : ""}` },
-                      { label: "Payment", value: "Cash on Delivery" },
                     ].map(row => (
                       <div key={row.label} className="flex gap-4 py-3 border-b border-zinc-100 last:border-0">
                         <span className="text-[10px] font-bold tracking-widests uppercase text-zinc-400 w-20 flex-shrink-0 pt-0.5">{row.label}</span>
                         <div className="text-sm font-semibold text-zinc-900">{row.value}</div>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Payment method */}
+                  <div className="mb-6">
+                    <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-400 mb-3">Payment method</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {onlineEnabled && (
+                        <button
+                          type="button"
+                          onClick={() => setPayMethod("online")}
+                          className={`flex items-start gap-3 p-4 border text-left transition-colors ${payMethod === "online" ? "border-black bg-black/[0.03]" : "border-zinc-200 hover:border-zinc-400"}`}
+                        >
+                          <CreditCard size={18} className="mt-0.5 flex-shrink-0 text-black" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-black">Pay online</p>
+                            <p className="text-xs text-zinc-500 mt-0.5">UPI, cards, netbanking · secure</p>
+                          </div>
+                          <span className={`ml-auto mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 ${payMethod === "online" ? "border-black bg-black" : "border-zinc-300"}`} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setPayMethod("cash_on_delivery")}
+                        className={`flex items-start gap-3 p-4 border text-left transition-colors ${payMethod === "cash_on_delivery" || !onlineEnabled ? "border-black bg-black/[0.03]" : "border-zinc-200 hover:border-zinc-400"}`}
+                      >
+                        <Banknote size={18} className="mt-0.5 flex-shrink-0 text-black" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-black">Cash on delivery</p>
+                          <p className="text-xs text-zinc-500 mt-0.5">Pay after the job is done</p>
+                        </div>
+                        <span className={`ml-auto mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 ${(payMethod === "cash_on_delivery" || !onlineEnabled) ? "border-black bg-black" : "border-zinc-300"}`} />
+                      </button>
+                    </div>
+                    {payMethod === "online" && onlineEnabled && (
+                      <p className="flex items-center gap-1.5 text-xs text-zinc-500 mt-3">
+                        <ShieldCheck size={13} className="text-emerald-600" /> Payments are processed securely by Razorpay.
+                      </p>
+                    )}
                   </div>
 
                   {/* Coupon */}
@@ -502,12 +687,18 @@ function BookingPageContent({ params }) {
                   )}
 
                   <div className="flex gap-3">
-                    <button onClick={() => setStep(2)} className="border border-zinc-300 text-zinc-600 px-5 py-3 text-xs font-bold tracking-widest uppercase hover:border-black hover:text-black transition-colors">
+                    <button onClick={() => setStep(2)} disabled={loading} className="border border-zinc-300 text-zinc-600 px-5 py-3 text-xs font-bold tracking-widest uppercase hover:border-black hover:text-black transition-colors disabled:opacity-50">
                       ← Back
                     </button>
                     <button onClick={handleBook} disabled={loading}
-                      className="flex-1 bg-black text-white py-3.5 text-xs font-bold tracking-widest uppercase hover:bg-zinc-800 transition-colors disabled:opacity-50">
-                      {loading ? "Booking…" : `Confirm — ${formatPrice(totalAmount)}`}
+                      className="flex-1 inline-flex items-center justify-center gap-2 bg-black text-white py-3.5 text-xs font-bold tracking-widest uppercase hover:bg-zinc-800 transition-colors disabled:opacity-50">
+                      {loading && <Loader2 size={13} className="animate-spin" />}
+                      {payingStage === "booking" ? "Creating booking…"
+                        : payingStage === "opening" ? "Opening payment…"
+                        : payingStage === "verifying" ? "Confirming payment…"
+                        : (payMethod === "online" && onlineEnabled)
+                          ? `Pay ${formatPrice(totalAmount)}`
+                          : `Confirm — ${formatPrice(totalAmount)}`}
                     </button>
                   </div>
                 </div>
@@ -566,8 +757,17 @@ function BookingPageContent({ params }) {
               </div>
 
               <div className="bg-zinc-50 border border-zinc-100 p-3 text-xs text-zinc-500 leading-relaxed flex items-start gap-2 rounded">
-                <CreditCard size={14} className="mt-0.5 flex-shrink-0" />
-                <span><strong>Cash on Delivery</strong> — Pay after the job is completed.</span>
+                {(payMethod === "online" && onlineEnabled) ? (
+                  <>
+                    <CreditCard size={14} className="mt-0.5 flex-shrink-0" />
+                    <span><strong>Pay online</strong> — secure UPI, card or netbanking via Razorpay.</span>
+                  </>
+                ) : (
+                  <>
+                    <Banknote size={14} className="mt-0.5 flex-shrink-0" />
+                    <span><strong>Cash on delivery</strong> — pay after the job is completed.</span>
+                  </>
+                )}
               </div>
 
               {(selectedDate || address.city) && (
@@ -597,12 +797,7 @@ function BookingPageContent({ params }) {
 export default function BookingPage({ params }) {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="animate-spin text-black" size={32} />
-          <p className="text-zinc-400 font-bold tracking-widest uppercase text-xs">Loading Booking System...</p>
-        </div>
-      </div>
+      <BrandLoader fullScreen label="Loading booking" />
     }>
       <BookingPageContent params={params} />
     </Suspense>

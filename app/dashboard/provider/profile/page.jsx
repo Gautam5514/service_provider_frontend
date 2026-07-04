@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useMemo } from "react";
+import BrandLoader from "@/components/BrandLoader";
 import api from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
 import { refreshLocation } from "@/lib/location";
@@ -361,14 +362,7 @@ export default function ProviderProfilePage() {
   };
 
   // ── loading ───────────────────────────────────────────────────────────────
-  if (loading) return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
-      <div className="space-y-3 text-center">
-        <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-400">Loading profile…</p>
-      </div>
-    </div>
-  );
+  if (loading) return <BrandLoader fullScreen label="Loading profile…" />;
 
   const st      = STATUS_CONFIG[provider.onboardingStatus] || STATUS_CONFIG.pending_profile;
   const initials= (userData.fullName || "P").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);

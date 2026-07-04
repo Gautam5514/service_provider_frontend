@@ -17,7 +17,7 @@ const FOOTER_LINKS = {
     ["How It Works", "/how-it-works"],
     ["Careers", "/careers"],
     ["Blog", "/blog"],
-    ["Become a Provider", "/register"],
+    ["Become a Provider", "/professional/register"],
   ],
   Support: [
     ["Help Center", "/help"],
