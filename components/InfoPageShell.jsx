@@ -17,7 +17,7 @@ const FOOTER_LINKS = {
     ["How It Works", "/how-it-works"],
     ["Careers", "/careers"],
     ["Blog", "/blog"],
-    ["Become a Provider", "/provider"],
+    ["Become a Provider", "/register"],
   ],
   Support: [
     ["Help Center", "/help"],
@@ -38,23 +38,23 @@ export default function InfoPageShell({
 }) {
   return (
     <main className="min-h-screen bg-white text-zinc-950">
-      <nav className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 md:px-10">
+      <nav className="sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-10">
           <Link href="/" className="flex items-center gap-3">
             <Image
               src="/logo-transparent.png"
               alt="EliteCrew"
               width={36}
               height={36}
-              className="h-9 w-9 object-contain"
+              className="h-8 w-8 object-contain"
             />
             <span className="text-lg font-extrabold tracking-tight">
-              Service<span className="font-light text-zinc-400">Market</span>
+              Elite<span className="font-light text-zinc-400">Crew</span>
             </span>
           </Link>
           <Link
             href="/"
-            className="inline-flex h-11 items-center gap-2 border border-zinc-300 px-4 text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-700 hover:border-black hover:text-black"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-300 px-4 text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-700 hover:border-black hover:text-black"
           >
             <Home size={15} />
             Home

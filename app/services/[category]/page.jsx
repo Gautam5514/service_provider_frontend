@@ -12,57 +12,57 @@ import {
 
 const SERVICE_IMAGES = {
   // AC
-  "ac-repair": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80",
-  "ac-installation": "https://images.unsplash.com/photo-1585338107529-13afc5f02586?auto=format&fit=crop&w=600&q=80",
-  "ac-deep-cleaning": "https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=600&q=80",
-  "ac-gas-refilling": "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=600&q=80",
-  "ac-uninstallation": "https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=600&q=80",
+  "ac-repair": "/images/ac_repair.png",
+  "ac-installation": "/images/ac_installation.png",
+  "ac-deep-cleaning": "/images/ac_deep_cleaning.png",
+  "ac-gas-refilling": "/images/ac_gas_refilling.png",
+  "ac-uninstallation": "/images/ac_uninstallation.png",
   
   // Cooler
-  "cooler-repair": "https://images.unsplash.com/photo-1618945037805-f1a4dc37688c?auto=format&fit=crop&w=600&q=80",
-  "cooler-service": "https://images.unsplash.com/photo-1628177142898-93e36e4e3a50?auto=format&fit=crop&w=600&q=80",
-  "cooler-installation": "https://images.unsplash.com/photo-1617637455955-eedadea3e83b?auto=format&fit=crop&w=600&q=80",
+  "cooler-repair": "/images/cooler_repair.png",
+  "cooler-service": "/images/cooler_service.png",
+  "cooler-installation": "/images/cooler_installation.png",
   
   // Fan
-  "fan-repair": "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=600&q=80",
-  "fan-installation": "https://images.unsplash.com/photo-1615874959474-d609969a20ed?auto=format&fit=crop&w=600&q=80",
-  "fan-servicing": "https://images.unsplash.com/photo-1544724480-629ee84337f7?auto=format&fit=crop&w=600&q=80",
+  "fan-repair": "/images/fan_repair.png",
+  "fan-installation": "/images/fan_installation.png",
+  "fan-servicing": "/images/fan_servicing.png",
   
   // TV
-  "tv-repair": "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=600&q=80",
-  "tv-wall-mounting": "https://images.unsplash.com/photo-1552975084-6e027cd345c2?auto=format&fit=crop&w=600&q=80",
+  "tv-repair": "/images/tv_repair.png",
+  "tv-wall-mounting": "/images/tv_wall_mounting.png",
   
   // Fridge
-  "fridge-repair": "https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=600&q=80",
-  "fridge-gas-refill": "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?auto=format&fit=crop&w=600&q=80",
+  "fridge-repair": "/images/fridge_repair.png",
+  "fridge-gas-refill": "/images/fridge_gas_refill.png",
   
   // Electrical
-  "electrical-work": "https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=600&q=80",
-  "wiring-cabling": "https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?auto=format&fit=crop&w=600&q=80",
+  "electrical-work": "/images/electrical_work.png",
+  "wiring-cabling": "/images/wiring_cabling.png",
   
   // Appliances
-  "appliance-repair": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80",
-  "washing-machine-repair": "https://images.unsplash.com/photo-1582730147233-ac8112440fd5?auto=format&fit=crop&w=600&q=80",
+  "appliance-repair": "/images/appliance_repair.png",
+  "washing-machine-repair": "/images/washing_machine_repair.png",
 };
 
 const CATEGORY_BACKGROUNDS = {
-  ac:         "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80",
-  cooler:     "https://images.unsplash.com/photo-1618945037805-f1a4dc37688c?auto=format&fit=crop&w=600&q=80",
-  fan:        "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=600&q=80",
-  tv:         "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=600&q=80",
-  fridge:     "https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=600&q=80",
-  electrical: "https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=600&q=80",
-  appliance:  "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80",
+  ac:         "/images/ac_repair.png",
+  cooler:     "/images/cooler_repair.png",
+  fan:        "/images/fan_repair.png",
+  tv:         "/images/tv_repair.png",
+  fridge:     "/images/fridge_repair.png",
+  electrical: "/images/electrical_work.png",
+  appliance:  "/images/appliance_repair.png",
 };
 
-const DEFAULT_SERVICE_IMAGE = "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80";
+const DEFAULT_SERVICE_IMAGE = "/images/default_service.png";
 
 // Diagnostic Blueprints
 const APPLIANCE_BLUEPRINTS = {
   ac: {
     title: "Split AC Blueprint & Diagnostics",
     subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80",
+    image: "/images/ac.webp",
     hotspots: [
       { id: "coil", name: "Evaporator Coils", x: "32%", y: "45%", desc: "Clogged or dusty evaporator coils decrease heat exchange, causing poor cooling or AC freezing.", service: "ac-repair" },
       { id: "filter", name: "Heavy Air Filter", x: "72%", y: "30%", desc: "Dirty or blocked air filters restrict internal airflow, create foul smells, and hike electrical bills.", service: "ac-deep-cleaning" },
@@ -73,7 +73,7 @@ const APPLIANCE_BLUEPRINTS = {
   cooler: {
     title: "Desert Cooler Blueprint & Diagnostics",
     subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "https://images.unsplash.com/photo-1618945037805-f1a4dc37688c?auto=format&fit=crop&w=600&q=80",
+    image: "/images/cooler_repair.png",
     hotspots: [
       { id: "pump", name: "Submersible Pump", x: "28%", y: "78%", desc: "Zero water flow usually means the submersible pump is burnt or clogged with scale.", service: "cooler-repair" },
       { id: "pad", name: "Honeycomb Pads", x: "72%", y: "48%", desc: "Dirty or lime-scaled honeycomb pads block fresh evaporation and block airflow.", service: "cooler-service" },
@@ -83,7 +83,7 @@ const APPLIANCE_BLUEPRINTS = {
   fan: {
     title: "Ceiling Fan Blueprint & Diagnostics",
     subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=600&q=80",
+    image: "/images/fan_repair.png",
     hotspots: [
       { id: "capacitor", name: "Speed Capacitor", x: "50%", y: "22%", desc: "Ceiling fan spinning slowly is 90% caused by a deteriorated or weak speed capacitor.", service: "fan-repair" },
       { id: "winding", name: "Copper Winding Core", x: "50%", y: "45%", desc: "Burnt copper winding or motor stator damages cause complete operational deadness or loud humming.", service: "fan-repair" },
@@ -93,7 +93,7 @@ const APPLIANCE_BLUEPRINTS = {
   tv: {
     title: "LED TV Anatomy & Diagnostics",
     subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=600&q=80",
+    image: "/images/tv_repair.png",
     hotspots: [
       { id: "panel", name: "IPS LED Panel", x: "50%", y: "45%", desc: "Lines on screen, flickering display, or dark patches are caused by internal backlighting errors.", service: "tv-repair" },
       { id: "board", name: "Power Motherboard", x: "82%", y: "35%", desc: "TV not powering on at all or failing to detect HDMI sources indicates board-level voltage failure.", service: "tv-repair" },
@@ -103,7 +103,7 @@ const APPLIANCE_BLUEPRINTS = {
   fridge: {
     title: "Inverter Fridge Blueprint & Diagnostics",
     subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=600&q=80",
+    image: "/images/refrigerator.webp",
     hotspots: [
       { id: "coil", name: "Cooling Evaporator", x: "50%", y: "28%", desc: "Frost buildup on coils or fan freeze stops cool air from circulating to the lower cabinets.", service: "fridge-repair" },
       { id: "thermostat", name: "Thermostat Controller", x: "78%", y: "42%", desc: "Faulty temperature sensor dial prevents the compressor from kicking off or cooling correctly.", service: "fridge-repair" },
@@ -113,7 +113,7 @@ const APPLIANCE_BLUEPRINTS = {
   electrical: {
     title: "MCB Distribution Board & Diagnostics",
     subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=600&q=80",
+    image: "/images/electricboard.webp",
     hotspots: [
       { id: "mcb", name: "MCB Breaker Switch", x: "42%", y: "32%", desc: "Frequent circuit breaker tripping is a classic sign of short-circuit faults or circuit overloading.", service: "electrical-work" },
       { id: "socket", name: "Modular Plug Sockets", x: "76%", y: "62%", desc: "Sparking switches or loose, burnt contact terminals behind sockets are severe fire hazards.", service: "electrical-work" },
@@ -123,7 +123,7 @@ const APPLIANCE_BLUEPRINTS = {
   appliance: {
     title: "Washing Machine Blueprint & Diagnostics",
     subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80",
+    image: "/images/washing_machine_repair.png",
     hotspots: [
       { id: "drum", name: "Stainless Steel Tub", x: "50%", y: "42%", desc: "Loud rattling or heavy shaking during spin cycles indicates bearing damage or shock absorber failures.", service: "washing-machine-repair" },
       { id: "motor", name: "Direct Drive Motor", x: "50%", y: "78%", desc: "Drum refuses to rotate despite electrical panel sounding active is 90% a motor or belt issue.", service: "washing-machine-repair" },
@@ -135,44 +135,44 @@ const APPLIANCE_BLUEPRINTS = {
 // Before / After Comparisons
 const BEFORE_AFTER_DATA = {
   ac: {
-    before: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80",
-    after: "https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=600&q=80",
+    before: "/images/ac_before_dirty.png",
+    after: "/images/ac_after_clean.png",
     title: "AC Coil Deep Cleaning Proof",
     desc: "Clogged, dusty coils block thermal exchange. Our jet pump wash strips away dust, mold, and odor-causing bacteria instantly."
   },
   cooler: {
-    before: "https://images.unsplash.com/photo-1618945037805-f1a4dc37688c?auto=format&fit=crop&w=600&q=80",
-    after: "https://images.unsplash.com/photo-1628177142898-93e36e4e3a50?auto=format&fit=crop&w=600&q=80",
+    before: "/images/cooler_before_dirty.png",
+    after: "/images/cooler_after_clean.png",
     title: "Honeycomb Cooling Pad Renewal",
     desc: "Salinized, brittle honeycomb pads ruin cooling output. Drag to see the incredible transformation with high-density fresh pads."
   },
   fan: {
-    before: "https://images.unsplash.com/photo-1544724480-629ee84337f7?auto=format&fit=crop&w=600&q=80",
-    after: "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=600&q=80",
+    before: "/images/fan_before_dirty.png",
+    after: "/images/fan_after_clean.png",
     title: "Greasy Fan Blade De-griming",
     desc: "Heavy grease and soot create aerodynamical drag and wobble ceiling fans. We fully dismantle, chemical-wash, and grease bearings."
   },
   tv: {
-    before: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=600&q=80",
-    after: "https://images.unsplash.com/photo-1552975084-6e027cd345c2?auto=format&fit=crop&w=600&q=80",
+    before: "/images/tv_before_dirty.png",
+    after: "/images/tv_after_clean.png",
     title: "TV Flush Wall-Mounting Magic",
     desc: "Messy cords and risky shelves ruin premium room vibes. Drag to compare a cluttered setup with perfectly anchored flush wall mounting."
   },
   fridge: {
-    before: "https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=600&q=80",
-    after: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?auto=format&fit=crop&w=600&q=80",
+    before: "/images/fridge_before_dirty.png",
+    after: "/images/fridge_after_clean.png",
     title: "Coil Defrosting & Seal Refresh",
     desc: "Thick ice accumulation raises compressor workload by 40%. We defrost, clean tubes, and sanitize door gaskets completely."
   },
   electrical: {
-    before: "https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=600&q=80",
-    after: "https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?auto=format&fit=crop&w=600&q=80",
+    before: "/images/electrical_before_dirty.png",
+    after: "/images/electrical_after_clean.png",
     title: "Breaker Board Cable Organizing",
     desc: "Cluttered bird's-nest fuse wiring is a severe short-circuit risk. We strip old wires and arrange modular MCB boxes with safety insulation."
   },
   appliance: {
-    before: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80",
-    after: "https://images.unsplash.com/photo-1582730147233-ac8112440fd5?auto=format&fit=crop&w=600&q=80",
+    before: "/images/appliance_before_dirty.png",
+    after: "/images/appliance_after_clean.png",
     title: "Washing Machine Tub Descaling",
     desc: "Scale and detergent mold build up on the outer tub ring, dirtying fresh clothes. See the pristine shine after anti-scale descaling."
   }

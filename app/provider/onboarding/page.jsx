@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getStoredUser } from "@/lib/auth";
 import api from "@/lib/api";
 import { refreshLocation } from "@/lib/location";
+import LocationPicker from "@/components/LocationPicker";
 import { Loader2, MapPin, Navigation, ChevronDown } from "lucide-react";
 
 const STEPS = [
@@ -148,6 +149,7 @@ export default function ProviderOnboardingPage() {
   const [statusLoading, setStatusLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [pickingLocation, setPickingLocation] = useState(false);
   const [error, setError] = useState("");
 
   // Step 1
@@ -477,6 +479,16 @@ export default function ProviderOnboardingPage() {
     }
   };
 
+  const onPickLocation = ({ lat, lng, fullAddress, city, pincode }) => {
+    setProfile((p) => ({
+      ...p,
+      city: city || p.city,
+      serviceArea: fullAddress || p.serviceArea || city,
+      location: lat && lng ? { lat, lng, source: "manual", pincode } : p.location,
+    }));
+    setPickingLocation(false);
+  };
+
   if (statusLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-50">
@@ -619,15 +631,25 @@ export default function ProviderOnboardingPage() {
                       )}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={useCurrentLocation}
-                    disabled={locating}
-                    className="inline-flex items-center justify-center gap-2 bg-black text-white rounded-lg px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-800 disabled:opacity-50"
-                  >
-                    {locating ? <Loader2 size={13} className="animate-spin" /> : <Navigation size={13} />}
-                    {locating ? "Detecting" : "Use Current Location"}
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setPickingLocation(true)}
+                      className="inline-flex items-center justify-center gap-2 bg-white text-black border border-zinc-300 rounded-lg px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:border-black"
+                    >
+                      <MapPin size={13} />
+                      Pick on Map
+                    </button>
+                    <button
+                      type="button"
+                      onClick={useCurrentLocation}
+                      disabled={locating}
+                      className="inline-flex items-center justify-center gap-2 bg-black text-white rounded-lg px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-800 disabled:opacity-50"
+                    >
+                      {locating ? <Loader2 size={13} className="animate-spin" /> : <Navigation size={13} />}
+                      {locating ? "Detecting" : "Use Current Location"}
+                    </button>
+                  </div>
                 </div>
                 <Field label="Gender">
                   <Select value={profile.gender}
@@ -1154,6 +1176,14 @@ export default function ProviderOnboardingPage() {
           ))}
         </div>
       </div>
+
+      {pickingLocation && (
+        <LocationPicker
+          initial={profile.location ? { lat: profile.location.lat, lng: profile.location.lng, fullAddress: profile.serviceArea, city: profile.city } : null}
+          onConfirm={onPickLocation}
+          onClose={() => setPickingLocation(false)}
+        />
+      )}
     </div>
   );
 }

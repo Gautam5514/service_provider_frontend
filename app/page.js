@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getStoredUser, performLogout, validateSession, saveAuthSession, clearAuthSession } from "@/lib/auth";
 import { CATEGORY_META, SERVICE_CATALOG, formatPrice } from "@/lib/services";
@@ -45,6 +45,8 @@ import {
   ShieldAlert,
   ThumbsUp,
   MessageSquare,
+  UserRound,
+  LogOut,
 } from "lucide-react";
 
 // ─── Static data ───────────────────────────────────────────────────────────────
@@ -204,25 +206,25 @@ const CATEGORY_INSIGHTS = {
 const CATEGORY_PHOTOS = {
   ac:         "/images/ac_repair.png",
   cooler:     "/images/cooler_repair.png",
-  fan:        "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=800&q=80",
-  tv:         "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=800&q=80",
-  fridge:     "https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=800&q=80",
-  electrical: "https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=800&q=80",
-  appliance:  "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80",
+  fan:        "/images/fan_repair.png",
+  tv:         "/images/tv_repair.png",
+  fridge:     "/images/fridge_repair.png",
+  electrical: "/images/electrical_work.png",
+  appliance:  "/images/appliance_repair.png",
 };
 
 const SERVICE_IMAGES = {
   "ac-repair": "/images/ac_repair.png",
   "ac-installation": "/images/ac_installation.png",
   "cooler-repair": "/images/cooler_repair.png",
-  "fan-repair": "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?auto=format&fit=crop&w=600&q=80",
-  "tv-repair": "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=600&q=80",
-  "fridge-repair": "https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=600&q=80",
-  "electrical-work": "https://images.unsplash.com/photo-1621905252507-b354bc25edac?auto=format&fit=crop&w=600&q=80",
-  "appliance-repair": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80",
+  "fan-repair": "/images/fan_repair.png",
+  "tv-repair": "/images/tv_repair.png",
+  "fridge-repair": "/images/fridge_repair.png",
+  "electrical-work": "/images/electrical_work.png",
+  "appliance-repair": "/images/appliance_repair.png",
 };
 
-const DEFAULT_SERVICE_IMAGE = "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80";
+const DEFAULT_SERVICE_IMAGE = "/images/default_service.png";
 
 const CAT_STYLES = {
   ac: {
@@ -484,6 +486,93 @@ function SpotTile({ image, name, category, placeLabel, gradient, loading }) {
   );
 }
 
+// ─── Account menu (logged-in navbar dropdown) ─────────────────────────────────
+
+function AccountMenu({ user, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const initials = (user?.fullName || "U")
+    .split(" ")
+    .filter(Boolean)
+    .map(w => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const items = [
+    { label: "My Profile",   href: "/profile",           Icon: UserRound    },
+    { label: "My Bookings",  href: "/bookings",          Icon: CalendarDays },
+    { label: "Saved Addresses", href: "/profile#addresses", Icon: MapPin    },
+    { label: "Help & Support",  href: "/support",        Icon: MessageSquare },
+  ];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="flex items-center gap-1.5 group"
+      >
+        <span className={`w-9 h-9 rounded-full bg-zinc-950 text-white text-[11px] font-black flex items-center justify-center ring-2 transition-all ${
+          open ? "ring-zinc-300" : "ring-transparent group-hover:ring-zinc-200"
+        }`}>
+          {initials}
+        </span>
+        <ChevronDown size={13} className={`text-zinc-400 transition-transform duration-200 hidden sm:block ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-2.5 w-64 rounded-2xl border border-zinc-100 bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.18)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+        >
+          {/* Identity header */}
+          <div className="px-4 py-3.5 border-b border-zinc-100 bg-zinc-50/60">
+            <p className="text-sm font-extrabold text-zinc-900 truncate">{user.fullName}</p>
+            <p className="text-[11px] text-zinc-400 font-medium truncate mt-0.5">{user.email}</p>
+          </div>
+
+          <div className="py-1.5">
+            {items.map(({ label, href, Icon }) => (
+              <Link key={label} href={href} role="menuitem"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-[13px] font-semibold text-zinc-600 hover:bg-zinc-50 hover:text-black transition-colors">
+                <Icon size={15} strokeWidth={1.9} className="text-zinc-400" />
+                {label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="border-t border-zinc-100 py-1.5">
+            <button role="menuitem"
+              onClick={() => { setOpen(false); onLogout(); }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-semibold text-red-500 hover:bg-red-50 transition-colors">
+              <LogOut size={15} strokeWidth={1.9} />
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
@@ -718,14 +807,11 @@ export default function HomePage() {
                 {user ? (
                   <>
                     <Link href="/bookings"
-                      className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-zinc-500 hover:text-black transition-colors border border-zinc-200 px-3 py-1.5 hover:border-zinc-400">
+                      className="hidden lg:flex items-center gap-1.5 text-xs font-semibold text-zinc-500 hover:text-black transition-colors border border-zinc-200 rounded-lg px-3 py-1.5 hover:border-zinc-400">
                       <CalendarDays size={13} /> Bookings
                     </Link>
                     <NotificationBell variant="light" />
-                    <button onClick={logout}
-                      className="text-[10px] font-bold tracking-widest uppercase text-zinc-400 hover:text-red-500 transition-colors">
-                      Logout
-                    </button>
+                    <AccountMenu user={user} onLogout={logout} />
                   </>
                 ) : (
                   <>
@@ -1466,7 +1552,7 @@ export default function HomePage() {
                 ))}
               </div>
 
-              <Link href="/provider"
+              <Link href="/register"
                 className="group inline-flex items-center gap-2 bg-white text-black px-7 py-3.5 text-xs font-bold tracking-widest uppercase hover:bg-zinc-100 transition-colors">
                 Apply as a Professional
                 <ArrowRight size={13} className="transition-transform duration-150 group-hover:translate-x-0.5" />
@@ -1742,7 +1828,7 @@ export default function HomePage() {
                   ["About Us",             "/about"],
                   ["How It Works",         "/how-it-works"],
                   ["Our Professionals",    "/providers"],
-                  ["Become a Provider",    "/provider"],
+                  ["Become a Provider",    "/register"],
                   ["Blog",                 "/blog"],
                 ].map(([label, href]) => (
                   <li key={label}>

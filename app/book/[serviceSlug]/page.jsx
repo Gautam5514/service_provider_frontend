@@ -8,6 +8,7 @@ import { getStoredUser } from "@/lib/auth";
 import { refreshLocation } from "@/lib/location";
 import { getServiceBySlug, getCategoryForSlug, CATEGORY_META, TIME_SLOTS, formatPrice } from "@/lib/services";
 import SmartSearch from "@/components/SmartSearch";
+import LocationPicker from "@/components/LocationPicker";
 import { Loader2, Navigation, CreditCard, Calendar, Clock, MapPin } from "lucide-react";
 
 const PLATFORM_FEE_RATE = 0.10;
@@ -50,6 +51,7 @@ function BookingPageContent({ params }) {
   const [selectedSavedAddress, setSelectedSavedAddress] = useState(null); // index
   const [showNewAddressForm,   setShowNewAddressForm]   = useState(false);
   const [saveThisAddress,      setSaveThisAddress]      = useState(false);
+  const [pickingLocation,      setPickingLocation]      = useState(false);
   const [address,              setAddress]              = useState({ text: "", city: "", pincode: "", lat: null, lng: null });
 
   // Step 3 — coupon
@@ -145,6 +147,20 @@ function BookingPageContent({ params }) {
     } finally {
       setLocating(false);
     }
+  };
+
+  const onPickLocation = ({ lat, lng, fullAddress, city, pincode }) => {
+    setSelectedSavedAddress(null);
+    setShowNewAddressForm(true);
+    setAddress((a) => ({
+      ...a,
+      text: fullAddress || a.text,
+      city: city || a.city,
+      pincode: pincode || a.pincode,
+      lat: lat ?? a.lat,
+      lng: lng ?? a.lng,
+    }));
+    setPickingLocation(false);
   };
 
   const canNext1 = selectedDate && selectedSlot;
@@ -329,15 +345,25 @@ function BookingPageContent({ params }) {
                         </p>
                       )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={useCurrentLocationForAddress}
-                      disabled={locating}
-                      className="inline-flex items-center justify-center gap-2 bg-black text-white px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-800 disabled:opacity-50"
-                    >
-                      {locating ? <Loader2 size={13} className="animate-spin" /> : <Navigation size={13} />}
-                      {locating ? "Detecting" : "Use Current Location"}
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setPickingLocation(true)}
+                        className="inline-flex items-center justify-center gap-2 bg-white text-black border border-zinc-300 px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:border-black"
+                      >
+                        <MapPin size={13} />
+                        Pick on Map
+                      </button>
+                      <button
+                        type="button"
+                        onClick={useCurrentLocationForAddress}
+                        disabled={locating}
+                        className="inline-flex items-center justify-center gap-2 bg-black text-white px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-800 disabled:opacity-50"
+                      >
+                        {locating ? <Loader2 size={13} className="animate-spin" /> : <Navigation size={13} />}
+                        {locating ? "Detecting" : "Use Current Location"}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Saved addresses */}
@@ -556,6 +582,14 @@ function BookingPageContent({ params }) {
 
         </div>
       </div>
+
+      {pickingLocation && (
+        <LocationPicker
+          initial={address.lat ? { lat: address.lat, lng: address.lng, fullAddress: address.text, city: address.city, pincode: address.pincode } : null}
+          onConfirm={onPickLocation}
+          onClose={() => setPickingLocation(false)}
+        />
+      )}
     </div>
   );
 }

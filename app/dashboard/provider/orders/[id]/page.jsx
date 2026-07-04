@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import api from "@/lib/api";
-import { CATEGORY_META, formatPrice } from "@/lib/services";
+import { CATEGORY_META, formatPrice, providerPayout } from "@/lib/services";
 import {
   ArrowLeft, CalendarClock, MapPin, UserRound, Wrench, CheckCircle2,
   AlertTriangle, Navigation, LockKeyhole, Phone, CreditCard, ClipboardList,
@@ -34,6 +34,17 @@ const STATUS_CONFIG = {
   cancelled:       { label: "Cancelled",        bg: "bg-zinc-100",   text: "text-zinc-500",    border: "border-zinc-200",    dot: "bg-zinc-400" },
 };
 
+// Reasons a provider can give when releasing a job they can't complete.
+const RELEASE_REASONS = [
+  "Personal emergency",
+  "Feeling unwell",
+  "Vehicle / travel problem",
+  "Don't have the required tools or parts",
+  "Customer not reachable",
+  "Job is outside my area",
+  "Other reason",
+];
+
 export default function ProviderOrderDetailPage({ params }) {
   const { id }       = use(params);
   const router       = useRouter();
@@ -47,6 +58,8 @@ export default function ProviderOrderDetailPage({ params }) {
   const [toast,   setToast]   = useState(null);
   const [rejectReason, setRejectReason] = useState("");
   const [showReject,   setShowReject]   = useState(false);
+  const [releaseReason, setReleaseReason] = useState("");
+  const [showRelease,   setShowRelease]   = useState(false);
 
   // ── GPS location sharing ──────────────────────────────────────────────────
   const [isSharing,  setIsSharing]  = useState(false);
@@ -114,7 +127,7 @@ export default function ProviderOrderDetailPage({ params }) {
       if (data.success) {
         setJob(data.booking);
         showToast(data.message || "Updated successfully");
-        if (endpoint === "reject") router.push("/dashboard/provider/orders");
+        if (endpoint === "reject" || endpoint === "provider-cancel") router.push("/dashboard/provider/orders");
       }
     } catch (e) {
       showToast(e.response?.data?.message || "Action failed", false);
@@ -273,6 +286,41 @@ export default function ProviderOrderDetailPage({ params }) {
                 className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-blue-600 text-white px-6 py-3.5 rounded-md text-xs font-bold tracking-widest uppercase hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 transition-all duration-200 disabled:opacity-50 flex-shrink-0 shadow-md">
                 <Navigation size={14} className="rotate-45" /> {acting ? "Initializing…" : "Start Travel"}
               </button>
+            </div>
+          )}
+
+          {/* Release Job — provider accepted but can't do it (any stage before completion) */}
+          {["accepted", "provider_on_way", "in_progress"].includes(job.status) && (
+            <div className="mt-4">
+              {!showRelease ? (
+                <button onClick={() => setShowRelease(true)}
+                  className="flex items-center gap-2 text-xs font-bold text-red-600 hover:text-red-700 transition-colors">
+                  <AlertTriangle size={13} /> Can&apos;t do this job?
+                </button>
+              ) : (
+                <div className="bg-white rounded-lg border border-red-200 p-5 shadow-sm max-w-xl">
+                  <p className="text-sm font-black text-zinc-950">Release this job?</p>
+                  <p className="text-xs text-zinc-500 font-semibold mt-1 mb-3">
+                    We&apos;ll assign the customer another nearby professional. Frequent releases can affect how many jobs you&apos;re offered.
+                  </p>
+                  <label className="block text-[9px] font-bold tracking-widest uppercase text-zinc-500 mb-2">Reason</label>
+                  <select value={releaseReason} onChange={e => setReleaseReason(e.target.value)}
+                    className="w-full border border-zinc-200 rounded-md bg-white px-3 py-2.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-400 mb-3 transition-colors">
+                    <option value="">Select a reason…</option>
+                    {RELEASE_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button onClick={() => action("provider-cancel", { reason: releaseReason })} disabled={acting || !releaseReason}
+                      className="flex-1 bg-red-600 text-white py-2.5 rounded-md text-xs font-bold tracking-widest uppercase hover:bg-red-700 active:scale-95 transition-all duration-150 disabled:opacity-40">
+                      {acting ? "Releasing…" : "Release Job"}
+                    </button>
+                    <button onClick={() => { setShowRelease(false); setReleaseReason(""); }} disabled={acting}
+                      className="sm:w-28 bg-zinc-100 text-zinc-600 py-2.5 rounded-md text-xs font-bold tracking-widest uppercase hover:bg-zinc-200 active:scale-95 transition-all duration-150">
+                      Keep Job
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -497,28 +545,14 @@ export default function ProviderOrderDetailPage({ params }) {
             
             <p className="text-[9px] font-bold tracking-widest uppercase text-white/50 mb-5 pb-3 border-b border-white/10">Financial Settlement</p>
             <div className="space-y-4 relative z-10">
-              {[
-                { label: "Base Service Price",  value:  job.pricing?.basePrice   || 0 },
-                { label: "Platform Commission", value: -(job.pricing?.platformFee || 0) },
-                { label: "Service Tax (GST)",   value: -(job.pricing?.tax         || 0) },
-              ].map(r => (
-                <div key={r.label} className="flex justify-between items-center text-xs font-semibold">
-                  <span className="text-white/60">{r.label}</span>
-                  <span className={`font-extrabold ${r.value < 0 ? "text-red-400" : "text-white"}`}>
-                    {r.value < 0 ? `−${formatPrice(Math.abs(r.value))}` : formatPrice(r.value)}
-                  </span>
-                </div>
-              ))}
-              
-              <div className="h-px bg-white/10 my-2" />
-
+              {/* Provider only sees their take-home — no fee/tax breakdown. */}
               <div className="flex justify-between items-center pt-2">
                 <div>
                   <span className="text-xs font-black tracking-widest uppercase text-white/50 block">Your Earning</span>
                   <span className="text-[10px] text-emerald-400 font-semibold">Immediate settlement</span>
                 </div>
                 <span className="text-2xl font-black text-emerald-400">
-                  {formatPrice((job.pricing?.basePrice || 0) - (job.pricing?.platformFee || 0) - (job.pricing?.tax || 0))}
+                  {formatPrice(providerPayout(job.pricing))}
                 </span>
               </div>
             </div>

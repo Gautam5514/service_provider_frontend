@@ -116,9 +116,9 @@ export default function NotificationBell({ align = "right", variant = "dark" }) 
   };
 
   // ── Fetch ──────────────────────────────────────────────────────────────
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ silent = false } = {}) => {
     if (!getStoredUser()) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(false);
     try {
       const { data } = await api.get("/notifications");
@@ -129,7 +129,7 @@ export default function NotificationBell({ align = "right", variant = "dark" }) 
     } catch {
       setError(true);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -139,9 +139,15 @@ export default function NotificationBell({ align = "right", variant = "dark" }) 
   }, []);
 
   useEffect(() => {
-    const first = setTimeout(load, 0);
-    const id    = setInterval(load, 30000);
-    return () => { clearTimeout(first); clearInterval(id); };
+    load();
+    // Real-time updates arrive over the socket (below). This interval is only a
+    // slow safety net for missed pushes — 2 min, and only while the tab is
+    // visible — so it isn't hammering /notifications every few seconds.
+    const id = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      load({ silent: true });
+    }, 120000);
+    return () => clearInterval(id);
   }, [load]);
 
   useEffect(() => { if (open) load(); }, [open, load]);
@@ -168,18 +174,26 @@ export default function NotificationBell({ align = "right", variant = "dark" }) 
         if (!isMuted()) playTone();
       };
 
+      // On (re)connect, do ONE silent catch-up fetch for anything missed while
+      // disconnected. This replaces frequent polling as the freshness source.
+      const onConnect = () => load({ silent: true });
+
       s.on("notification:new", handler);
-      bound = { socket: s, handler };
+      s.on("connect", onConnect);
+      bound = { socket: s, handler, onConnect };
     }
 
     setup();
 
     return () => {
       mounted = false;
-      // Remove listener only if it was successfully attached
-      if (bound) bound.socket.off("notification:new", bound.handler);
+      // Remove listeners only if they were successfully attached
+      if (bound) {
+        bound.socket.off("notification:new", bound.handler);
+        bound.socket.off("connect", bound.onConnect);
+      }
     };
-  }, []);
+  }, [load]);
 
   // ── Close on outside click / Escape ───────────────────────────────────
   useEffect(() => {

@@ -26,7 +26,7 @@ export default function ProviderDashboardHome() {
   const user = useMemo(() => getStoredUser(), []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
     const load = async () => {
       try {
         const [profileRes, jobsRes, poolRes, earningsRes] = await Promise.all([
@@ -245,7 +245,7 @@ export default function ProviderDashboardHome() {
             </div>
             <div className="px-5 py-3 border-t border-zinc-100 bg-zinc-50/40">
               <p className="text-[10px] text-zinc-400 font-medium">
-                Your payout = base price − platform fee − GST · {earnings.jobsThisMonth} job{earnings.jobsThisMonth !== 1 ? "s" : ""} completed this month
+                Your take-home earnings · {earnings.jobsThisMonth} job{earnings.jobsThisMonth !== 1 ? "s" : ""} completed this month
               </p>
             </div>
           </div>

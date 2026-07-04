@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/api";
-import { formatPrice } from "@/lib/services";
+import { formatPrice, providerPayout } from "@/lib/services";
 import {
   AlertTriangle, ArrowRight, BellRing, CalendarClock,
   CheckCircle2, ChevronDown, ChevronUp, ClipboardList,
@@ -81,7 +81,8 @@ function MyJobCard({ job }) {
 
           <div className="flex-shrink-0 flex flex-col items-end justify-between">
             <div className="text-right">
-              <p className="text-base font-black text-zinc-900">{formatPrice(job.pricing?.totalAmount || 0)}</p>
+              <p className="text-base font-black text-emerald-700">{formatPrice(providerPayout(job.pricing))}</p>
+              <p className="text-[9px] text-zinc-400 mt-0.5">your earning</p>
               <p className="text-[9px] text-zinc-300 mt-0.5">{job.bookingNumber}</p>
             </div>
             <span className="flex items-center gap-1 mt-2 text-[10px] font-bold text-zinc-400 group-hover:text-zinc-900 transition-colors">
@@ -103,10 +104,7 @@ function PoolJobCard({ job, onClaimed }) {
   const [claiming, setClaiming] = useState(false);
   const [err,      setErr]      = useState("");
 
-  const basePrice  = job.pricing?.basePrice   || 0;
-  const platFee    = job.pricing?.platformFee  || 0;
-  const tax        = job.pricing?.tax          || 0;
-  const myPayout   = Math.max(0, basePrice - platFee - tax);
+  const myPayout   = providerPayout(job.pricing);
 
   const handleClaim = async () => {
     setClaiming(true);
@@ -150,7 +148,8 @@ function PoolJobCard({ job, onClaimed }) {
 
         <div className="flex-shrink-0 flex flex-col items-end justify-between gap-2">
           <div className="text-right">
-            <p className="text-base font-black text-zinc-900">{formatPrice(job.pricing?.totalAmount || 0)}</p>
+            <p className="text-base font-black text-emerald-700">{formatPrice(myPayout)}</p>
+            <p className="text-[9px] text-zinc-400 mt-0.5">your payout</p>
             <p className="text-[9px] text-zinc-300 mt-0.5">{job.bookingNumber}</p>
           </div>
           {/* Toggle — show details before committing */}
@@ -199,26 +198,12 @@ function PoolJobCard({ job, onClaimed }) {
               </div>
             </div>
 
-            {/* Payout breakdown */}
-            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
+            {/* Payout — provider only sees their take-home, not the fee breakdown */}
+            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 flex flex-col justify-center">
               <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-emerald-700 mb-2.5">Your Earnings</p>
-              <div className="space-y-1.5 text-xs">
-                <div className="flex justify-between text-zinc-600">
-                  <span>Base price</span>
-                  <span className="font-semibold">{formatPrice(basePrice)}</span>
-                </div>
-                <div className="flex justify-between text-zinc-500">
-                  <span>Platform fee</span>
-                  <span>−{formatPrice(platFee)}</span>
-                </div>
-                <div className="flex justify-between text-zinc-500">
-                  <span>Tax</span>
-                  <span>−{formatPrice(tax)}</span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-emerald-200 mt-1">
-                  <span className="font-extrabold text-emerald-900">Your payout</span>
-                  <span className="font-black text-lg text-emerald-700 leading-none">{formatPrice(myPayout)}</span>
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-emerald-900 text-sm">Your payout</span>
+                <span className="font-black text-2xl text-emerald-700 leading-none">{formatPrice(myPayout)}</span>
               </div>
               <p className="text-[9px] text-emerald-600 font-medium mt-2">
                 Paid to you in cash by the customer on completion.
@@ -275,32 +260,39 @@ export default function ProviderOrdersPage() {
   const [loadingPool, setLoadingPool] = useState(false);
   const [myTab,       setMyTab]       = useState("all");
 
-  const loadMyJobs = useCallback(async () => {
-    setLoadingMy(true);
+  // `silent` background refreshes update the data in place without flashing the
+  // loading state — only the first load shows a spinner.
+  const loadMyJobs = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoadingMy(true);
     try {
       const { data } = await api.get("/bookings/provider/jobs");
       if (data.success) setMyJobs(data.jobs || []);
     } catch (e) { console.error(e); }
-    finally { setLoadingMy(false); }
+    finally { if (!silent) setLoadingMy(false); }
   }, []);
 
-  const loadPool = useCallback(async () => {
-    setLoadingPool(true);
-    setPoolMsg("");
+  const loadPool = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoadingPool(true);
     try {
       const { data } = await api.get("/bookings/provider/available");
       if (data.success) {
         setPoolJobs(data.jobs || []);
-        if (data.message) setPoolMsg(data.message);
+        setPoolMsg(data.message || "");
       }
     } catch (e) { console.error(e); }
-    finally { setLoadingPool(false); }
+    finally { if (!silent) setLoadingPool(false); }
   }, []);
 
   useEffect(() => {
-    const id = setTimeout(() => { loadMyJobs(); loadPool(); }, 0);
-    const iv = setInterval(() => { loadMyJobs(); loadPool(); }, 20000);
-    return () => { clearTimeout(id); clearInterval(iv); };
+    loadMyJobs();
+    loadPool();
+    const iv = setInterval(() => {
+      // Don't poll while the tab is in the background — no wasted requests.
+      if (document.visibilityState !== "visible") return;
+      loadMyJobs({ silent: true });
+      loadPool({ silent: true });
+    }, 30000);
+    return () => clearInterval(iv);
   }, [loadMyJobs, loadPool]);
 
   // Auto-switch to pool if provider has no jobs yet but pool has some

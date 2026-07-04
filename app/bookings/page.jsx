@@ -7,16 +7,19 @@ import api from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
 import { CATEGORY_META, formatPrice } from "@/lib/services";
 import SmartSearch from "@/components/SmartSearch";
-import { Calendar, Clock, MapPin, Wrench, Home, Search, ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft, Calendar, ChevronRight, Clock, Home,
+  MapPin, Plus, Search, UserRound, Wrench,
+} from "lucide-react";
 
 const STATUS_CONFIG = {
-  pending:          { label: "Finding Provider", bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   dot: "bg-amber-500"   },
-  accepted:         { label: "Confirmed",         bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    dot: "bg-blue-500"    },
-  provider_on_way:  { label: "On The Way",        bg: "bg-violet-50",  text: "text-violet-700",  border: "border-violet-200",  dot: "bg-violet-500 animate-pulse" },
-  in_progress:      { label: "In Progress",       bg: "bg-orange-50",  text: "text-orange-700",  border: "border-orange-200",  dot: "bg-orange-500 animate-pulse" },
-  completed:        { label: "Completed",         bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", dot: "bg-emerald-500" },
-  cancelled:        { label: "Cancelled",         bg: "bg-zinc-100",   text: "text-zinc-500",    border: "border-zinc-200",    dot: "bg-zinc-400"    },
-  disputed:         { label: "Disputed",          bg: "bg-red-50",     text: "text-red-700",     border: "border-red-200",     dot: "bg-red-500"     },
+  pending:          { label: "Finding Provider", bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200/70",   dot: "bg-amber-500"   },
+  accepted:         { label: "Confirmed",        bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200/70",    dot: "bg-blue-500"    },
+  provider_on_way:  { label: "On The Way",       bg: "bg-violet-50",  text: "text-violet-700",  border: "border-violet-200/70",  dot: "bg-violet-500 animate-pulse" },
+  in_progress:      { label: "In Progress",      bg: "bg-orange-50",  text: "text-orange-700",  border: "border-orange-200/70",  dot: "bg-orange-500 animate-pulse" },
+  completed:        { label: "Completed",        bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200/70", dot: "bg-emerald-500" },
+  cancelled:        { label: "Cancelled",        bg: "bg-zinc-100",   text: "text-zinc-500",    border: "border-zinc-200",       dot: "bg-zinc-400"    },
+  disputed:         { label: "Disputed",         bg: "bg-red-50",     text: "text-red-700",     border: "border-red-200/70",     dot: "bg-red-500"     },
 };
 
 const TABS = [
@@ -27,6 +30,93 @@ const TABS = [
 ];
 
 function isActive(status) { return ["pending","accepted","provider_on_way","in_progress"].includes(status); }
+
+// Group an ordered booking list into [{ key: "July 2026", items: [...] }, …],
+// preserving the API's sort order.
+function groupByMonth(list) {
+  const groups = [];
+  const index  = new Map();
+  for (const b of list) {
+    const d   = new Date(b.scheduledDate);
+    const key = isNaN(d) ? "Unscheduled" : d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+    if (!index.has(key)) {
+      index.set(key, groups.length);
+      groups.push({ key, items: [] });
+    }
+    groups[index.get(key)].items.push(b);
+  }
+  return groups;
+}
+
+function BookingCard({ booking: b }) {
+  const st   = STATUS_CONFIG[b.status] || STATUS_CONFIG.cancelled;
+  const meta = CATEGORY_META[b.serviceCategory];
+  const Icon = meta?.icon || Wrench;
+  const scheduledDate = new Date(b.scheduledDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  const slotLabel = b.scheduledTimeSlot
+    ? new Date(`2000-01-01T${b.scheduledTimeSlot}`).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
+    : "";
+  const muted = ["cancelled", "disputed"].includes(b.status);
+
+  return (
+    <Link href={`/bookings/${b._id}`}
+      className="group block bg-white rounded-2xl border border-zinc-200/80 p-5 transition-all duration-300 hover:border-zinc-300 hover:shadow-[0_16px_40px_-20px_rgba(0,0,0,0.25)] hover:-translate-y-px">
+      <div className="flex items-start gap-4">
+
+        {/* Category icon */}
+        <div className={`hidden sm:flex w-11 h-11 rounded-xl items-center justify-center shrink-0 border transition-colors ${
+          muted ? "bg-zinc-50 border-zinc-100" : "bg-zinc-50 border-zinc-100 group-hover:bg-zinc-950 group-hover:border-zinc-950"
+        }`}>
+          <Icon size={18} strokeWidth={1.8}
+            className={muted ? "text-zinc-300" : "text-zinc-500 group-hover:text-white transition-colors"} />
+        </div>
+
+        {/* Details */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2.5 flex-wrap mb-1.5">
+            <span className={`inline-flex items-center gap-1.5 text-[9px] font-bold tracking-[0.14em] uppercase px-2 py-[3px] rounded-full border ${st.bg} ${st.text} ${st.border}`}>
+              <span className={`w-1 h-1 rounded-full ${st.dot}`} />
+              {st.label}
+            </span>
+            <span className="text-[10px] font-semibold tracking-wider text-zinc-300">{b.bookingNumber}</span>
+          </div>
+
+          <h3 className={`text-[15px] font-extrabold tracking-tight truncate mb-1.5 ${muted ? "text-zinc-400" : "text-zinc-900"}`}>
+            {b.serviceName}
+          </h3>
+
+          <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-xs text-zinc-500">
+            <span className="inline-flex items-center gap-1.5 font-medium whitespace-nowrap">
+              <Calendar size={12.5} className="shrink-0" /> {scheduledDate}
+            </span>
+            {slotLabel && (
+              <span className="inline-flex items-center gap-1.5 font-medium whitespace-nowrap">
+                <Clock size={12.5} className="shrink-0" /> {slotLabel}
+              </span>
+            )}
+            {b.address?.text && (
+              <span className="inline-flex items-center gap-1.5 font-medium min-w-0 max-w-[240px] md:max-w-xs">
+                <MapPin size={12.5} className="shrink-0" />
+                <span className="truncate">{b.address.text}</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Price + affordance */}
+        <div className="flex flex-col items-end justify-between self-stretch shrink-0 pl-2">
+          <p className={`text-base md:text-lg font-black tracking-tight tabular-nums ${muted ? "text-zinc-400" : "text-zinc-900"}`}>
+            {formatPrice(b.pricing?.totalAmount || 0)}
+          </p>
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide uppercase text-zinc-300 group-hover:text-zinc-900 transition-colors mt-2">
+            <span className="hidden md:inline">Details</span>
+            <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function MyBookingsPage() {
   const router  = useRouter();
@@ -66,21 +156,23 @@ export default function MyBookingsPage() {
     cancelled: bookings.filter(b => ["cancelled","disputed"].includes(b.status)).length,
   };
 
-  return (
-    <div className="min-h-screen bg-zinc-50 font-sans selection:bg-black selection:text-white pb-16 sm:pb-0">
+  const groups = groupByMonth(visible);
 
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-zinc-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-5 min-h-14 py-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+  return (
+    <div className="min-h-screen bg-[#f7f7f8] font-sans selection:bg-black selection:text-white pb-16 sm:pb-0">
+
+      {/* ── Navbar ── */}
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-zinc-100 shadow-sm">
+        <div className="max-w-4xl mx-auto px-5 min-h-16 py-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="flex items-center gap-3">
             <Link href="/" className="text-zinc-400 hover:text-black transition-colors">
               <ArrowLeft size={18} />
             </Link>
             <Link href="/" className="flex items-center gap-2">
-              <img 
-                src="/logo-transparent.png" 
-                alt="EliteCrew" 
-                className="w-6 h-6 object-contain" 
+              <img
+                src="/logo-transparent.png"
+                alt="EliteCrew"
+                className="w-6 h-6 object-contain"
               />
               <span className="text-base font-extrabold tracking-tight text-black">
                 Elite<span className="font-light text-zinc-500">Crew</span>
@@ -93,30 +185,43 @@ export default function MyBookingsPage() {
         </div>
       </nav>
 
-      {/* Premium Header */}
-      <div className="bg-zinc-950 text-white pb-14 pt-10 px-5 relative overflow-hidden">
+      {/* ── Header ── */}
+      <div className="bg-zinc-950 text-white pb-16 pt-10 px-5 relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "linear-gradient(to right,#fff 1px,transparent 1px),linear-gradient(to bottom,#fff 1px,transparent 1px)", backgroundSize: "40px 40px" }} />
+        <div className="absolute -top-20 -right-16 w-72 h-72 rounded-full bg-emerald-500/[0.07] blur-3xl pointer-events-none" />
+
         <div className="max-w-4xl mx-auto relative z-10 flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
           <div>
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500 mb-2">Order History</p>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">My Bookings</h1>
+            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-zinc-500 mb-2">Order History</p>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">My Bookings</h1>
+            {!loading && !error && (
+              <p className="text-[13px] text-zinc-500 mt-2">
+                {counts.all} booking{counts.all !== 1 ? "s" : ""}
+                {counts.active > 0 && <> · <span className="text-emerald-400 font-semibold">{counts.active} active</span></>}
+              </p>
+            )}
           </div>
-          <Link href="/" className="inline-flex items-center justify-center bg-white text-black px-7 py-3.5 text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-200 transition-colors shadow-xl">
-            + Book Service
+          <Link href="/"
+            className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-200 transition-colors shadow-xl">
+            <Plus size={13} strokeWidth={2.5} /> Book Service
           </Link>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-5 pb-16">
-        
-        {/* Floating Tabs */}
+
+        {/* ── Floating tabs ── */}
         <div className="-mt-7 relative z-20 mb-8">
-          <div className="bg-white p-1.5 rounded-lg border border-zinc-200 shadow-sm flex overflow-x-auto scrollbar-hide">
+          <div className="bg-white p-1.5 rounded-2xl border border-zinc-200/80 shadow-[0_12px_32px_-16px_rgba(0,0,0,0.18)] flex overflow-x-auto scrollbar-hide">
             {TABS.map(t => (
               <button key={t.key} onClick={() => setTab(t.key)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-md text-[10px] font-bold tracking-widest uppercase transition-all whitespace-nowrap ${tab === t.key ? "bg-black text-white shadow-md" : "text-zinc-500 hover:text-black hover:bg-zinc-50"}`}>
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-[10px] font-bold tracking-widest uppercase transition-all whitespace-nowrap ${
+                  tab === t.key ? "bg-zinc-950 text-white shadow-md" : "text-zinc-500 hover:text-black hover:bg-zinc-50"
+                }`}>
                 {t.label}
-                <span className={`px-2 py-0.5 rounded-full text-[9px] ${tab === t.key ? "bg-white/20 text-white" : "bg-zinc-100 text-zinc-500"}`}>
+                <span className={`min-w-[20px] px-1.5 py-0.5 rounded-full text-[9px] tabular-nums ${
+                  tab === t.key ? "bg-white/15 text-white" : "bg-zinc-100 text-zinc-500"
+                }`}>
                   {counts[t.key]}
                 </span>
               </button>
@@ -124,89 +229,79 @@ export default function MyBookingsPage() {
           </div>
         </div>
 
-        {/* Error */}
+        {/* ── Error ── */}
         {error && (
-          <div className="text-center py-20 bg-white border border-red-100 rounded-lg">
+          <div className="text-center py-20 bg-white border border-red-100 rounded-2xl">
             <p className="text-red-500 font-bold tracking-widest uppercase text-xs mb-4">Failed to load bookings</p>
-            <button onClick={load} className="bg-red-500 text-white px-6 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:bg-red-600 transition-colors rounded-lg">Retry</button>
+            <button onClick={load}
+              className="bg-zinc-950 text-white px-6 py-2.5 text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-800 transition-colors rounded-xl">
+              Retry
+            </button>
           </div>
         )}
 
-        {/* Loading */}
+        {/* ── Loading skeleton ── */}
         {loading && (
-          <div className="space-y-4">
-            {[...Array(3)].map((_,i) => <div key={i} className="bg-white border border-zinc-200 rounded-lg h-32 animate-pulse" />)}
-          </div>
-        )}
-
-        {/* Empty */}
-        {!loading && !error && visible.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 bg-white border border-dashed border-zinc-300 rounded-lg">
-            <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4">
-              <Calendar size={24} className="text-zinc-300" />
-            </div>
-            <p className="text-zinc-400 font-bold tracking-widest uppercase text-xs mb-4">No bookings found</p>
-            <Link href="/" className="bg-black text-white px-6 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-md">Browse Services</Link>
-          </div>
-        )}
-
-        {/* List */}
-        {!loading && !error && visible.length > 0 && (
-          <div className="space-y-4">
-            {visible.map(b => {
-              const st   = STATUS_CONFIG[b.status] || STATUS_CONFIG.cancelled;
-              const meta = CATEGORY_META[b.serviceCategory];
-              const scheduledDate = new Date(b.scheduledDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-              const slotLabel = b.scheduledTimeSlot
-                ? new Date(`2000-01-01T${b.scheduledTimeSlot}`).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
-                : "";
-
-              return (
-                <Link key={b._id} href={`/bookings/${b._id}`} className="block group">
-                  <div className="bg-white border border-zinc-200 rounded-lg p-5 md:p-6 hover:border-black hover:shadow-xl transition-all duration-300 flex flex-col md:flex-row gap-5 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-zinc-200 group-hover:bg-black transition-colors" />
-                    
-                    {/* Icon */}
-                    <div className="w-14 h-14 rounded-md bg-zinc-50 border border-zinc-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:bg-black group-hover:border-black transition-all duration-300 shadow-sm">
-                      {meta ? <meta.icon size={22} className="text-zinc-400 group-hover:text-white transition-colors" /> : <Wrench size={22} className="text-zinc-400 group-hover:text-white transition-colors" />}
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-3 mb-2">
-                        <span className={`inline-flex items-center gap-1.5 text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full border ${st.bg} ${st.text} ${st.border}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
-                          {st.label}
-                        </span>
-                        <p className="text-[9px] font-bold text-zinc-400 tracking-widest uppercase">{b.bookingNumber}</p>
-                      </div>
-                      <h3 className="font-extrabold text-black text-lg mb-2.5 truncate">{b.serviceName}</h3>
-                      <div className="flex flex-wrap gap-y-2 gap-x-5">
-                        <p className="text-xs font-semibold text-zinc-500 flex items-center gap-1.5">
-                          <Calendar size={13} className="text-zinc-400" /> {scheduledDate} {slotLabel && <><span className="text-zinc-300">·</span><Clock size={13} className="text-zinc-400" /> {slotLabel}</>}
-                        </p>
-                        <p className="text-xs font-semibold text-zinc-500 truncate flex items-center gap-1.5 max-w-[200px] md:max-w-xs">
-                          <MapPin size={13} className="text-zinc-400 shrink-0" /> <span className="truncate">{b.address?.text}</span>
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Price + arrow */}
-                    <div className="flex items-center justify-between md:flex-col md:items-end md:justify-center border-t border-zinc-100 md:border-0 pt-4 md:pt-0 mt-2 md:mt-0 shrink-0">
-                      <p className="text-xl md:text-2xl font-black text-black">{formatPrice(b.pricing?.totalAmount || 0)}</p>
-                      <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 group-hover:bg-black group-hover:border-black group-hover:text-white transition-all mt-2 hidden md:flex">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                      </div>
-                    </div>
+          <div className="space-y-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white border border-zinc-200/70 rounded-2xl p-5 animate-pulse">
+                <div className="flex items-start gap-4">
+                  <div className="hidden sm:block w-11 h-11 rounded-xl bg-zinc-100 shrink-0" />
+                  <div className="flex-1 space-y-2.5">
+                    <div className="h-4 w-28 bg-zinc-100 rounded-full" />
+                    <div className="h-4 w-2/3 bg-zinc-100 rounded-full" />
+                    <div className="h-3 w-1/2 bg-zinc-50 rounded-full" />
                   </div>
-                </Link>
-              );
-            })}
+                  <div className="h-5 w-16 bg-zinc-100 rounded-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Empty ── */}
+        {!loading && !error && visible.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24 bg-white border border-dashed border-zinc-300 rounded-2xl text-center px-6">
+            <div className="w-14 h-14 bg-zinc-50 border border-zinc-100 rounded-2xl flex items-center justify-center mb-4">
+              <Calendar size={22} className="text-zinc-300" />
+            </div>
+            <p className="text-sm font-extrabold text-zinc-800 mb-1">
+              {tab === "all" ? "No bookings yet" : `No ${tab} bookings`}
+            </p>
+            <p className="text-xs text-zinc-400 mb-6 max-w-[260px]">
+              {tab === "all"
+                ? "Book your first service — a verified professional will be at your door in no time."
+                : "Nothing here right now. Check the other tabs or book a new service."}
+            </p>
+            <Link href="/"
+              className="bg-zinc-950 text-white px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-md">
+              Browse Services
+            </Link>
+          </div>
+        )}
+
+        {/* ── Grouped list ── */}
+        {!loading && !error && visible.length > 0 && (
+          <div className="space-y-8">
+            {groups.map(group => (
+              <section key={group.key}>
+                <div className="flex items-center gap-3 mb-3 px-1">
+                  <h2 className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400 shrink-0">{group.key}</h2>
+                  <div className="h-px flex-1 bg-zinc-200/70" />
+                  <span className="text-[10px] font-semibold text-zinc-300 tabular-nums shrink-0">
+                    {group.items.length}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {group.items.map(b => <BookingCard key={b._id} booking={b} />)}
+                </div>
+              </section>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Mobile Bottom Nav */}
+      {/* ── Mobile bottom nav ── */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-zinc-200">
         <div className="flex items-center justify-around h-16 px-2">
           <Link href="/" className="flex flex-col items-center gap-1 flex-1 py-2 text-zinc-400 hover:text-black transition-colors">
@@ -220,6 +315,10 @@ export default function MyBookingsPage() {
           <Link href="/bookings" className="flex flex-col items-center gap-1 flex-1 py-2 text-black transition-colors">
             <Calendar size={19} strokeWidth={2.3} />
             <span className="text-[9px] font-bold tracking-wide">Bookings</span>
+          </Link>
+          <Link href="/profile" className="flex flex-col items-center gap-1 flex-1 py-2 text-zinc-400 hover:text-black transition-colors">
+            <UserRound size={19} strokeWidth={1.8} />
+            <span className="text-[9px] font-bold tracking-wide">Profile</span>
           </Link>
         </div>
       </nav>

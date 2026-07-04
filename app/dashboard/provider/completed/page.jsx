@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import api from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
-import { formatPrice } from "@/lib/services";
+import { formatPrice, providerPayout } from "@/lib/services";
 import {
   CheckCircle2, Star, CalendarClock, MapPin, UserRound,
   Wrench, TrendingUp, Award, Clock,
@@ -36,7 +36,7 @@ export default function ProviderCompletedOrdersPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  const totalEarnings = jobs.reduce((sum, j) => sum + (j.pricing?.totalAmount || 0), 0);
+  const totalEarnings = jobs.reduce((sum, j) => sum + providerPayout(j.pricing), 0);
   const ratedJobs     = jobs.filter(j => getJobRating(j) > 0);
   const avgRating     = ratedJobs.length
     ? (ratedJobs.reduce((s, j) => s + getJobRating(j), 0) / ratedJobs.length).toFixed(1)
@@ -143,7 +143,8 @@ export default function ProviderCompletedOrdersPage() {
                   {/* Right */}
                   <div className="flex-shrink-0 flex flex-col items-end justify-between">
                     <div className="text-right">
-                      <p className="text-base font-black text-zinc-900">{formatPrice(job.pricing?.totalAmount || 0)}</p>
+                      <p className="text-base font-black text-emerald-700">{formatPrice(providerPayout(job.pricing))}</p>
+                      <p className="text-[9px] text-zinc-400 mt-0.5">your earning</p>
                       <p className="text-[9px] text-zinc-300 mt-0.5">{job.bookingNumber}</p>
                     </div>
                     {getJobRating(job) > 0 ? (

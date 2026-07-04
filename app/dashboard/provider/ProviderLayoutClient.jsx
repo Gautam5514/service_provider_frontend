@@ -57,13 +57,13 @@ export default function ProviderLayout({ children }) {
       <ProviderSidebar />
 
       {/* Main content */}
-      <SidebarInset className="bg-[#f7f7f8] overflow-y-auto">
+      <SidebarInset className="bg-[#f7f7f8] overflow-y-auto [scrollbar-gutter:stable]">
 
         {/* Desktop topbar */}
-        <div className="hidden md:flex sticky top-0 z-30 h-20 items-center border-b border-zinc-100 bg-white/90 px-8 backdrop-blur-lg shadow-sm transition-all duration-200">
+        <div className="hidden md:flex sticky top-0 z-30 h-16 shrink-0 items-center border-b border-zinc-100 bg-white/90 px-8 backdrop-blur-lg shadow-sm transition-all duration-200">
           {/* Left: Sidebar trigger & Title */}
           <div className="flex-1 flex items-center gap-4 justify-start min-w-[200px]">
-            <SidebarTrigger className="text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-md p-2 transition-all duration-200" />
+            <SidebarTrigger className="text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-xl p-2 transition-all duration-200" />
             <div className="w-px h-5 bg-zinc-200" />
             <div className="flex items-center gap-2.5">
               <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
@@ -85,7 +85,7 @@ export default function ProviderLayout({ children }) {
         </div>
 
         {/* Mobile header */}
-        <div className="md:hidden bg-zinc-950 px-4 py-3 sticky top-0 z-30 space-y-3">
+        <div className="md:hidden bg-zinc-950 px-4 py-3 sticky top-0 z-30 shrink-0 space-y-3">
           <div className="h-8 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <img src="/logo-transparent.png" alt="EliteCrew" className="w-6 h-6 object-contain brightness-0 invert" />
