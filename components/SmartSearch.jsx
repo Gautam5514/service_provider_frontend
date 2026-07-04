@@ -237,25 +237,25 @@ function searchLocal(q, userRole) {
 
 const ROLE_CONFIG = {
   customer: {
-    label:       "Elite Search Hub",
+    label:       "Search services & bookings",
     placeholder: "Search AC repair, wiring, past orders...",
     endpoint:    "/search",
     chips:       ["AC repair", "Fan install", "completed", "today"],
   },
   provider: {
-    label:       "Partner Spotlight Portal",
+    label:       "Search jobs & earnings",
     placeholder: "Search active orders, payout status, clients...",
     endpoint:    "/search",
     chips:       ["completed", "in progress", "cash", "today"],
   },
   admin: {
-    label:       "Central Admin Spotlight",
+    label:       "Admin search",
     placeholder: "Search provider names, approvals, tickets...",
     endpoint:    "/search",
     chips:       ["pending", "approved", "today", "cash"],
   },
   public: {
-    label:       "EliteCrew Service Search",
+    label:       "Search services",
     placeholder: "Search home services (AC, cooler, wiring)...",
     endpoint:    "/search/public",
     chips:       ["AC repair", "Fridge repair", "Fan install", "TV mounting"],
@@ -571,7 +571,7 @@ export default function SmartSearch({ role: roleProp, compact = false, className
       {/* ── Search Input Frame ── */}
       <div className="relative z-50">
         {compact ? (
-          <div className="relative flex items-center h-10 w-full rounded-xl border border-zinc-200/90 bg-zinc-50/80 hover:bg-zinc-100/60 focus-within:bg-white focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:shadow-[0_0_12px_rgba(99,102,241,0.15)] transition-all duration-250 px-3.5 gap-2.5">
+          <div className="relative flex items-center h-10 w-full rounded-xl border border-zinc-200/90 bg-zinc-50/80 hover:bg-zinc-100/60 focus-within:bg-white focus-within:border-black focus-within:ring-2 focus-within:ring-black/10 transition-all duration-250 px-3.5 gap-2.5">
             <Search size={15} className="text-zinc-400 shrink-0" strokeWidth={2.4} />
             <input
               ref={inputRef}
@@ -665,7 +665,7 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                 type="button"
                 aria-label="Search"
                 onClick={() => { setOpen(true); inputRef.current?.focus(); }}
-                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2.5 text-[11px] font-black uppercase tracking-wider text-white shadow-[0_8px_18px_-5px_rgba(16,185,129,0.6)] hover:bg-emerald-700 active:scale-95 transition-all md:px-6 md:py-3.5 md:text-xs"
+                className="inline-flex items-center gap-1.5 rounded-full bg-zinc-950 px-4 py-2.5 text-[11px] font-black uppercase tracking-wider text-white hover:bg-zinc-800 active:scale-95 transition-all md:px-6 md:py-3.5 md:text-xs"
               >
                 <Search size={14} strokeWidth={3} />
                 <span className="hidden sm:inline">Search</span>
@@ -681,8 +681,8 @@ export default function SmartSearch({ role: roleProp, compact = false, className
           id="sm-results"
           role="listbox"
           className={`absolute top-full z-50 mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-white/99 backdrop-blur-2xl shadow-[0_25px_65px_-15px_rgba(0,0,0,0.35)] animate-in fade-in slide-in-from-top-3 duration-200 ${
-            compact 
-              ? "right-0 w-[92vw] sm:right-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[480px] md:w-[500px] origin-top-right sm:origin-top" 
+            compact
+              ? "right-0 w-[92vw] max-w-[520px] sm:w-[480px] md:w-[520px] origin-top-right"
               : "left-0 right-0 origin-top"
           }`}
         >
@@ -690,7 +690,7 @@ export default function SmartSearch({ role: roleProp, compact = false, className
           <div className="border-b border-zinc-100 px-5 py-4 bg-zinc-50/50">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5">
-                <Sparkles size={12} className="text-indigo-500 animate-pulse" />
+                <Search size={11} className="text-zinc-400" />
                 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">
                   {cfg.label}
                 </p>
@@ -710,7 +710,7 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                     key={chip}
                     type="button"
                     onClick={() => applyChip(chip)}
-                    className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-widest text-zinc-500 hover:border-indigo-500 hover:text-indigo-600 hover:shadow-sm transition-all duration-200"
+                    className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-widest text-zinc-500 hover:border-black hover:text-black transition-colors duration-200"
                   >
                     {chip}
                   </button>
@@ -815,193 +815,86 @@ export default function SmartSearch({ role: roleProp, compact = false, className
 
                 {/* 2. Role-Specific Grid Panels */}
                 <div className="px-5 py-5">
-                  <div className="flex items-center gap-1.5 mb-3.5">
-                    <LayoutDashboard size={12} className="text-zinc-400" />
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <LayoutDashboard size={11} className="text-zinc-400" />
                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">
-                      Quick Access Dashboard
+                      {(role === "public" || role === "customer") ? "Popular services" : "Quick actions"}
                     </p>
                   </div>
 
-                  {/* Public / Customer Grid */}
+                  {/* Public / Customer — popular services */}
                   {(role === "public" || role === "customer") && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div
-                        onClick={() => applyChip("AC Service")}
-                        className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-cyan-50/20 hover:bg-cyan-50/50 hover:border-cyan-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5"
-                      >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-100/70 text-cyan-600 group-hover:scale-105 transition-transform shrink-0">
-                          <AirVent size={18} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-xs font-black text-zinc-800 truncate">AC Gas & Jet Clean</span>
-                            <span className="bg-cyan-100 text-cyan-700 text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider scale-90 shrink-0">Cooling</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {[
+                        { q: "AC Service",          Icon: AirVent,      label: "AC Service & Repair",   sub: "Deep clean · gas refill",      price: "₹399" },
+                        { q: "Electrical wiring",   Icon: Zap,          label: "Electrical Work",       sub: "Wiring · switches · MCB",      price: "₹199" },
+                        { q: "Refrigerator Repair", Icon: Refrigerator, label: "Fridge Repair",         sub: "Cooling issues · compressor",  price: "₹499" },
+                        { q: "Fan Installation",    Icon: Fan,          label: "Fan Installation",      sub: "Ceiling & wall mount",         price: "₹149" },
+                      ].map(({ q, Icon, label, sub, price }) => (
+                        <div key={q} onClick={() => applyChip(q)} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 hover:border-black cursor-pointer group transition-colors">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-900">
+                            <Icon size={16} />
                           </div>
-                          <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">High-pressure deep clean starts ₹399</span>
-                        </div>
-                      </div>
-
-                      <div
-                        onClick={() => applyChip("Electrical wiring")}
-                        className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-amber-50/30 hover:bg-amber-50/60 hover:border-amber-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5"
-                      >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100/60 text-amber-600 group-hover:scale-105 transition-transform shrink-0">
-                          <Zap size={18} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-xs font-black text-zinc-800 truncate">Electrical Repairs</span>
-                            <span className="bg-amber-100 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider scale-90 shrink-0">Hot</span>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-xs font-bold text-zinc-900 block truncate">{label}</span>
+                            <span className="text-[10px] font-medium text-zinc-400 block truncate mt-0.5">{sub}</span>
                           </div>
-                          <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">Certified electricians starts ₹199</span>
-                        </div>
-                      </div>
-
-                      <div
-                        onClick={() => applyChip("Refrigerator Repair")}
-                        className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-blue-50/20 hover:bg-blue-50/50 hover:border-blue-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5"
-                      >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100/70 text-blue-600 group-hover:scale-105 transition-transform shrink-0">
-                          <Refrigerator size={18} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-xs font-black text-zinc-800 truncate">Fridge Specialists</span>
-                            <span className="bg-blue-100 text-blue-700 text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider scale-90 shrink-0">Expert</span>
+                          <div className="text-right shrink-0">
+                            <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-400">from</span>
+                            <span className="text-xs font-black text-zinc-900">{price}</span>
                           </div>
-                          <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">Compressor repairs & diagnostics starts ₹499</span>
                         </div>
-                      </div>
-
-                      <div
-                        onClick={() => applyChip("Fan Installation")}
-                        className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-emerald-50/20 hover:bg-emerald-50/50 hover:border-emerald-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5"
-                      >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100/70 text-emerald-600 group-hover:scale-105 transition-transform shrink-0">
-                          <Fan size={18} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-xs font-black text-zinc-800 truncate">Ceiling Fan Installation</span>
-                            <span className="bg-emerald-100 text-emerald-700 text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider scale-90 shrink-0">Fast</span>
-                          </div>
-                          <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">High-speed fan mount & wiring starts ₹149</span>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   )}
 
-                  {/* Provider Grid */}
+                  {/* Provider — quick actions */}
                   {role === "provider" && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Link href="/dashboard/provider/orders">
-                        <div className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-emerald-50/20 hover:bg-emerald-50/50 hover:border-emerald-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5">
-                          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100/70 text-emerald-600 shrink-0">
-                            <BriefcaseBusiness size={18} />
-                            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                            </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {[
+                        { href: "/dashboard/provider/orders",    Icon: BriefcaseBusiness, label: "Active orders",     sub: "Assigned jobs & directions" },
+                        { href: "/dashboard/provider/completed", Icon: DollarSign,        label: "Earnings",          sub: "Completed payouts" },
+                        { href: "/dashboard/provider/profile",   Icon: Wrench,            label: "Services & skills", sub: "What you offer" },
+                        { href: "/dashboard/provider/profile",   Icon: Star,              label: "My ratings",        sub: "Customer feedback" },
+                      ].map(({ href, Icon, label, sub }, i) => (
+                        <Link key={label + i} href={href}>
+                          <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 hover:border-black cursor-pointer group transition-colors">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-900">
+                              <Icon size={16} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs font-bold text-zinc-900 block truncate">{label}</span>
+                              <span className="text-[10px] font-medium text-zinc-400 block truncate mt-0.5">{sub}</span>
+                            </div>
+                            <ArrowRight size={13} className="shrink-0 text-zinc-300 group-hover:text-black transition-colors" />
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xs font-black text-zinc-800 block truncate">My Active Orders</span>
-                            <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">Assigned jobs, directions, and timings</span>
-                          </div>
-                        </div>
-                      </Link>
-
-                      <Link href="/dashboard/provider/completed">
-                        <div className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-amber-50/20 hover:bg-amber-50/50 hover:border-amber-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100/70 text-amber-600 shrink-0">
-                            <DollarSign size={18} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xs font-black text-zinc-800 block truncate">Weekly Earnings Log</span>
-                            <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">Track completed payouts & performance charts</span>
-                          </div>
-                        </div>
-                      </Link>
-
-                      <Link href="/dashboard/provider/profile">
-                        <div className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-indigo-50/20 hover:bg-indigo-50/50 hover:border-indigo-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100/70 text-indigo-600 shrink-0">
-                            <Wrench size={18} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xs font-black text-zinc-800 block truncate">Manage My Skills & Rates</span>
-                            <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">Add offered services, pricing thresholds</span>
-                          </div>
-                        </div>
-                      </Link>
-
-                      <Link href="/dashboard/provider/profile">
-                        <div className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-rose-50/20 hover:bg-rose-50/50 hover:border-rose-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100/70 text-rose-600 shrink-0">
-                            <Star size={18} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xs font-black text-zinc-800 block truncate">Customer Rating Analytics</span>
-                            <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">Review feedback rating comments from orders</span>
-                          </div>
-                        </div>
-                      </Link>
+                        </Link>
+                      ))}
                     </div>
                   )}
 
-                  {/* Admin Grid */}
+                  {/* Admin — quick actions */}
                   {role === "admin" && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in">
-                      <Link href="/admin/providers">
-                        <div className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-emerald-50/20 hover:bg-emerald-50/50 hover:border-emerald-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100/70 text-emerald-600 shrink-0">
-                            <ShieldCheck size={18} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {[
+                        { href: "/admin/providers", Icon: ShieldCheck, label: "Providers",        sub: "Monitor & audit profiles" },
+                        { href: "/admin/approved",  Icon: UserCheck,   label: "KYC approvals",    sub: "Pending onboardings" },
+                        { href: "/admin/coupons",   Icon: Percent,     label: "Coupons & offers", sub: "Promo campaigns" },
+                        { href: "/admin/support",   Icon: ShieldAlert, label: "Support center",   sub: "Complaints & disputes" },
+                      ].map(({ href, Icon, label, sub }) => (
+                        <Link key={label} href={href}>
+                          <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 hover:border-black cursor-pointer group transition-colors">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-900">
+                              <Icon size={16} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs font-bold text-zinc-900 block truncate">{label}</span>
+                              <span className="text-[10px] font-medium text-zinc-400 block truncate mt-0.5">{sub}</span>
+                            </div>
+                            <ArrowRight size={13} className="shrink-0 text-zinc-300 group-hover:text-black transition-colors" />
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xs font-black text-zinc-800 block truncate">Provider Administration</span>
-                            <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">Search, monitor, audit or disable provider profiles</span>
-                          </div>
-                        </div>
-                      </Link>
-
-                      <Link href="/admin/approved">
-                        <div className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-amber-50/20 hover:bg-amber-50/50 hover:border-amber-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5">
-                          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100/70 text-amber-600 shrink-0">
-                            <UserCheck size={18} />
-                            <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                            </span>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xs font-black text-zinc-800 block truncate">Pending KYC Approvals</span>
-                            <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">Activate pending onboardings and registrations</span>
-                          </div>
-                        </div>
-                      </Link>
-
-                      <Link href="/admin/coupons">
-                        <div className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-blue-50/20 hover:bg-blue-50/50 hover:border-blue-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100/70 text-blue-600 shrink-0">
-                            <Percent size={18} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xs font-black text-zinc-800 block truncate">Discount Coupons & Offers</span>
-                            <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">Create custom discounts and promo campaigns</span>
-                          </div>
-                        </div>
-                      </Link>
-
-                      <Link href="/admin/support">
-                        <div className="flex items-center gap-3.5 rounded-xl border border-zinc-100 p-3 bg-rose-50/20 hover:bg-rose-50/50 hover:border-rose-200 cursor-pointer group transition-all duration-200 hover:translate-x-0.5">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100/70 text-rose-600 shrink-0">
-                            <ShieldAlert size={18} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <span className="text-xs font-black text-zinc-800 block truncate">Helpdesk & Support Center</span>
-                            <span className="text-[10px] font-medium text-zinc-400 block line-clamp-1 mt-0.5">Resolve active complaints and refund disputes</span>
-                          </div>
-                        </div>
-                      </Link>
+                        </Link>
+                      ))}
                     </div>
                   )}
 
@@ -1010,7 +903,7 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                     <div className="mt-4 pt-4 border-t border-zinc-100">
                       <div className="flex items-center gap-1.5 mb-2">
                         <Filter size={10} className="text-zinc-400" />
-                        <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400">Smart CRM Filters</span>
+                        <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400">Quick filters</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {["status:pending", "role:provider", "city:Mumbai", "completed today", "payouts"].map(pill => (
@@ -1018,7 +911,7 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                             key={pill}
                             type="button"
                             onClick={() => applyChip(pill)}
-                            className="bg-zinc-100 hover:bg-indigo-50 hover:text-indigo-600 border border-zinc-200 hover:border-indigo-300 text-zinc-600 font-extrabold text-[9px] px-2.5 py-1 rounded-full transition-all"
+                            className="bg-zinc-100 hover:bg-white hover:text-black border border-zinc-200 hover:border-black text-zinc-600 font-extrabold text-[9px] px-2.5 py-1 rounded-full transition-colors"
                           >
                             {pill}
                           </button>
@@ -1114,7 +1007,7 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                 <kbd className="bg-white border border-zinc-200 px-1 rounded shadow-sm text-[8px]">Esc</kbd> dismiss
               </span>
               {activeIdx >= 0 && (
-                <span className="ml-auto text-[9px] font-black uppercase bg-indigo-500 text-white px-2 py-0.5 rounded-full shadow-[0_2px_4px_rgba(99,102,241,0.3)]">
+                <span className="ml-auto text-[9px] font-black uppercase bg-zinc-950 text-white px-2 py-0.5 rounded-full">
                   {activeIdx + 1} of {mergedResults.length}
                 </span>
               )}

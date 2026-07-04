@@ -603,6 +603,37 @@ export default function HomePage() {
     Object.entries(SERVICE_CATALOG).map(([k, a]) => [k, a.length])
   );
 
+  // Live admin-created services enrich the category cards: uploaded photos,
+  // real counts and real starting prices — so a new category like "cleaning"
+  // is never a blank card. Static catalog stays as the instant fallback.
+  const [liveByCat, setLiveByCat] = useState({});
+  useEffect(() => {
+    const absUrl = (u) => {
+      if (!u) return null;
+      if (/^https?:\/\//i.test(u)) return u;
+      const base = process.env.NEXT_PUBLIC_API_URL || "";
+      return `${base}${u.startsWith("/") ? "" : "/"}${u}`;
+    };
+    fetch("/api/services")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d?.success || !Array.isArray(d.services)) return;
+        const byCat = {};
+        for (const s of d.services) {
+          if (s.active === false || !s.category) continue;
+          const cur = byCat[s.category] || { slugs: new Set(), minPrice: null, image: null, firstName: null };
+          cur.slugs.add(s.slug);
+          const price = Number(s.basePrice);
+          if (Number.isFinite(price) && (cur.minPrice === null || price < cur.minPrice)) cur.minPrice = price;
+          if (!cur.image && s.images?.length) cur.image = absUrl(s.images[0]);
+          if (!cur.firstName || s.isPopular) cur.firstName = s.name;
+          byCat[s.category] = cur;
+        }
+        setLiveByCat(byCat);
+      })
+      .catch(() => {});
+  }, []);
+
   const [stats, setStats] = useState(null);
   useEffect(() => {
     fetch("/api/stats/public")
@@ -1000,12 +1031,24 @@ export default function HomePage() {
             {Object.entries(CATEGORY_META)
               .sort(([a], [b]) => (CATEGORY_INSIGHTS[b]?.demand || 0) - (CATEGORY_INSIGHTS[a]?.demand || 0))
               .map(([key, meta], idx) => {
-                const count    = catCounts[key] || 0;
                 const ins      = CATEGORY_INSIGHTS[key] || { demand: 50, booked: "100", rating: 4.7, eta: "same day" };
                 const services = SERVICE_CATALOG[key] || [];
-                const minPrice = services.length ? Math.min(...services.map(s => s.price)) : null;
-                const popular  = services.find(s => s.popular) || services[0];
-                const photo    = CATEGORY_PHOTOS[key];
+                const live     = liveByCat[key];
+
+                // Merge static + live: count dedupes by slug, price takes the
+                // true minimum, photo prefers the curated one then the first
+                // uploaded service image (so new categories always have one).
+                const staticSlugs = new Set(services.map(s => s.slug));
+                const liveOnly    = live ? [...live.slugs].filter(sl => !staticSlugs.has(sl)).length : 0;
+                const count       = (catCounts[key] || 0) + liveOnly;
+
+                const staticMin = services.length ? Math.min(...services.map(s => s.price)) : null;
+                const minPrice  = [staticMin, live?.minPrice].filter(v => v != null).length
+                  ? Math.min(...[staticMin, live?.minPrice].filter(v => v != null))
+                  : null;
+
+                const popular  = services.find(s => s.popular) || services[0] || (live?.firstName ? { name: live.firstName } : null);
+                const photo    = CATEGORY_PHOTOS[key] || live?.image || null;
                 return (
                   <Link
                     key={key}
