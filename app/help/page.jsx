@@ -1,7 +1,43 @@
 import InfoPageShell from "@/components/InfoPageShell";
 
+export const metadata = {
+  title: "Help Center — Bookings, Payments & Support",
+  description:
+    "Quick answers about booking status, provider assignment, payments, invoices, ratings and account support on EliteCrew.",
+  alternates: { canonical: "/help" },
+};
+
+// FAQ rich-result markup — mirrors the questions answered on this page.
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Where can I see my service status?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Open My Bookings to see pending, accepted, in-progress, completed, rating, and invoice details for each booking.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Why is a provider not assigned yet?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "The platform checks active providers near your service address, category match, availability, and working radius. Assignment happens when an eligible provider accepts.",
+      },
+    },
+  ],
+};
+
 export default function HelpCenterPage() {
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+    />
     <InfoPageShell
       eyebrow="Support"
       title="Help Center"
@@ -23,5 +59,6 @@ export default function HelpCenterPage() {
         },
       ]}
     />
+    </>
   );
 }

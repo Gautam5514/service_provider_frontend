@@ -1,5 +1,12 @@
 import InfoPageShell from "@/components/InfoPageShell";
 
+export const metadata = {
+  title: "How It Works — Book a Verified Professional in Minutes",
+  description:
+    "Choose a service, pick a time slot, get matched with a KYC-verified professional near you, track the job live and pay after the work is done.",
+  alternates: { canonical: "/how-it-works" },
+};
+
 export default function HowItWorksPage() {
   return (
     <InfoPageShell

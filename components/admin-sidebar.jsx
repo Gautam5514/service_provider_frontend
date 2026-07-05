@@ -25,6 +25,8 @@ import {
   MessageSquare,
   Wrench,
   Tag,
+  Briefcase,
+  Inbox,
 } from "lucide-react";
 
 const navItems = [
@@ -33,6 +35,8 @@ const navItems = [
   { name: "Approved",     href: "/admin/approved",  icon: CheckCircle2 },
   { name: "Services",     href: "/admin/services",  icon: Wrench },
   { name: "Coupons",      href: "/admin/coupons",   icon: Tag },
+  { name: "Careers",      href: "/admin/careers",   icon: Briefcase },
+  { name: "Job Applicants", href: "/admin/careers/applications", icon: Inbox },
   { name: "Support",      href: "/admin/support",   icon: MessageSquare },
 ];
 

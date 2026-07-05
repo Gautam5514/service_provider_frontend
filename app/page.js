@@ -9,6 +9,7 @@ import { CATEGORY_META, SERVICE_CATALOG, formatPrice } from "@/lib/services";
 import LocationBar from "@/components/LocationBar";
 import SmartSearch from "@/components/SmartSearch";
 import NotificationBell from "@/components/NotificationBell";
+import SiteFooter from "@/components/SiteFooter";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -1830,114 +1831,7 @@ export default function HomePage() {
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────────────── */}
-      <footer className="border-t border-zinc-100 bg-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-10 pt-12 pb-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-
-            <div className="col-span-2 md:col-span-1">
-              <Link href="/" className="flex items-center gap-2.5 mb-4 group">
-                <img 
-                  src="/logo-transparent.png" 
-                  alt="EliteCrew" 
-                  className="w-8 h-8 object-contain"
-                />
-                <span className="text-base font-extrabold tracking-tight">
-                  Elite<span className="font-light text-zinc-400">Crew</span>
-                </span>
-              </Link>
-              <p className="text-xs text-zinc-400 leading-relaxed max-w-[195px]">
-                Expert home services at your doorstep. Verified professionals, transparent pricing.
-              </p>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400 mb-4">Services</p>
-              <ul className="space-y-2.5">
-                {Object.entries(CATEGORY_META).map(([key, m]) => (
-                  <li key={key}>
-                    <Link href={`/services/${key}`}
-                      className="text-xs font-semibold text-zinc-500 hover:text-black transition-colors">
-                      {m.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400 mb-4">Company</p>
-              <ul className="space-y-2.5">
-                {[
-                  ["About Us",                   "/about"],
-                  ["How It Works",               "/how-it-works"],
-                  ["Our Professionals",          "/providers"],
-                  ["Register as a Professional", "/professional/register"],
-                  ["Partner Login",              "/professional/login"],
-                  ["Blog",                       "/blog"],
-                ].map(([label, href]) => (
-                  <li key={label}>
-                    <Link href={href}
-                      className="text-xs font-semibold text-zinc-500 hover:text-black transition-colors">
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400 mb-4">Support</p>
-              <ul className="space-y-2.5">
-                {[
-                  ["Help Center",      "/help"],
-                  ["Contact Us",       "/contact"],
-                  ["My Bookings",      "/bookings"],
-                  ["Terms of Service", "/terms"],
-                  ["Privacy Policy",   "/privacy"],
-                ].map(([label, href]) => (
-                  <li key={label}>
-                    <Link href={href}
-                      className="text-xs font-semibold text-zinc-500 hover:text-black transition-colors">
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Professional / partner CTA band */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl bg-black text-white px-6 py-5">
-            <div className="text-center sm:text-left">
-              <p className="text-sm font-extrabold">Are you a service professional?</p>
-              <p className="text-xs text-zinc-400 mt-0.5">Join EliteCrew Partner and get verified jobs near you.</p>
-            </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <Link
-                href="/professional/register"
-                className="bg-white text-black px-5 py-2.5 text-[11px] font-bold tracking-widest uppercase hover:bg-zinc-200 transition-colors"
-              >
-                Register as a Professional
-              </Link>
-              <Link
-                href="/professional/login"
-                className="text-white/80 text-[11px] font-bold tracking-widest uppercase hover:text-white transition-colors"
-              >
-                Partner Login
-              </Link>
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 pt-7 border-t border-zinc-100">
-            <p className="text-[10px] text-zinc-400 font-medium">
-              © {new Date().getFullYear()} EliteCrew · All rights reserved.
-            </p>
-            <p className="text-[10px] text-zinc-300 font-medium">
-              Built with care for India&apos;s homes.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
 
       {/* ─── SLIDE-IN QUICK VIEW PANEL DRAWER ──────────────────────────────── */}
       {quickViewService && (

@@ -1,5 +1,12 @@
 import InfoPageShell from "@/components/InfoPageShell";
 
+export const metadata = {
+  title: "About Us — Verified Home Service Professionals",
+  description:
+    "EliteCrew connects you with KYC-verified professionals for AC service, fridge repair, electrical work and more. Transparent pricing, trackable bookings, pay after service.",
+  alternates: { canonical: "/about" },
+};
+
 export default function AboutPage() {
   return (
     <InfoPageShell

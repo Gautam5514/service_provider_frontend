@@ -1,4 +1,5 @@
 import { CATEGORY_META, SERVICE_CATALOG } from "@/lib/services";
+import { SITE_URL, SITE_NAME } from "@/lib/seo";
 
 export async function generateMetadata({ params }) {
   const { category } = await params;
@@ -13,8 +14,8 @@ export async function generateMetadata({ params }) {
     ? Math.min(...services.map(s => s.price))
     : null;
 
-  const title       = `${meta.label} Near You — Starting ₹${lowestPrice ?? "149"} | EliteCrew`;
-  const description = `Book verified ${meta.label} professionals at your doorstep. ${meta.description}. Starting from ₹${lowestPrice ?? "149"}. Pay after service. KYC-verified pros.`;
+  const title       = `Best ${meta.label} at Home Near You — From ₹${lowestPrice ?? "149"}`;
+  const description = `Book the best ${meta.label.toLowerCase()} professionals at your doorstep. ${meta.description}. Upfront prices from ₹${lowestPrice ?? "149"}, KYC-verified pros, pay after service.`;
 
   return {
     title,
@@ -50,8 +51,8 @@ export default async function ServiceCategoryLayout({ children, params }) {
         description: meta.description,
         provider: {
           "@type": "LocalBusiness",
-          name:    "EliteCrew",
-          url:     process.env.NEXT_PUBLIC_SITE_URL || "https://elitecrew.example.com",
+          name:    SITE_NAME,
+          url:     SITE_URL,
         },
         areaServed: {
           "@type": "Country",
@@ -81,12 +82,31 @@ export default async function ServiceCategoryLayout({ children, params }) {
       }
     : null;
 
+  // Breadcrumbs help Google show "Home > Services > AC Services" in results.
+  const breadcrumbJsonLd = meta
+    ? {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+          { "@type": "ListItem", position: 2, name: "Services", item: `${SITE_URL}/services/${category}` },
+          { "@type": "ListItem", position: 3, name: meta.label, item: `${SITE_URL}/services/${category}` },
+        ],
+      }
+    : null;
+
   return (
     <>
       {jsonLd && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      {breadcrumbJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
         />
       )}
       {children}

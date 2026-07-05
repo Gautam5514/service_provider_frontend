@@ -1,5 +1,12 @@
 import InfoPageShell from "@/components/InfoPageShell";
 
+export const metadata = {
+  title: "Contact Us — EliteCrew Support",
+  description:
+    "Reach EliteCrew support for booking help, provider onboarding, invoices, ratings or service complaints. Keep your booking number handy for faster help.",
+  alternates: { canonical: "/contact" },
+};
+
 export default function ContactPage() {
   return (
     <InfoPageShell
