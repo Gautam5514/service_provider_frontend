@@ -1,7 +1,24 @@
 import { SITE_URL } from "@/lib/seo";
 import { CATEGORY_META } from "@/lib/services";
 
-export default function sitemap() {
+async function getBlogEntries() {
+  const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  try {
+    const res = await fetch(`${base}/api/blog`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.posts || []).map((p) => ({
+      url: `${SITE_URL}/blog/${p.slug}`,
+      lastModified: new Date(p.updatedAt || p.createdAt),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export default async function sitemap() {
   const now = new Date();
 
   const staticPages = [
@@ -25,12 +42,15 @@ export default function sitemap() {
     changeFrequency: "weekly",
   }));
 
-  return [...staticPages, ...categoryPages].map(
-    ({ path, priority, changeFrequency }) => ({
+  const blogEntries = await getBlogEntries();
+
+  return [
+    ...[...staticPages, ...categoryPages].map(({ path, priority, changeFrequency }) => ({
       url: `${SITE_URL}${path}`,
       lastModified: now,
       changeFrequency,
       priority,
-    })
-  );
+    })),
+    ...blogEntries,
+  ];
 }

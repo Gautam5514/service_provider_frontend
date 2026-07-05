@@ -27,6 +27,8 @@ import {
   Tag,
   Briefcase,
   Inbox,
+  Newspaper,
+  Mail,
 } from "lucide-react";
 
 const navItems = [
@@ -37,6 +39,8 @@ const navItems = [
   { name: "Coupons",      href: "/admin/coupons",   icon: Tag },
   { name: "Careers",      href: "/admin/careers",   icon: Briefcase },
   { name: "Job Applicants", href: "/admin/careers/applications", icon: Inbox },
+  { name: "Blog",         href: "/admin/blog",      icon: Newspaper },
+  { name: "Contact Messages", href: "/admin/contact", icon: Mail },
   { name: "Support",      href: "/admin/support",   icon: MessageSquare },
 ];
 
