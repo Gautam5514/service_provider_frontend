@@ -45,6 +45,78 @@ const SERVICE_IMAGES = {
   // Appliances
   "appliance-repair": "/images/appliance_repair.png",
   "washing-machine-repair": "/images/washing_machine_repair.png",
+
+  // Cleaning
+  "bathroom-deep-cleaning": "/images/cleaning.png",
+  "kitchen-deep-cleaning": "/images/cleaning.png",
+  "full-home-deep-cleaning": "/images/cleaning.png",
+  "sofa-shampoo-cleaning": "/images/cleaning.png",
+  "carpet-cleaning": "/images/cleaning.png",
+  "mattress-cleaning": "/images/cleaning.png",
+  "balcony-cleaning": "/images/cleaning.png",
+  "move-in-move-out-cleaning": "/images/cleaning.png",
+  "regular-housekeeping": "/images/cleaning.png",
+  "window-glass-cleaning": "/images/cleaning.png",
+
+  // Plumbing
+  "tap-mixer-repair": "/images/plumbing.png",
+  "toilet-flush-repair": "/images/plumbing.png",
+  "drain-unclogging": "/images/plumbing.png",
+  "water-tank-cleaning": "/images/plumbing.png",
+  "pipe-leakage-repair": "/images/plumbing.png",
+
+  // Carpentry
+  "door-lock-installation": "/images/carpentry.png",
+  "furniture-assembly": "/images/carpentry.png",
+  "bed-repair": "/images/carpentry.png",
+  "curtain-rod-installation": "/images/carpentry.png",
+  "modular-furniture-repair": "/images/carpentry.png",
+
+  // Pest Control
+  "cockroach-pest-control": "/images/pest_control.png",
+  "termite-treatment": "/images/pest_control.png",
+  "bed-bug-treatment": "/images/pest_control.png",
+  "mosquito-control": "/images/pest_control.png",
+
+  // Painting
+  "single-wall-painting": "/images/painting.png",
+  "room-painting": "/images/painting.png",
+  "wall-dampness-repair": "/images/painting.png",
+  "texture-wall-painting": "/images/painting.png",
+
+  // Laundry
+  "cloth-wash-fold": "/images/laundry.png",
+  "dry-cleaning": "/images/laundry.png",
+  "steam-ironing": "/images/laundry.png",
+  "shoe-cleaning": "/images/laundry.png",
+  "curtain-laundry": "/images/laundry.png",
+
+  // Car Wash
+  "car-exterior-wash": "/images/car_wash.png",
+  "car-interior-cleaning": "/images/car_wash.png",
+  "car-deep-cleaning": "/images/car_wash.png",
+  "bike-wash": "/images/car_wash.png",
+
+  // Beauty
+  "women-haircut-at-home": "/images/beauty.png",
+  "facial-cleanup": "/images/beauty.png",
+  "manicure-pedicure": "/images/beauty.png",
+  "waxing-service": "/images/beauty.png",
+
+  // Grooming
+  "men-haircut-at-home": "/images/grooming.png",
+  "beard-styling": "/images/grooming.png",
+  "head-massage": "/images/grooming.png",
+
+  // Moving
+  "packers-movers-survey": "/images/moving.png",
+  "home-shifting-help": "/images/moving.png",
+  "furniture-moving-help": "/images/moving.png",
+
+  // Gardening
+  "garden-maintenance": "/images/gardening.png",
+  "plant-care-visit": "/images/gardening.png",
+  "lawn-mowing": "/images/gardening.png",
 };
 
 const CATEGORY_BACKGROUNDS = {
@@ -55,6 +127,17 @@ const CATEGORY_BACKGROUNDS = {
   fridge:     "/images/fridge_repair.png",
   electrical: "/images/electrical_work.png",
   appliance:  "/images/appliance_repair.png",
+  cleaning:   "/images/cleaning.png",
+  plumbing:   "/images/plumbing.png",
+  carpentry:  "/images/carpentry.png",
+  "pest-control": "/images/pest_control.png",
+  painting:   "/images/painting.png",
+  laundry:    "/images/laundry.png",
+  "car-wash": "/images/car_wash.png",
+  beauty:     "/images/beauty.png",
+  grooming:   "/images/grooming.png",
+  moving:     "/images/moving.png",
+  gardening:  "/images/gardening.png",
 };
 
 const DEFAULT_SERVICE_IMAGE = "/images/default_service.png";

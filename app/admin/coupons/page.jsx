@@ -18,7 +18,27 @@ import {
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-const CATEGORIES = ["ac", "cooler", "fan", "tv", "fridge", "electrical", "appliance"];
+const CATEGORIES = [
+  "ac",
+  "cooler",
+  "fan",
+  "tv",
+  "fridge",
+  "electrical",
+  "appliance",
+  "cleaning",
+  "plumbing",
+  "carpentry",
+  "pest-control",
+  "painting",
+  "laundry",
+  "car-wash",
+  "beauty",
+  "grooming",
+  "moving",
+  "gardening",
+  "other",
+];
 
 function statusOf(coupon) {
   if (!coupon.isActive)
@@ -75,7 +95,10 @@ export default function AdminCouponsPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const id = setTimeout(load, 0);
+    return () => clearTimeout(id);
+  }, [load]);
 
   // ── create ─────────────────────────────────────────────────────────────────
   const handleCreate = async (e) => {

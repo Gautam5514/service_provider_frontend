@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
-import { AirVent, Fan, Monitor, Pencil, Plug, Plus, Refrigerator, Save, Sparkles, Trash2, Wind, Wrench, X, Zap } from "lucide-react";
+import { AirVent, Armchair, Bath, Bug, Car, Fan, Flower2, Hand, Monitor, Paintbrush, Pencil, Plug, Plus, Refrigerator, Save, Scissors, Shirt, Sparkles, Trash2, Truck, Wind, Wrench, X, Zap } from "lucide-react";
 
 const CATEGORIES = [
   { key: "ac", label: "AC", Icon: AirVent },
@@ -13,6 +13,16 @@ const CATEGORIES = [
   { key: "electrical", label: "Electrical", Icon: Zap },
   { key: "appliance", label: "Appliance", Icon: Plug },
   { key: "cleaning", label: "Cleaning", Icon: Sparkles },
+  { key: "plumbing", label: "Plumbing", Icon: Bath },
+  { key: "carpentry", label: "Carpentry", Icon: Armchair },
+  { key: "pest-control", label: "Pest Control", Icon: Bug },
+  { key: "painting", label: "Painting", Icon: Paintbrush },
+  { key: "laundry", label: "Laundry", Icon: Shirt },
+  { key: "car-wash", label: "Car Wash", Icon: Car },
+  { key: "beauty", label: "Beauty", Icon: Hand },
+  { key: "grooming", label: "Grooming", Icon: Scissors },
+  { key: "moving", label: "Moving", Icon: Truck },
+  { key: "gardening", label: "Gardening", Icon: Flower2 },
   { key: "other", label: "Others", Icon: Wrench },
 ];
 
@@ -42,7 +52,17 @@ const PRESETS = {
   electrical: ["Electrical Work", "Wiring & Cabling", "Switch Board Repair"],
   appliance: ["Appliance Repair", "Washing Machine Repair", "Geyser Repair"],
   cleaning: ["Bathroom Cleaning", "Kitchen Cleaning", "Full Home Cleaning", "Sofa Cleaning"],
-  other: ["Plumbing Work", "Painting", "Pest Control", "Carpentry"],
+  plumbing: ["Tap and Mixer Repair", "Toilet Flush Repair", "Drain Unclogging", "Pipe Leakage Repair"],
+  carpentry: ["Door Lock Installation", "Furniture Assembly", "Bed Repair", "Curtain Rod Installation"],
+  "pest-control": ["Cockroach Pest Control", "Termite Treatment", "Bed Bug Treatment", "Mosquito Control"],
+  painting: ["Single Wall Painting", "Room Painting", "Wall Dampness Repair", "Texture Wall Painting"],
+  laundry: ["Cloth Wash and Fold", "Dry Cleaning", "Steam Ironing", "Shoe Cleaning"],
+  "car-wash": ["Car Exterior Wash", "Car Interior Cleaning", "Car Deep Cleaning", "Bike Wash"],
+  beauty: ["Women Haircut at Home", "Facial Cleanup", "Manicure and Pedicure", "Waxing Service"],
+  grooming: ["Men Haircut at Home", "Beard Styling", "Head Massage"],
+  moving: ["Home Shifting Help", "Furniture Moving Help", "Packers and Movers Survey"],
+  gardening: ["Garden Maintenance", "Plant Care Visit", "Lawn Mowing"],
+  other: ["Custom House Work", "General Helper", "Odd Jobs", "Errand Support"],
 };
 
 const EMPTY_FORM = {
@@ -227,7 +247,7 @@ export default function AdminServicesPage() {
             <p className="mb-2 text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">Service Catalog</p>
             <h1 className="text-3xl font-black tracking-tight text-zinc-950 md:text-4xl">Manage Services.</h1>
             <p className="mt-2 max-w-2xl text-sm font-medium text-zinc-500">
-              Add and control customer-bookable services across AC, fan, fridge, cooler, TV, electrical, and appliance categories.
+              Add and control customer-bookable services across repair, cleaning, laundry, car wash, beauty, handyman, moving and home-care categories.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

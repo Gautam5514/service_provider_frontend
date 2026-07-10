@@ -18,7 +18,27 @@ const STEPS = [
   { id: 7, label: "Agreement" },
 ];
 
-const SERVICE_CATEGORIES = ["ac", "cooler", "fan", "tv", "fridge", "electrical", "appliance", "cleaning", "other"];
+const SERVICE_CATEGORIES = [
+  "ac",
+  "cooler",
+  "fan",
+  "tv",
+  "fridge",
+  "electrical",
+  "appliance",
+  "cleaning",
+  "plumbing",
+  "carpentry",
+  "pest-control",
+  "painting",
+  "laundry",
+  "car-wash",
+  "beauty",
+  "grooming",
+  "moving",
+  "gardening",
+  "other",
+];
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const DAY_LABELS = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
 

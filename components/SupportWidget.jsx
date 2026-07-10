@@ -4,25 +4,30 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import api from "@/lib/api";
-import { getStoredUser } from "@/lib/auth";
-import { CheckCircle2, Loader2, MessageSquare, Send, X } from "lucide-react";
+import { AUTH_CHANGED_EVENT, getStoredUser } from "@/lib/auth";
+import { SUPPORT_OPEN_EVENT } from "@/lib/supportWidget";
+import { CheckCircle2, Link2, Loader2, MessageSquare, Send, X } from "lucide-react";
 
-// Routes where the floating button is hidden (they have their own support UX)
-const HIDDEN_PREFIXES = [
-  "/admin",
-  "/dashboard/provider",
-  "/dashboard/customer",
-  "/provider/onboarding",
-  "/support",
-];
+// Routes where the floating button is hidden (they have their own support UX,
+// or are the support chat itself).
+const HIDDEN_PREFIXES = ["/admin", "/support"];
 
-const CATEGORIES = [
-  { value: "booking_issue",      label: "Booking Issue"      },
-  { value: "payment_issue",      label: "Payment Issue"      },
-  { value: "provider_complaint", label: "Provider Complaint" },
-  { value: "app_bug",            label: "App Bug / Error"    },
-  { value: "general",            label: "General Enquiry"    },
-];
+const CATEGORIES_BY_ROLE = {
+  customer: [
+    { value: "booking_issue",      label: "Booking Issue"      },
+    { value: "payment_issue",      label: "Payment Issue"      },
+    { value: "provider_complaint", label: "Provider Complaint" },
+    { value: "app_bug",            label: "App Bug / Error"    },
+    { value: "general",            label: "General Enquiry"    },
+  ],
+  provider: [
+    { value: "booking_issue",  label: "Booking Issue"    },
+    { value: "payment_issue",  label: "Payment / Payout Issue" },
+    { value: "customer_issue", label: "Customer Issue"   },
+    { value: "app_bug",        label: "App Bug / Error"  },
+    { value: "general",        label: "General Enquiry"  },
+  ],
+};
 
 export default function SupportWidget() {
   const router   = useRouter();
@@ -34,11 +39,28 @@ export default function SupportWidget() {
   const [user,     setUser]     = useState(null);
   const [category, setCategory] = useState("");
   const [message,  setMessage]  = useState("");
+  const [booking,  setBooking]  = useState(null); // { bookingId, bookingNumber, serviceName }
   const [loading,  setLoading]  = useState(false);
   const [done,     setDone]     = useState(null);
   const [error,    setError]    = useState("");
 
-  useEffect(() => { setUser(getStoredUser()); }, []);
+  // Re-read the session on every navigation — this widget lives in the root
+  // layout, which never remounts on client-side navigation, so without this
+  // it keeps rendering whatever auth state was true on the very first paint
+  // (e.g. still shows "sign in" right after a login redirect).
+  useEffect(() => { setUser(getStoredUser()); }, [pathname]);
+
+  // Also resync immediately on login/logout (same tab) and cross-tab changes,
+  // rather than waiting for the next navigation.
+  useEffect(() => {
+    const resync = () => setUser(getStoredUser());
+    window.addEventListener(AUTH_CHANGED_EVENT, resync);
+    window.addEventListener("storage", resync);
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, resync);
+      window.removeEventListener("storage", resync);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -48,12 +70,30 @@ export default function SupportWidget() {
     return () => document.removeEventListener("pointerdown", handler);
   }, []);
 
+  // Let other pages (e.g. a booking detail page) open this widget pre-filled.
+  useEffect(() => {
+    const handler = (e) => {
+      const { bookingId, bookingNumber, serviceName, category: cat } = e.detail || {};
+      setDone(null);
+      setError("");
+      if (bookingId) setBooking({ bookingId, bookingNumber, serviceName });
+      if (cat) setCategory(cat);
+      setOpen(true);
+    };
+    window.addEventListener(SUPPORT_OPEN_EVENT, handler);
+    return () => window.removeEventListener(SUPPORT_OPEN_EVENT, handler);
+  }, []);
+
   // ── Early return AFTER all hooks ─────────────────────────────────────────
   // Rules of Hooks: hooks must always run in the same order; only return after them.
+  const isPartner = user?.role === "provider";
+  if (user?.role === "admin") return null;
   if (HIDDEN_PREFIXES.some(p => pathname.startsWith(p))) return null;
 
+  const categories = CATEGORIES_BY_ROLE[isPartner ? "provider" : "customer"];
+
   // ── Handlers ─────────────────────────────────────────────────────────────
-  const reset = () => { setDone(null); setCategory(""); setMessage(""); setError(""); };
+  const reset = () => { setDone(null); setCategory(""); setMessage(""); setBooking(null); setError(""); };
 
   const goToChat = () => {
     if (done?.ticketId) router.push(`/support/${done.ticketId}`);
@@ -70,11 +110,16 @@ export default function SupportWidget() {
     setLoading(true);
     setError("");
     try {
-      const { data } = await api.post("/support", { category, message: message.trim() });
+      const { data } = await api.post("/support", {
+        category,
+        message:   message.trim(),
+        bookingId: booking?.bookingId || undefined,
+      });
       if (data.success) {
         setDone({ ticketNumber: data.ticket.ticketNumber, ticketId: data.ticket._id });
         setCategory("");
         setMessage("");
+        setBooking(null);
       }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create ticket. Please try again.");
@@ -85,7 +130,7 @@ export default function SupportWidget() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div ref={wrapRef} className="fixed bottom-6 right-6 z-[200] flex flex-col items-end gap-3 font-sans">
+    <div ref={wrapRef} className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[1200] flex flex-col items-end gap-3 font-sans">
 
       {/* ── Panel ──────────────────────────────────────────────────────────── */}
       {open && (
@@ -99,7 +144,7 @@ export default function SupportWidget() {
               </div>
               <div>
                 <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-500">EliteCrew</p>
-                <p className="text-sm font-extrabold text-white">Support</p>
+                <p className="text-sm font-extrabold text-white">{isPartner ? "Partner Support" : "Support"}</p>
               </div>
             </div>
             <button
@@ -161,6 +206,24 @@ export default function SupportWidget() {
                   {" "}Describe your issue and we&apos;ll get back to you in real time.
                 </p>
 
+                {booking && (
+                  <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 mb-3">
+                    <Link2 size={12} className="text-zinc-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold text-zinc-700 truncate">
+                        {booking.bookingNumber || "Linked booking"}
+                      </p>
+                      {booking.serviceName && (
+                        <p className="text-[10px] text-zinc-400 truncate">{booking.serviceName}</p>
+                      )}
+                    </div>
+                    <button type="button" onClick={() => setBooking(null)}
+                      className="text-zinc-300 hover:text-zinc-600 shrink-0">
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-3">
                   <div>
                     <label className="block text-[10px] font-bold tracking-widest uppercase text-zinc-400 mb-1.5">
@@ -172,7 +235,7 @@ export default function SupportWidget() {
                       className="w-full border border-zinc-200 px-3 py-2.5 text-sm text-black bg-white focus:outline-none focus:border-black transition-colors rounded-xl"
                     >
                       <option value="">Select issue type…</option>
-                      {CATEGORIES.map(c => (
+                      {categories.map(c => (
                         <option key={c.value} value={c.value}>{c.label}</option>
                       ))}
                     </select>
@@ -184,7 +247,9 @@ export default function SupportWidget() {
                     </label>
                     <textarea
                       rows={4}
-                      placeholder="e.g. My provider didn&apos;t arrive and I&apos;ve had no update…"
+                      placeholder={isPartner
+                        ? "e.g. The customer wasn't available at the address and I couldn't reach them…"
+                        : "e.g. My provider didn't arrive and I've had no update…"}
                       value={message}
                       onChange={e => { setMessage(e.target.value); setError(""); }}
                       className="w-full border border-zinc-200 px-3 py-2.5 text-sm text-black focus:outline-none focus:border-black transition-colors resize-none rounded-xl placeholder:text-zinc-300"

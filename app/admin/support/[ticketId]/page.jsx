@@ -118,7 +118,15 @@ export default function AdminSupportChatPage({ params }) {
     try {
       const { data } = await api.post(`/support/${ticketId}/message`, { text });
       if (data.success) {
-        setMessages(prev => prev.map(m => m._id === tempId ? { ...data.message } : m));
+        // The server also echoes this message back over the socket to every
+        // admin room (including this one), so it may already have been
+        // appended by the socket handler by the time this resolves — drop
+        // the temp placeholder without adding a duplicate.
+        setMessages(prev => {
+          const withoutTemp = prev.filter(m => m._id !== tempId);
+          const alreadyPresent = withoutTemp.some(m => String(m._id) === String(data.message._id));
+          return alreadyPresent ? withoutTemp : [...withoutTemp, data.message];
+        });
       }
     } catch (err) {
       setMessages(prev => prev.filter(m => m._id !== tempId));
@@ -148,10 +156,13 @@ export default function AdminSupportChatPage({ params }) {
   if (loading) return <BrandLoader fullScreen />;
 
   return (
-    <div className="flex flex-col h-screen bg-[#f7f7f8] font-sans selection:bg-black selection:text-white">
+    <div className="bg-[#f7f7f8] font-sans selection:bg-black selection:text-white">
 
       {/* ── Header ───────────────────────────────────────────────────────── */}
-      <div className="bg-zinc-950 text-white shrink-0">
+      {/* Sticky within the admin dashboard's own scroll container (SidebarInset),
+          offset below its topbar (h-16) on desktop — this page has no scroll
+          container of its own, unlike the standalone /support/[id] page. */}
+      <div className="sticky top-0 md:top-16 z-20 bg-zinc-950 text-white">
         <div className="px-6 md:px-10 py-4 flex items-center gap-4">
           <Link href="/admin/support"
             className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 text-zinc-400 hover:bg-white/15 hover:text-white transition-colors shrink-0">
@@ -166,10 +177,15 @@ export default function AdminSupportChatPage({ params }) {
               </span>
             </div>
             <p className="text-sm font-extrabold text-white truncate mt-0.5">{ticket?.subject}</p>
-            {ticket?.customerId?.fullName && (
+            {ticket?.userId?.fullName && (
               <p className="text-[10px] text-zinc-500 flex items-center gap-1 mt-0.5">
-                <User size={10} /> {ticket.customerId.fullName}
-                {ticket.customerId?.email && ` · ${ticket.customerId.email}`}
+                <User size={10} /> {ticket.userId.fullName}
+                <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${
+                  ticket.userRole === "provider" ? "bg-violet-500/20 text-violet-300" : "bg-sky-500/20 text-sky-300"
+                }`}>
+                  {ticket.userRole === "provider" ? "Partner" : "Customer"}
+                </span>
+                {ticket.userId?.email && ` · ${ticket.userId.email}`}
               </p>
             )}
           </div>
@@ -197,7 +213,7 @@ export default function AdminSupportChatPage({ params }) {
       </div>
 
       {/* ── Messages ─────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto bg-white">
+      <div className="bg-white min-h-[60vh]">
         <div className="max-w-3xl mx-auto px-4 md:px-8 py-6 space-y-3">
 
           {/* Ticket info banner */}
@@ -205,6 +221,26 @@ export default function AdminSupportChatPage({ params }) {
             <p className="text-[10px] font-bold uppercase tracking-widests text-zinc-400 mb-1">{ticket?.categoryLabel}</p>
             <p className="text-sm font-extrabold text-zinc-900">{ticket?.subject}</p>
           </div>
+
+          {/* Linked booking */}
+          {ticket?.bookingId?.bookingNumber && (
+            <div className="flex items-center justify-between gap-3 bg-white border border-zinc-200 rounded-2xl px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-[9px] font-bold tracking-widest uppercase text-zinc-400">Linked Booking</p>
+                <p className="text-xs font-bold text-zinc-800 truncate">
+                  {ticket.bookingId.bookingNumber} · {ticket.bookingId.serviceName}
+                </p>
+              </div>
+              <div className="shrink-0 flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest">
+                <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">{ticket.bookingId.status}</span>
+                <span className={`px-2 py-0.5 rounded-full ${
+                  ticket.bookingId.paymentStatus === "paid" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                }`}>
+                  {ticket.bookingId.paymentStatus}
+                </span>
+              </div>
+            </div>
+          )}
 
           {messages.map((msg, i) => {
             // From admin's perspective: admin messages on right, customer on left
@@ -249,7 +285,7 @@ export default function AdminSupportChatPage({ params }) {
       </div>
 
       {/* ── Reply area ───────────────────────────────────────────────────── */}
-      <div className="bg-white border-t border-zinc-100 shrink-0">
+      <div className="sticky bottom-0 z-20 bg-white border-t border-zinc-100">
         <div className="max-w-3xl mx-auto px-4 md:px-8 py-4">
           {error && <p className="text-[11px] text-red-600 font-semibold mb-2">{error}</p>}
 

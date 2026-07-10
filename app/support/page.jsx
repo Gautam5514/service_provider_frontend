@@ -98,7 +98,7 @@ export default function SupportListPage() {
 
         {!loading && !error && tickets.map(ticket => {
           const st = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.closed;
-          const hasUnread = (ticket.unreadByCustomer || 0) > 0;
+          const hasUnread = (ticket.unreadByMe || 0) > 0;
           return (
             <Link key={ticket._id} href={`/support/${ticket._id}`}>
               <div className={`group bg-white border rounded-lg p-5 hover:border-zinc-300 hover:shadow-md transition-all duration-200 cursor-pointer ${hasUnread ? "border-blue-200" : "border-zinc-100"}`}>
@@ -118,12 +118,15 @@ export default function SupportListPage() {
                       </span>
                       {hasUnread && (
                         <span className="text-[9px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-md">
-                          {ticket.unreadByCustomer} new
+                          {ticket.unreadByMe} new
                         </span>
                       )}
                     </div>
                     <p className="text-sm font-bold text-zinc-900 truncate mb-0.5">{ticket.subject}</p>
-                    <p className="text-[10px] font-semibold text-zinc-400">{ticket.categoryLabel}</p>
+                    <p className="text-[10px] font-semibold text-zinc-400">
+                      {ticket.categoryLabel}
+                      {ticket.bookingId?.bookingNumber && ` · Booking ${ticket.bookingId.bookingNumber}`}
+                    </p>
                     {ticket.lastMessage && (
                       <p className="text-xs text-zinc-400 mt-1 truncate">
                         {ticket.lastMessage.senderRole === "admin" ? "Support: " : "You: "}

@@ -1,5 +1,6 @@
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import { SITE_URL, SITE_NAME } from "@/lib/seo";
+import SupportWidget from "@/components/SupportWidget";
 import "./globals.css";
 
 // Plus Jakarta Sans — the clean, modern geometric sans behind the
@@ -128,6 +129,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         {children}
+        <SupportWidget />
       </body>
     </html>
   );

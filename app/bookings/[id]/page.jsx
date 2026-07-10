@@ -10,7 +10,8 @@ import { getStoredUser } from "@/lib/auth";
 import { formatPrice } from "@/lib/services";
 import { getSocket, ensureSocket } from "@/lib/socket";
 import { loadRazorpay, openRazorpayCheckout } from "@/lib/razorpay";
-import { BellRing, CheckCircle2, ClipboardList, KeyRound, MapPin, Navigation, Phone, Wrench, Calendar, CreditCard, Clock, Loader2, ShieldCheck } from "lucide-react";
+import { openSupportWidget } from "@/lib/supportWidget";
+import { BellRing, CheckCircle2, ClipboardList, KeyRound, MapPin, MessageSquare, Navigation, Phone, Wrench, Calendar, CreditCard, Clock, Loader2, ShieldCheck } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import SmartSearch from "@/components/SmartSearch";
 
@@ -61,6 +62,7 @@ export default function BookingDetailPage({ params }) {
     : null
   );
   const [paying,           setPaying]           = useState(false);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const [providerLocation, setProviderLocation] = useState(null);
   const [showDispute,      setShowDispute]      = useState(false);
   const [disputeForm,      setDisputeForm]      = useState({ reason: "", description: "" });
@@ -169,6 +171,25 @@ export default function BookingDetailPage({ params }) {
     } finally { setCancelling(false); }
   };
 
+  const handleDownloadInvoice = async () => {
+    setDownloadingInvoice(true);
+    try {
+      const res = await api.get(`/bookings/${id}/invoice`, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${booking.bookingNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      setToast({ msg: "Couldn't download invoice. Please try again.", ok: false });
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
   const handleDispute = async (e) => {
     e.preventDefault();
     if (!disputeForm.reason) return;
@@ -239,15 +260,6 @@ export default function BookingDetailPage({ params }) {
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans selection:bg-black selection:text-white pb-20 sm:pb-16">
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          body { background: white !important; }
-          body * { visibility: hidden; }
-          #invoice, #invoice * { visibility: visible; }
-          #invoice { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
-        }
-      `}} />
-
       {/* Toast */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-5 py-3.5 text-[10px] rounded-full font-bold tracking-widest uppercase shadow-2xl border ${toast.ok ? "bg-white border-emerald-200 text-emerald-700" : "bg-white border-red-200 text-red-700"}`}>
@@ -604,7 +616,7 @@ export default function BookingDetailPage({ params }) {
 
         {/* Dynamic completed tax invoice Receipt PDF section */}
         {isCompleted && (
-          <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-xl print:border-0 print:shadow-none print:rounded-none relative z-10" id="invoice">
+          <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-xl relative z-10" id="invoice">
             <div className="bg-zinc-950 text-white p-8 md:p-10 relative overflow-hidden">
               <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
                 style={{backgroundImage:"linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)",backgroundSize:"24px 24px"}} />
@@ -693,16 +705,17 @@ export default function BookingDetailPage({ params }) {
                 </p>
               </div>
 
-              <div className="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 print:hidden border-t border-zinc-100 pt-8">
+              <div className="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-t border-zinc-100 pt-8">
                 <p className="text-xs font-semibold text-zinc-400 max-w-sm leading-relaxed">
                   The same invoice format is attached to the customer completion email as a PDF receipt.
                 </p>
                 <button
                   type="button"
-                  onClick={() => window.print()}
-                  className="bg-black text-white px-8 py-3.5 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase hover:bg-zinc-800 shadow-xl transition-all"
+                  onClick={handleDownloadInvoice}
+                  disabled={downloadingInvoice}
+                  className="bg-black text-white px-8 py-3.5 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase hover:bg-zinc-800 shadow-xl transition-all disabled:opacity-60 disabled:cursor-wait"
                 >
-                  Print PDF Invoice
+                  {downloadingInvoice ? "Downloading…" : "Download Invoice"}
                 </button>
               </div>
             </div>
@@ -771,6 +784,21 @@ export default function BookingDetailPage({ params }) {
             )}
           </div>
         )}
+
+        {/* ── Chat with Support (booking not showing up, payment stuck, etc.) ── */}
+        <div className="print:hidden">
+          <button
+            onClick={() => openSupportWidget({
+              bookingId:     booking._id,
+              bookingNumber: booking.bookingNumber,
+              serviceName:   booking.serviceName,
+              category:      booking.paymentStatus === "unpaid" ? "payment_issue" : "booking_issue",
+            })}
+            className="w-full flex items-center justify-center gap-2 border border-zinc-200 text-zinc-500 py-3.5 text-[9px] font-bold tracking-widest uppercase hover:border-zinc-400 hover:text-zinc-800 transition-colors rounded-2xl bg-white shadow-[0_4px_25px_rgba(0,0,0,0.01)]"
+          >
+            <MessageSquare size={13} /> Chat With Support
+          </button>
+        </div>
 
         {/* Action Panel */}
         <div className="flex flex-wrap gap-4 pt-4 print:hidden z-10 relative">

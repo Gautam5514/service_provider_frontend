@@ -33,9 +33,19 @@ import {
   Search,
   ShieldCheck,
   AirVent,
+  Armchair,
+  Bath,
+  Bug,
+  Car,
+  Flower2,
+  Hand,
+  Paintbrush,
+  Scissors,
+  Shirt,
   Sparkles,
   Star,
   TrendingUp,
+  Truck,
   Users,
   Wind,
   Wrench,
@@ -189,6 +199,17 @@ const CATEGORY_ICONS = {
   fridge:    Refrigerator,
   electrical:Zap,
   appliance: Plug,
+  cleaning:  Sparkles,
+  plumbing:  Bath,
+  carpentry: Armchair,
+  "pest-control": Bug,
+  painting:  Paintbrush,
+  laundry:   Shirt,
+  "car-wash": Car,
+  beauty:    Hand,
+  grooming:  Scissors,
+  moving:    Truck,
+  gardening: Flower2,
 };
 
 // Local demand signals used to rank + enrich the category cards.
@@ -199,8 +220,19 @@ const CATEGORY_INSIGHTS = {
   fan:        { demand: 84, booked: "1.2k", rating: 4.8, eta: "same day"  },
   fridge:     { demand: 73, booked: "940",  rating: 4.7, eta: "same day"  },
   electrical: { demand: 66, booked: "1.1k", rating: 4.8, eta: "in 60 min" },
+  cleaning:   { demand: 64, booked: "1.3k", rating: 4.8, eta: "same day"  },
   appliance:  { demand: 58, booked: "760",  rating: 4.7, eta: "same day"  },
+  plumbing:   { demand: 54, booked: "680",  rating: 4.7, eta: "in 90 min" },
+  laundry:    { demand: 52, booked: "720",  rating: 4.7, eta: "next day"  },
+  "car-wash": { demand: 50, booked: "610",  rating: 4.7, eta: "same day"  },
   tv:         { demand: 49, booked: "540",  rating: 4.7, eta: "next day"  },
+  carpentry:  { demand: 45, booked: "430",  rating: 4.6, eta: "same day"  },
+  "pest-control": { demand: 43, booked: "390", rating: 4.7, eta: "next day" },
+  painting:   { demand: 39, booked: "310",  rating: 4.6, eta: "next day"  },
+  beauty:     { demand: 37, booked: "520",  rating: 4.8, eta: "same day"  },
+  grooming:   { demand: 35, booked: "470",  rating: 4.7, eta: "same day"  },
+  moving:     { demand: 31, booked: "220",  rating: 4.6, eta: "scheduled" },
+  gardening:  { demand: 28, booked: "180",  rating: 4.6, eta: "scheduled" },
 };
 
 // Real service photography for the image-led category cards (Urban Company style).
@@ -212,17 +244,117 @@ const CATEGORY_PHOTOS = {
   fridge:     "/images/fridge_repair.png",
   electrical: "/images/electrical_work.png",
   appliance:  "/images/appliance_repair.png",
+  cleaning:   "/images/cleaning.png",
+  plumbing:   "/images/plumbing.png",
+  carpentry:  "/images/carpentry.png",
+  "pest-control": "/images/pest_control.png",
+  painting:   "/images/painting.png",
+  laundry:    "/images/laundry.png",
+  "car-wash": "/images/car_wash.png",
+  beauty:     "/images/beauty.png",
+  grooming:   "/images/grooming.png",
+  moving:     "/images/moving.png",
+  gardening:  "/images/gardening.png",
 };
 
 const SERVICE_IMAGES = {
   "ac-repair": "/images/ac_repair.png",
   "ac-installation": "/images/ac_installation.png",
+  "ac-deep-cleaning": "/images/ac_deep_cleaning.png",
+  "ac-gas-refilling": "/images/ac_gas_refilling.png",
+  "ac-uninstallation": "/images/ac_uninstallation.png",
+  
   "cooler-repair": "/images/cooler_repair.png",
+  "cooler-service": "/images/cooler_service.png",
+  "cooler-installation": "/images/cooler_installation.png",
+  
   "fan-repair": "/images/fan_repair.png",
+  "fan-installation": "/images/fan_installation.png",
+  "fan-servicing": "/images/fan_servicing.png",
+  
   "tv-repair": "/images/tv_repair.png",
+  "tv-wall-mounting": "/images/tv_wall_mounting.png",
+  
   "fridge-repair": "/images/fridge_repair.png",
+  "fridge-gas-refill": "/images/fridge_gas_refill.png",
+  
   "electrical-work": "/images/electrical_work.png",
+  "wiring-cabling": "/images/wiring_cabling.png",
+  
   "appliance-repair": "/images/appliance_repair.png",
+  "washing-machine-repair": "/images/washing_machine_repair.png",
+
+  // Cleaning
+  "bathroom-deep-cleaning": "/images/cleaning.png",
+  "kitchen-deep-cleaning": "/images/cleaning.png",
+  "full-home-deep-cleaning": "/images/cleaning.png",
+  "sofa-shampoo-cleaning": "/images/cleaning.png",
+  "carpet-cleaning": "/images/cleaning.png",
+  "mattress-cleaning": "/images/cleaning.png",
+  "balcony-cleaning": "/images/cleaning.png",
+  "move-in-move-out-cleaning": "/images/cleaning.png",
+  "regular-housekeeping": "/images/cleaning.png",
+  "window-glass-cleaning": "/images/cleaning.png",
+
+  // Plumbing
+  "tap-mixer-repair": "/images/plumbing.png",
+  "toilet-flush-repair": "/images/plumbing.png",
+  "drain-unclogging": "/images/plumbing.png",
+  "water-tank-cleaning": "/images/plumbing.png",
+  "pipe-leakage-repair": "/images/plumbing.png",
+
+  // Carpentry
+  "door-lock-installation": "/images/carpentry.png",
+  "furniture-assembly": "/images/carpentry.png",
+  "bed-repair": "/images/carpentry.png",
+  "curtain-rod-installation": "/images/carpentry.png",
+  "modular-furniture-repair": "/images/carpentry.png",
+
+  // Pest Control
+  "cockroach-pest-control": "/images/pest_control.png",
+  "termite-treatment": "/images/pest_control.png",
+  "bed-bug-treatment": "/images/pest_control.png",
+  "mosquito-control": "/images/pest_control.png",
+
+  // Painting
+  "single-wall-painting": "/images/painting.png",
+  "room-painting": "/images/painting.png",
+  "wall-dampness-repair": "/images/painting.png",
+  "texture-wall-painting": "/images/painting.png",
+
+  // Laundry
+  "cloth-wash-fold": "/images/laundry.png",
+  "dry-cleaning": "/images/laundry.png",
+  "steam-ironing": "/images/laundry.png",
+  "shoe-cleaning": "/images/laundry.png",
+  "curtain-laundry": "/images/laundry.png",
+
+  // Car Wash
+  "car-exterior-wash": "/images/car_wash.png",
+  "car-interior-cleaning": "/images/car_wash.png",
+  "car-deep-cleaning": "/images/car_wash.png",
+  "bike-wash": "/images/car_wash.png",
+
+  // Beauty
+  "women-haircut-at-home": "/images/beauty.png",
+  "facial-cleanup": "/images/beauty.png",
+  "manicure-pedicure": "/images/beauty.png",
+  "waxing-service": "/images/beauty.png",
+
+  // Grooming
+  "men-haircut-at-home": "/images/grooming.png",
+  "beard-styling": "/images/grooming.png",
+  "head-massage": "/images/grooming.png",
+
+  // Moving
+  "packers-movers-survey": "/images/moving.png",
+  "home-shifting-help": "/images/moving.png",
+  "furniture-moving-help": "/images/moving.png",
+
+  // Gardening
+  "garden-maintenance": "/images/gardening.png",
+  "plant-care-visit": "/images/gardening.png",
+  "lawn-mowing": "/images/gardening.png",
 };
 
 const DEFAULT_SERVICE_IMAGE = "/images/default_service.png";
@@ -1049,7 +1181,7 @@ export default function HomePage() {
                   : null;
 
                 const popular  = services.find(s => s.popular) || services[0] || (live?.firstName ? { name: live.firstName } : null);
-                const photo    = CATEGORY_PHOTOS[key] || live?.image || null;
+                const photo    = live?.image || CATEGORY_PHOTOS[key] || null;
                 return (
                   <Link
                     key={key}

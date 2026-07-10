@@ -24,6 +24,12 @@ const STATUS_TABS = [
   { key: "closed",     label: "Closed" },
 ];
 
+const ROLE_TABS = [
+  { key: "all",      label: "All" },
+  { key: "customer", label: "Customers" },
+  { key: "provider", label: "Partners" },
+];
+
 function fmtTime(d) {
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
 }
@@ -33,17 +39,21 @@ export default function AdminSupportPage() {
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState(false);
   const [statusTab,setStatusTab]= useState("all");
+  const [roleTab,  setRoleTab]  = useState("all");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
-      const params = statusTab !== "all" ? `?status=${statusTab}` : "";
-      const { data } = await api.get(`/support/admin${params}`);
+      const params = new URLSearchParams();
+      if (statusTab !== "all") params.set("status", statusTab);
+      if (roleTab   !== "all") params.set("role", roleTab);
+      const qs = params.toString();
+      const { data } = await api.get(`/support/admin${qs ? `?${qs}` : ""}`);
       if (data.success) setTickets(data.tickets);
     } catch { setError(true); }
     finally { setLoading(false); }
-  }, [statusTab]);
+  }, [statusTab, roleTab]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -65,7 +75,9 @@ export default function AdminSupportPage() {
           status:       "open",
           unreadByAdmin:1,
           lastMessageAt:data.createdAt,
-          customerId:   { fullName: data.customerName },
+          userId:       { fullName: data.userName },
+          userRole:     data.userRole,
+          bookingId:    data.bookingNumber ? { bookingNumber: data.bookingNumber } : null,
         }, ...prev]);
       };
 
@@ -76,7 +88,7 @@ export default function AdminSupportPage() {
                 ...t,
                 lastMessageAt: new Date().toISOString(),
                 lastMessage:   { text: data.message.text, senderRole: data.message.senderRole },
-                unreadByAdmin: data.message.senderRole === "customer"
+                unreadByAdmin: data.message.senderRole !== "admin"
                   ? (t.unreadByAdmin || 0) + 1
                   : t.unreadByAdmin,
               }
@@ -138,6 +150,18 @@ export default function AdminSupportPage() {
               {tab.key === "open" && counts.open > 0 && (
                 <span className="bg-amber-400 text-zinc-900 text-[9px] font-black px-1.5 py-0.5 rounded-full">{counts.open}</span>
               )}
+            </button>
+          ))}
+        </div>
+
+        {/* Role filter */}
+        <div className="flex flex-wrap gap-1 bg-white rounded-lg border border-zinc-100 p-1 w-fit shadow-sm">
+          {ROLE_TABS.map(tab => (
+            <button key={tab.key} onClick={() => setRoleTab(tab.key)}
+              className={`px-4 py-2 text-[10px] font-bold tracking-widests uppercase rounded-md transition-all ${
+                roleTab === tab.key ? "bg-zinc-900 text-white" : "text-zinc-400 hover:text-zinc-700"
+              }`}>
+              {tab.label}
             </button>
           ))}
         </div>
@@ -206,15 +230,26 @@ export default function AdminSupportPage() {
                             )}
                           </div>
                           <p className="text-sm font-bold text-zinc-900 truncate mb-0.5">{ticket.subject}</p>
-                          <div className="flex items-center gap-2 text-[10px] text-zinc-400 font-medium">
+                          <div className="flex items-center gap-2 text-[10px] text-zinc-400 font-medium flex-wrap">
                             <User size={10} />
-                            <span>{ticket.customerId?.fullName || "Customer"}</span>
+                            <span>{ticket.userId?.fullName || "User"}</span>
+                            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${
+                              ticket.userRole === "provider" ? "bg-violet-50 text-violet-600" : "bg-sky-50 text-sky-600"
+                            }`}>
+                              {ticket.userRole === "provider" ? "Partner" : "Customer"}
+                            </span>
                             <span>·</span>
                             <span>{ticket.categoryLabel}</span>
+                            {ticket.bookingId?.bookingNumber && (
+                              <>
+                                <span>·</span>
+                                <span>Booking {ticket.bookingId.bookingNumber}</span>
+                              </>
+                            )}
                           </div>
                           {ticket.lastMessage && (
                             <p className="text-xs text-zinc-400 mt-1 truncate">
-                              {ticket.lastMessage.senderRole === "customer" ? "Customer: " : "You: "}
+                              {ticket.lastMessage.senderRole === "admin" ? "You: " : `${ticket.userRole === "provider" ? "Partner" : "Customer"}: `}
                               {ticket.lastMessage.text}
                             </p>
                           )}

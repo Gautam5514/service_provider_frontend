@@ -7,10 +7,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import api from "@/lib/api";
 import { CATEGORY_META, formatPrice, providerPayout } from "@/lib/services";
+import { openSupportWidget } from "@/lib/supportWidget";
 import {
   ArrowLeft, CalendarClock, MapPin, UserRound, Wrench, CheckCircle2,
   AlertTriangle, Navigation, LockKeyhole, Phone, CreditCard, ClipboardList,
-  Radio, StopCircle,
+  Radio, StopCircle, MessageSquare,
 } from "lucide-react";
 
 // Load the map client-side only
@@ -353,6 +354,19 @@ export default function ProviderOrderDetailPage({ params }) {
               </div>
             </div>
           )}
+
+          {/* Chat with Support — customer unreachable, payout issue, etc. */}
+          <button
+            onClick={() => openSupportWidget({
+              bookingId:     job._id,
+              bookingNumber: job.bookingNumber,
+              serviceName:   job.serviceName,
+              category:      job.paymentStatus === "unpaid" ? "payment_issue" : "customer_issue",
+            })}
+            className="mt-4 w-full flex items-center justify-center gap-2 border border-zinc-200 text-zinc-500 py-3 rounded-md text-[10px] font-bold tracking-widest uppercase hover:border-zinc-400 hover:text-zinc-800 transition-colors bg-white"
+          >
+            <MessageSquare size={13} /> Chat With Support
+          </button>
         </div>
 
         {/* Sub-Card 2: Location Map Tracking (If Active) */}

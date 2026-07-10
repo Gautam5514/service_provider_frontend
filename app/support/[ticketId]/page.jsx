@@ -104,7 +104,7 @@ export default function SupportChatPage({ params }) {
     const tempId = `tmp-${Date.now()}`;
     const tempMsg = {
       _id:        tempId,
-      senderRole: "customer",
+      senderRole: myUser?.role || "customer",
       senderName: myUser?.fullName || "You",
       text,
       createdAt:  new Date().toISOString(),
@@ -117,10 +117,15 @@ export default function SupportChatPage({ params }) {
     try {
       const { data } = await api.post(`/support/${ticketId}/message`, { text });
       if (data.success) {
-        // Replace temp message with real one
-        setMessages(prev => prev.map(m =>
-          m._id === tempId ? { ...data.message } : m
-        ));
+        // Replace the temp message with the real one. The server also echoes
+        // this message back over the socket to the sender's own room, so it
+        // may already have been appended by the socket handler by the time
+        // this resolves — drop the temp placeholder without adding a dupe.
+        setMessages(prev => {
+          const withoutTemp = prev.filter(m => m._id !== tempId);
+          const alreadyPresent = withoutTemp.some(m => String(m._id) === String(data.message._id));
+          return alreadyPresent ? withoutTemp : [...withoutTemp, data.message];
+        });
       }
     } catch (err) {
       // Remove temp message and show error
@@ -184,8 +189,24 @@ export default function SupportChatPage({ params }) {
             <p className="text-[10px] text-zinc-400 mt-1">{ticket?.categoryLabel}</p>
           </div>
 
+          {/* Linked booking */}
+          {ticket?.bookingId?.bookingNumber && (
+            <Link href={myUser?.role === "provider"
+              ? `/dashboard/provider/orders/${ticket.bookingId._id}`
+              : `/bookings/${ticket.bookingId._id}`}
+              className="flex items-center justify-between gap-3 bg-white border border-zinc-100 rounded-lg px-4 py-3 mb-2 shadow-sm hover:border-zinc-300 transition-colors">
+              <div className="min-w-0">
+                <p className="text-[9px] font-bold tracking-widest uppercase text-zinc-400">Linked Booking</p>
+                <p className="text-xs font-bold text-zinc-800 truncate">
+                  {ticket.bookingId.bookingNumber} · {ticket.bookingId.serviceName}
+                </p>
+              </div>
+              <ArrowLeft size={12} className="text-zinc-300 rotate-180 shrink-0" />
+            </Link>
+          )}
+
           {messages.map((msg, i) => {
-            const isMe = msg.senderRole === "customer";
+            const isMe = msg.senderRole === (myUser?.role || "customer");
             const showName = i === 0 || messages[i - 1]?.senderRole !== msg.senderRole;
 
             return (
