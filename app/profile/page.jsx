@@ -12,7 +12,7 @@ import NotificationBell from "@/components/NotificationBell";
 import {
   ArrowLeft, BadgeCheck, Briefcase, CalendarDays, Check, ChevronRight,
   Home, KeyRound, Loader2, LogOut, MapPin, MessageSquare,
-  Plus, Star, Trash2, UserRound, X,
+  Plus, Star, Tag, Trash2, UserRound, X,
 } from "lucide-react";
 
 const inputCls =
@@ -251,6 +251,10 @@ export default function ProfilePage() {
               className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold text-zinc-500 hover:text-black hover:bg-white transition-colors">
               <Briefcase size={15} strokeWidth={1.9} className="text-zinc-400" /> Browse Professionals
             </Link>
+            <Link href="/offers"
+              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold text-zinc-500 hover:text-black hover:bg-white transition-colors">
+              <Tag size={15} strokeWidth={1.9} className="text-zinc-400" /> Offers &amp; Coupons
+            </Link>
           </div>
         </aside>
 
@@ -459,6 +463,18 @@ export default function ProfilePage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-zinc-900">Booking History</p>
                   <p className="text-xs text-zinc-400 mt-0.5">All your past and active services, invoices, and live tracking.</p>
+                </div>
+                <ChevronRight size={16} className="text-zinc-300 group-hover:text-black group-hover:translate-x-0.5 transition-all" />
+              </Link>
+
+              <Link href="/offers"
+                className="flex items-center gap-4 py-4 group">
+                <div className="w-9 h-9 rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0">
+                  <Tag size={15} className="text-zinc-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-zinc-900">Offers &amp; Coupons</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">Copy an active code and apply it at checkout to save.</p>
                 </div>
                 <ChevronRight size={16} className="text-zinc-300 group-hover:text-black group-hover:translate-x-0.5 transition-all" />
               </Link>

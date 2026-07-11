@@ -1,18 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import api from "@/lib/api";
+import { refreshAdminBadges } from "@/lib/adminBadges";
+import { useAdminToast } from "@/lib/useAdminToast";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
+import { getSocket, ensureSocket } from "@/lib/socket";
+import AdminToast from "@/components/AdminToast";
 import {
   AlertCircle,
   Briefcase,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   CreditCard,
   Frown,
   Inbox,
+  Loader2,
   Mail,
   MapPin,
   MessageCircle,
   MessageSquareText,
+  MousePointerClick,
   Phone,
   RefreshCw,
   Search,
@@ -35,6 +44,8 @@ const STATUS_META = {
   resolved:    { label: "Resolved",    cls: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
 };
 const PIPELINE = ["new", "in_progress", "resolved"];
+const PAGE_SIZE = 25;
+const EMPTY_COUNTS = { all: 0, new: 0, in_progress: 0, resolved: 0 };
 
 const fmtDateTime = (d) =>
   new Date(d).toLocaleString("en-IN", {
@@ -48,86 +59,173 @@ const fmtDateTime = (d) =>
 const initials = (name = "") =>
   name.trim().split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "?";
 
+function ListSkeleton() {
+  return (
+    <div className="bg-white border border-zinc-200 rounded-lg divide-y divide-zinc-100 overflow-hidden">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="p-4 flex items-start gap-3 animate-pulse">
+          <div className="h-9 w-9 rounded-full bg-zinc-100 flex-shrink-0" />
+          <div className="flex-1 space-y-2 py-0.5">
+            <div className="h-3 bg-zinc-100 rounded w-2/3" />
+            <div className="h-2.5 bg-zinc-100 rounded w-2/5" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminContactMessagesPage() {
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(false);
-  const [filter, setFilter] = useState("all");
-  const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState(null);
-  const [noteDraft, setNoteDraft] = useState("");
-  const [noteSaved, setNoteSaved] = useState(false);
+  const [pagination, setPagination] = useState({ page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 });
+  const [counts, setCounts] = useState(EMPTY_COUNTS);
+  const [unseenCount, setUnseenCount] = useState(0);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const [loading, setLoading] = useState(true);       // only the very first fetch
+  const [refetching, setRefetching] = useState(false); // every fetch after that
+  const [fetchError, setFetchError] = useState(false);
+
+  const [filter, setFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebouncedValue(searchInput, 350);
+
+  const [selectedId, setSelectedId] = useState(null);
+  const [liveNewCount, setLiveNewCount] = useState(0);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [noteSaving, setNoteSaving] = useState(false);
+
+  const { toast, showToast, dismissToast } = useAdminToast();
+
+  // ── Fetch a specific page/search/status combo. Never depends on component
+  // state directly — every caller passes exactly what it wants — so there's
+  // no stale-closure risk and no accidental double-fetch. ──────────────────
+  // Guards against out-of-order responses — if the admin flips filters or
+  // pages quickly, a slower earlier request must never clobber a faster,
+  // more recent one.
+  const requestIdRef = useRef(0);
+
+  const fetchMessages = useCallback(async ({ page: p, search: s, status: st }) => {
+    const requestId = ++requestIdRef.current;
+    setRefetching(true);
     setFetchError(false);
     try {
-      const { data } = await api.get("/contact/admin");
+      const { data } = await api.get("/contact/admin", {
+        params: { page: p, limit: PAGE_SIZE, search: s || undefined, status: st },
+      });
+      if (requestId !== requestIdRef.current) return; // a newer request has since superseded this one
       setMessages(data.messages || []);
+      setPagination(data.pagination || { page: p, limit: PAGE_SIZE, total: 0, totalPages: 1 });
+      setCounts(data.counts || EMPTY_COUNTS);
+      setUnseenCount(data.unseenCount || 0);
+      setLiveNewCount(0);
     } catch {
-      setFetchError(true);
+      if (requestId === requestIdRef.current) setFetchError(true);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+        setRefetching(false);
+      }
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  // A change in search or status always resets to page 1 and reloads —
+  // also covers the very first load on mount.
+  useEffect(() => {
+    setPage(1);
+    setSelectedId(null);
+    fetchMessages({ page: 1, search, status: filter });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, filter]);
 
-  const filtered = useMemo(() => {
-    let list = messages;
-    if (filter !== "all") list = list.filter((m) => m.status === filter);
-    if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      list = list.filter(
-        (m) =>
-          m.name.toLowerCase().includes(q) ||
-          m.email.toLowerCase().includes(q) ||
-          m.referenceNumber.toLowerCase().includes(q) ||
-          m.message.toLowerCase().includes(q)
-      );
+  const goToPage = (p) => {
+    const clamped = Math.min(Math.max(1, p), pagination.totalPages || 1);
+    setPage(clamped);
+    fetchMessages({ page: clamped, search, status: filter });
+  };
+
+  const retry = () => fetchMessages({ page, search, status: filter });
+
+  // ── Live "something just arrived" signal — never mutates the paginated
+  // list in place (that would desync skip/limit against what's on screen);
+  // instead a small banner offers a deliberate refresh. ────────────────────
+  useEffect(() => {
+    let mounted = true;
+    let bound = null;
+    async function setup() {
+      let s = getSocket();
+      if (!s) s = await ensureSocket();
+      if (!s || !mounted) return;
+      const handler = () => setLiveNewCount((c) => c + 1);
+      s.on("contact:message:new", handler);
+      bound = { socket: s, handler };
     }
-    return list;
-  }, [messages, filter, query]);
+    setup();
+    return () => {
+      mounted = false;
+      if (bound) bound.socket.off("contact:message:new", bound.handler);
+    };
+  }, []);
 
-  const selected = useMemo(
-    () => filtered.find((m) => m._id === selectedId) || filtered[0] || null,
-    [filtered, selectedId]
-  );
+  // selected must come from the currently loaded page — searching/paginating
+  // never auto-opens anything, only a deliberate click does.
+  const selected = useMemo(() => messages.find((m) => m._id === selectedId) || null, [messages, selectedId]);
 
   useEffect(() => {
     setNoteDraft(selected?.adminNote || "");
-    setNoteSaved(false);
   }, [selected?._id]);
 
-  const counts = useMemo(() => {
-    const c = { all: messages.length, new: 0, in_progress: 0, resolved: 0 };
-    for (const m of messages) c[m.status] = (c[m.status] || 0) + 1;
-    return c;
-  }, [messages]);
+  // The only place a message is ever marked "seen" — a deliberate click on
+  // its row. Optimistic, with a silent rollback if the server call fails
+  // (view-tracking is background bookkeeping — not worth a toast over).
+  const openMessage = (msg) => {
+    setSelectedId(msg._id);
+    if (msg.adminViewed) return;
+    setMessages((prev) => prev.map((m) => (m._id === msg._id ? { ...m, adminViewed: true } : m)));
+    setUnseenCount((c) => Math.max(0, c - 1));
+    api.put(`/contact/admin/${msg._id}/view`)
+      .then(refreshAdminBadges)
+      .catch(() => {
+        setMessages((prev) => prev.map((m) => (m._id === msg._id ? { ...m, adminViewed: false } : m)));
+        setUnseenCount((c) => c + 1);
+      });
+  };
 
+  // Optimistic status change, rolled back with a toast if it fails — this is
+  // a deliberate decision, so the admin needs to know if it didn't stick.
   const setStatus = async (id, status) => {
+    const previous = messages;
+    setMessages((prev) => prev.map((m) => (m._id === id ? { ...m, status } : m)));
     try {
       await api.put(`/contact/admin/${id}/status`, { status });
-      setMessages((prev) => prev.map((m) => (m._id === id ? { ...m, status } : m)));
+      showToast(`Marked as ${STATUS_META[status]?.label || status}.`);
     } catch {
-      alert("Could not update the message status.");
+      setMessages(previous);
+      showToast("Could not update the message status — please try again.", { ok: false });
     }
   };
 
   const saveNote = async () => {
+    if (!selected) return;
+    setNoteSaving(true);
+    const previousNote = selected.adminNote || "";
+    setMessages((prev) => prev.map((m) => (m._id === selected._id ? { ...m, adminNote: noteDraft } : m)));
     try {
       await api.put(`/contact/admin/${selected._id}/note`, { adminNote: noteDraft });
-      setMessages((prev) =>
-        prev.map((m) => (m._id === selected._id ? { ...m, adminNote: noteDraft } : m))
-      );
-      setNoteSaved(true);
-      setTimeout(() => setNoteSaved(false), 1800);
+      showToast("Internal note saved.");
     } catch {
-      alert("Could not save the note.");
+      setMessages((prev) => prev.map((m) => (m._id === selected._id ? { ...m, adminNote: previousNote } : m)));
+      setNoteDraft(previousNote);
+      showToast("Could not save the note — please try again.", { ok: false });
+    } finally {
+      setNoteSaving(false);
     }
   };
 
-  if (fetchError)
+  const showingFrom = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
+  const showingTo = Math.min(pagination.page * pagination.limit, pagination.total);
+
+  if (fetchError && messages.length === 0 && !refetching)
     return (
       <div className="min-h-screen bg-[#f7f7f8] flex items-center justify-center p-6 font-sans">
         <div className="bg-white border border-zinc-200 p-8 text-center max-w-sm w-full rounded-lg">
@@ -135,7 +233,7 @@ export default function AdminContactMessagesPage() {
           <h2 className="text-base font-black text-zinc-900 mb-1">Failed to load messages</h2>
           <p className="text-xs text-zinc-500 mb-5">Check that the backend is running and retry.</p>
           <button
-            onClick={load}
+            onClick={retry}
             className="flex items-center justify-center gap-2 w-full bg-black text-white px-5 py-2.5 text-xs font-bold tracking-widest uppercase hover:bg-zinc-800 transition-colors rounded-lg"
           >
             <RefreshCw size={13} /> Retry
@@ -146,6 +244,8 @@ export default function AdminContactMessagesPage() {
 
   return (
     <div className="min-h-screen bg-[#f7f7f8] pb-20 font-sans selection:bg-black selection:text-white">
+      <AdminToast toast={toast} onDismiss={dismissToast} />
+
       {/* ── Dark header ───────────────────────────────────────────────── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-white pb-12">
         <div
@@ -160,8 +260,14 @@ export default function AdminContactMessagesPage() {
           <p className="text-[9px] font-bold tracking-[0.25em] uppercase text-zinc-500 mb-2">
             Customer Communication
           </p>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight leading-tight">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight leading-tight flex items-center gap-3 flex-wrap">
             Contact Messages
+            {unseenCount > 0 && (
+              <span className="inline-flex items-center gap-1.5 bg-sky-500/15 border border-sky-500/25 text-sky-300 px-3 py-1 text-[11px] font-bold tracking-widest uppercase rounded-full align-middle">
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                {unseenCount} unseen
+              </span>
+            )}
           </h1>
           <p className="text-sm text-zinc-400 mt-2">
             Every submission from the public Contact Us form — respond and track resolution.
@@ -173,7 +279,7 @@ export default function AdminContactMessagesPage() {
         {/* ── Stats row ─────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
           {[
-            { label: "Total Messages", value: counts.all, sub: "All time received" },
+            { label: "Total Messages", value: counts.all, sub: "Matching current search" },
             { label: "New", value: counts.new, sub: "Awaiting first response" },
             { label: "In Progress", value: counts.in_progress, sub: "Being handled" },
             { label: "Resolved", value: counts.resolved, sub: "Closed out" },
@@ -195,7 +301,7 @@ export default function AdminContactMessagesPage() {
               return (
                 <button
                   key={s}
-                  onClick={() => { setFilter(s); setSelectedId(null); }}
+                  onClick={() => setFilter(s)}
                   className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[11px] font-bold transition-colors ${
                     isActive ? "bg-zinc-950 text-white" : "text-zinc-500 hover:bg-zinc-100"
                   }`}
@@ -212,24 +318,25 @@ export default function AdminContactMessagesPage() {
             <input
               type="text"
               placeholder="Search name, email, ref, or message…"
-              value={query}
-              onChange={(e) => { setQuery(e.target.value); setSelectedId(null); }}
-              className="w-full border border-zinc-200 rounded-lg pl-9 pr-3 py-2.5 text-sm text-black placeholder:text-zinc-300 focus:outline-none focus:border-black transition-colors"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full border border-zinc-200 rounded-lg pl-9 pr-8 py-2.5 text-sm text-black placeholder:text-zinc-300 focus:outline-none focus:border-black transition-colors"
             />
+            {refetching && (
+              <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-300 animate-spin" />
+            )}
           </div>
         </div>
 
         {/* ── Split view ────────────────────────────────────────────────── */}
         {loading ? (
-          <div className="bg-white border border-zinc-100 rounded-lg p-14 text-center text-xs text-zinc-400 font-semibold">
-            Loading messages…
-          </div>
-        ) : filtered.length === 0 ? (
+          <ListSkeleton />
+        ) : messages.length === 0 ? (
           <div className="bg-white border border-zinc-100 rounded-lg p-14 text-center">
             <Inbox size={26} className="text-zinc-200 mx-auto mb-3" />
             <p className="text-sm font-black text-zinc-900 mb-1">No messages here</p>
             <p className="text-xs text-zinc-400">
-              {messages.length === 0
+              {!search.trim() && counts.all === 0
                 ? "Messages appear the moment someone submits the Contact Us form."
                 : "Try a different filter or search."}
             </p>
@@ -237,49 +344,95 @@ export default function AdminContactMessagesPage() {
         ) : (
           <div className="grid lg:grid-cols-[360px_1fr] gap-5 items-start">
             {/* Left — message list */}
-            <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden divide-y divide-zinc-100 max-h-[70vh] overflow-y-auto">
-              {filtered.map((m) => {
-                const st = STATUS_META[m.status] || STATUS_META.new;
-                const tp = TOPIC_META[m.topic] || TOPIC_META.other;
-                const isSel = selected?._id === m._id;
-                return (
-                  <button
-                    key={m._id}
-                    onClick={() => setSelectedId(m._id)}
-                    className={`w-full text-left p-4 flex items-start gap-3 transition-colors ${
-                      isSel ? "bg-zinc-950" : "hover:bg-zinc-50"
-                    }`}
-                  >
-                    <span
-                      className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
-                        isSel ? "bg-[#C8A45C] text-black" : "bg-zinc-100 text-zinc-600"
+            <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden flex flex-col">
+              {liveNewCount > 0 && (
+                <button
+                  onClick={() => goToPage(1)}
+                  className="w-full flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-700 text-white text-[11px] font-bold tracking-wide py-2.5 transition-colors"
+                >
+                  <Sparkles size={12} />
+                  {liveNewCount} new message{liveNewCount > 1 ? "s" : ""} — click to refresh
+                </button>
+              )}
+              <div className="divide-y divide-zinc-100 max-h-[65vh] overflow-y-auto">
+                {messages.map((m) => {
+                  const st = STATUS_META[m.status] || STATUS_META.new;
+                  const tp = TOPIC_META[m.topic] || TOPIC_META.other;
+                  const isSel = selected?._id === m._id;
+                  const unseen = !m.adminViewed;
+                  return (
+                    <button
+                      key={m._id}
+                      onClick={() => openMessage(m)}
+                      className={`w-full text-left p-4 flex items-start gap-3 transition-colors relative ${
+                        isSel ? "bg-zinc-950" : "hover:bg-zinc-50"
                       }`}
                     >
-                      {initials(m.name)}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center justify-between gap-2">
-                        <span className={`text-[13px] font-black truncate ${isSel ? "text-white" : "text-zinc-900"}`}>
-                          {m.name}
+                      {unseen && (
+                        <span
+                          className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-sky-500"
+                          title="Not yet opened"
+                        />
+                      )}
+                      <span
+                        className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
+                          isSel ? "bg-[#C8A45C] text-black" : "bg-zinc-100 text-zinc-600"
+                        }`}
+                      >
+                        {initials(m.name)}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center justify-between gap-2">
+                          <span className={`text-[13px] truncate ${unseen ? "font-black" : "font-semibold"} ${isSel ? "text-white" : "text-zinc-900"}`}>
+                            {m.name}
+                          </span>
+                          <span className={`text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full border flex-shrink-0 ${st.cls}`}>
+                            {st.label}
+                          </span>
                         </span>
-                        <span className={`text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full border flex-shrink-0 ${st.cls}`}>
-                          {st.label}
+                        <span className={`block text-[11.5px] truncate mt-0.5 ${isSel ? "text-zinc-400" : "text-zinc-500"}`}>
+                          {tp.label} · {m.referenceNumber}
+                        </span>
+                        <span className={`block text-[10.5px] mt-0.5 ${isSel ? "text-zinc-500" : "text-zinc-400"}`}>
+                          {fmtDateTime(m.createdAt)}
                         </span>
                       </span>
-                      <span className={`block text-[11.5px] truncate mt-0.5 ${isSel ? "text-zinc-400" : "text-zinc-500"}`}>
-                        {tp.label} · {m.referenceNumber}
-                      </span>
-                      <span className={`block text-[10.5px] mt-0.5 ${isSel ? "text-zinc-500" : "text-zinc-400"}`}>
-                        {fmtDateTime(m.createdAt)}
-                      </span>
-                    </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Pagination footer */}
+              <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-zinc-100 bg-zinc-50/60">
+                <p className="text-[10.5px] font-semibold text-zinc-400">
+                  {pagination.total > 0 ? `${showingFrom}–${showingTo} of ${pagination.total}` : "0 results"}
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => goToPage(page - 1)}
+                    disabled={page <= 1 || refetching}
+                    className="w-7 h-7 flex items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft size={15} />
                   </button>
-                );
-              })}
+                  <span className="text-[10.5px] font-bold text-zinc-600 px-1.5 tabular-nums">
+                    {pagination.page} / {pagination.totalPages}
+                  </span>
+                  <button
+                    onClick={() => goToPage(page + 1)}
+                    disabled={page >= pagination.totalPages || refetching}
+                    className="w-7 h-7 flex items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                    aria-label="Next page"
+                  >
+                    <ChevronRight size={15} />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Right — detail panel */}
-            {selected && (
+            {selected ? (
               <div className="bg-white border border-zinc-200 rounded-lg">
                 {/* header */}
                 <div className="p-6 md:p-7 border-b border-zinc-100 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -411,13 +564,22 @@ export default function AdminContactMessagesPage() {
                   <div className="mt-2.5 flex items-center gap-3">
                     <button
                       onClick={saveNote}
-                      className="bg-black text-white px-4 py-2 text-[10px] font-bold tracking-widest uppercase rounded-lg hover:bg-zinc-800 transition-colors"
+                      disabled={noteSaving || noteDraft === (selected.adminNote || "")}
+                      className="flex items-center gap-2 bg-black text-white px-4 py-2 text-[10px] font-bold tracking-widest uppercase rounded-lg hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
+                      {noteSaving && <Loader2 size={11} className="animate-spin" />}
                       Save Note
                     </button>
-                    {noteSaved && <span className="text-[11px] font-semibold text-emerald-600">Saved</span>}
                   </div>
                 </div>
+              </div>
+            ) : (
+              <div className="hidden lg:flex flex-col items-center justify-center bg-white border border-dashed border-zinc-200 rounded-lg py-24 text-center">
+                <MousePointerClick size={26} className="text-zinc-200 mb-3" />
+                <p className="text-sm font-black text-zinc-900 mb-1">Select a message</p>
+                <p className="text-xs text-zinc-400 max-w-[220px]">
+                  Click anyone in the list to see their full message here.
+                </p>
               </div>
             )}
           </div>

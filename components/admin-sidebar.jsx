@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getStoredUser, performLogout } from "@/lib/auth";
+import api from "@/lib/api";
+import { getSocket, ensureSocket } from "@/lib/socket";
+import { ADMIN_BADGES_REFRESH_EVENT } from "@/lib/adminBadges";
 import {
   Sidebar,
   SidebarContent,
@@ -31,27 +34,115 @@ import {
   Mail,
 } from "lucide-react";
 
+// `countKey` maps a nav item to the matching field in the /admin/badge-counts
+// response — items without one (Dashboard, Approved, Services, ...) never
+// carry a badge since there's nothing pending admin action there.
 const navItems = [
   { name: "Dashboard",    href: "/admin",           icon: LayoutDashboard },
-  { name: "Applications", href: "/admin/providers", icon: Users },
+  { name: "Applications", href: "/admin/providers", icon: Users,          countKey: "applications" },
   { name: "Approved",     href: "/admin/approved",  icon: CheckCircle2 },
   { name: "Services",     href: "/admin/services",  icon: Wrench },
   { name: "Coupons",      href: "/admin/coupons",   icon: Tag },
   { name: "Careers",      href: "/admin/careers",   icon: Briefcase },
-  { name: "Job Applicants", href: "/admin/careers/applications", icon: Inbox },
+  { name: "Job Applicants", href: "/admin/careers/applications", icon: Inbox, countKey: "jobApplicants" },
   { name: "Blog",         href: "/admin/blog",      icon: Newspaper },
-  { name: "Contact Messages", href: "/admin/contact", icon: Mail },
-  { name: "Support",      href: "/admin/support",   icon: MessageSquare },
+  { name: "Contact Messages", href: "/admin/contact", icon: Mail,         countKey: "contactMessages" },
+  { name: "Support",      href: "/admin/support",   icon: MessageSquare, countKey: "support" },
 ];
+
+// Socket events that mean "something admin needs to look at just landed" —
+// any of these trigger a silent badge-count refetch.
+const REFRESH_EVENTS = [
+  "support:ticket:created",
+  "support:message:new",
+  "contact:message:new",
+  "career:application:new",
+  "provider:application:new",
+];
+
+// Some hrefs are nested inside another (e.g. "/admin/careers/applications"
+// sits under "/admin/careers") — a plain per-item startsWith() check would
+// light up both at once. Instead pick the single longest href that matches
+// the current path, so only the most specific item is ever active.
+function activeHrefFor(pathname) {
+  let best = null;
+  for (const item of navItems) {
+    const matches =
+      pathname === item.href ||
+      (item.href !== "/admin" && pathname.startsWith(`${item.href}/`));
+    if (matches && (!best || item.href.length > best.length)) best = item.href;
+  }
+  return best;
+}
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [counts, setCounts] = useState({});
 
   useEffect(() => {
     setUser(getStoredUser());
   }, []);
+
+  const loadCounts = useCallback(async () => {
+    try {
+      const { data } = await api.get("/admin/badge-counts");
+      if (data.success) setCounts(data.counts || {});
+    } catch {
+      // Non-critical — badges just stay stale until the next successful fetch.
+    }
+  }, []);
+
+  // Fetch on mount, on every route change (visiting a page often resolves
+  // the items that were pending there), and on a slow poll as a safety net.
+  useEffect(() => {
+    loadCounts();
+  }, [loadCounts, pathname]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") loadCounts();
+    }, 60000);
+    return () => clearInterval(id);
+  }, [loadCounts]);
+
+  // Instant same-tab refresh — pages dispatch this right after they mark
+  // something as viewed (opening a list, opening a ticket, ...).
+  useEffect(() => {
+    window.addEventListener(ADMIN_BADGES_REFRESH_EVENT, loadCounts);
+    return () => window.removeEventListener(ADMIN_BADGES_REFRESH_EVENT, loadCounts);
+  }, [loadCounts]);
+
+  // Real-time — refetch as soon as a customer/provider submits something
+  // that needs admin attention.
+  useEffect(() => {
+    let mounted = true;
+    let bound = null;
+
+    async function setup() {
+      let s = getSocket();
+      if (!s) s = await ensureSocket();
+      if (!s || !mounted) return;
+
+      const handler = () => loadCounts();
+      REFRESH_EVENTS.forEach((event) => s.on(event, handler));
+      s.on("connect", handler);
+      bound = { socket: s, handler };
+    }
+
+    setup();
+
+    return () => {
+      mounted = false;
+      if (bound) {
+        REFRESH_EVENTS.forEach((event) => bound.socket.off(event, bound.handler));
+        bound.socket.off("connect", bound.handler);
+      }
+    };
+  }, [loadCounts]);
+
+  const activeHref = useMemo(() => activeHrefFor(pathname), [pathname]);
 
   const handleLogout = () => {
     performLogout().then(() => router.push("/login"));
@@ -91,9 +182,8 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-1.5">
               {navItems.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  (item.href !== "/admin" && pathname.startsWith(item.href));
+                const isActive = item.href === activeHref;
+                const count = item.countKey ? counts[item.countKey] || 0 : 0;
                 return (
                   <SidebarMenuItem key={item.name}>
                     <SidebarMenuButton
@@ -107,7 +197,16 @@ export function AdminSidebar() {
                       }
                     >
                       <item.icon size={16} strokeWidth={isActive ? 2.2 : 1.8} className="mr-1.5 shrink-0" />
-                      <span className="text-[13px]">{item.name}</span>
+                      <span className="text-[13px] flex-1">{item.name}</span>
+                      {count > 0 && (
+                        <span
+                          className={`ml-auto min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full text-[9px] font-black leading-none group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:-top-1 group-data-[collapsible=icon]:-right-1 ${
+                            isActive ? "bg-zinc-900 text-white" : "bg-amber-500 text-white"
+                          }`}
+                        >
+                          {count > 99 ? "99+" : count}
+                        </span>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

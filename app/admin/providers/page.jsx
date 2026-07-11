@@ -238,6 +238,9 @@ export default function AdminProvidersPage() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                        {!provider.adminViewed && !provider.isActive && (
+                          <span className="w-2 h-2 rounded-full bg-sky-500 flex-shrink-0" title="Not yet opened" />
+                        )}
                         <h2 className="text-base font-bold tracking-tight text-black truncate">
                           {provider.userId?.fullName || "Unknown"}
                         </h2>

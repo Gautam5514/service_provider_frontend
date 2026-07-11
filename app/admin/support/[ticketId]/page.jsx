@@ -6,6 +6,7 @@ import Link from "next/link";
 import api from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
 import { getSocket, ensureSocket } from "@/lib/socket";
+import { refreshAdminBadges } from "@/lib/adminBadges";
 import {
   ArrowLeft, CheckCircle2, Loader2,
   Lock, Send, User, XCircle,
@@ -46,6 +47,9 @@ export default function AdminSupportChatPage({ params }) {
         if (data.success) {
           setTicket(data.ticket);
           setMessages(data.messages);
+          // Opening a ticket resets its unreadByAdmin count server-side —
+          // tell the sidebar to refresh its badge count now.
+          refreshAdminBadges();
         }
       })
       .catch(console.error)

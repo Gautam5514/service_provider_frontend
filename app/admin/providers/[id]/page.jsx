@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { getDashboardPath, getStoredUser } from "@/lib/auth";
+import { refreshAdminBadges } from "@/lib/adminBadges";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -108,7 +109,14 @@ export default function ProviderReviewPage({ params }) {
     if (user.role !== "admin")   { router.replace(getDashboardPath(user.role));  return; }
 
     api.get(`/admin/providers/${id}`)
-      .then(({ data }) => { if (data.success) setProvider(data.provider); })
+      .then(({ data }) => {
+        if (data.success) {
+          setProvider(data.provider);
+          // Opening this application marks it viewed server-side —
+          // tell the sidebar to refresh its badge count now.
+          refreshAdminBadges();
+        }
+      })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, [id, router]);
