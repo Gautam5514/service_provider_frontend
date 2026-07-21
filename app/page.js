@@ -10,6 +10,7 @@ import LocationBar from "@/components/LocationBar";
 import SmartSearch from "@/components/SmartSearch";
 import NotificationBell from "@/components/NotificationBell";
 import SiteFooter from "@/components/SiteFooter";
+import { WorldMap } from "@/components/ui/map";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -1496,6 +1497,74 @@ export default function HomePage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── GLOBAL NETWORK ───────────────────────────────────────────── */}
+      <section className="py-16 md:py-24 bg-zinc-950 text-white relative overflow-hidden">
+        <div className="absolute top-0 left-1/3 w-96 h-96 bg-emerald-500/[0.07] blur-[140px] pointer-events-none rounded-full" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-sky-500/[0.05] blur-[140px] pointer-events-none rounded-full" />
+
+        <div className="max-w-7xl mx-auto px-4 md:px-10 relative z-10">
+          <div className="mb-12 text-center">
+            <p className="text-[10px] font-bold tracking-[0.28em] uppercase text-white/25 mb-3">
+              Growing Network
+            </p>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">
+              Local hands, <span className="text-zinc-500">global standards</span>
+            </h2>
+            <p className="text-white/35 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+              Built in New Delhi, engineered for everywhere. Our verified
+              professional network is expanding city by city - same upfront
+              pricing, same quality bar, wherever you are.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/[0.06] bg-black p-2 md:p-4 shadow-[0_0_80px_-20px_rgba(52,211,153,0.15)]">
+            <WorldMap
+              theme="dark"
+              lineColor="#34d399"
+              dots={[
+                {
+                  start: { lat: 28.6139, lng: 77.209, label: "New Delhi" },
+                  end: { lat: 25.2048, lng: 55.2708, label: "Dubai" },
+                },
+                {
+                  start: { lat: 28.6139, lng: 77.209, label: "New Delhi" },
+                  end: { lat: 1.3521, lng: 103.8198, label: "Singapore" },
+                },
+                {
+                  start: { lat: 28.6139, lng: 77.209, label: "New Delhi" },
+                  end: { lat: 51.5074, lng: -0.1278, label: "London" },
+                },
+                {
+                  start: { lat: 51.5074, lng: -0.1278, label: "London" },
+                  end: { lat: 40.7128, lng: -74.006, label: "New York" },
+                },
+                {
+                  start: { lat: 1.3521, lng: 103.8198, label: "Singapore" },
+                  end: { lat: -33.8688, lng: 151.2093, label: "Sydney" },
+                },
+              ]}
+            />
+          </div>
+
+          <div className="mt-10 grid grid-cols-3 gap-px bg-white/[0.06] max-w-3xl mx-auto">
+            {[
+              { value: "40+", label: "Cities served" },
+              { value: "2,500+", label: "Verified pros" },
+              { value: "120k+", label: "Jobs completed" },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-zinc-950 py-6 px-4 text-center">
+                <p className="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-1">
+                  {stat.value}
+                </p>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/25">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
