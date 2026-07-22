@@ -2,16 +2,34 @@
 // "> " quotes, **bold** inline) as clean article typography. Server-safe.
 
 function renderInline(text, keyPrefix) {
-  const parts = String(text).split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) =>
-    part.startsWith("**") && part.endsWith("**") ? (
-      <strong key={`${keyPrefix}-${i}`} className="font-bold text-zinc-900">
-        {part.slice(2, -2)}
-      </strong>
-    ) : (
-      part
-    )
-  );
+  const regex = /(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g;
+  const parts = String(text).split(regex);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={`${keyPrefix}-${i}`} className="font-bold text-zinc-900">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (linkMatch) {
+      const [, label, href] = linkMatch;
+      const isExternal = href.startsWith("http");
+      return (
+        <a
+          key={`${keyPrefix}-${i}`}
+          href={href}
+          target={isExternal ? "_blank" : undefined}
+          rel={isExternal ? "noopener noreferrer" : undefined}
+          className="font-semibold text-[#8a6d33] underline decoration-[#C8A45C]/50 underline-offset-4 hover:text-black hover:decoration-black transition-colors"
+        >
+          {label}
+        </a>
+      );
+    }
+    return part;
+  });
 }
 
 function parseBlocks(content) {
