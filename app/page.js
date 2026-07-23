@@ -166,14 +166,13 @@ const INITIAL_TESTIMONIALS = [
 ];
 
 const CITIES = [
-  "Mumbai","Delhi","Bangalore","Hyderabad","Chennai",
-  "Pune","Kolkata","Ahmedabad","Jaipur","Lucknow","Noida","Gurgaon",
+  "New Delhi", "Ranchi", "Kolkata", "Mumbai", "Bengaluru",
+  "Jamshedpur", "Dhanbad", "Patna", "Hyderabad", "Chennai", "Pune", "Ahmedabad", "Jaipur", "Lucknow",
 ];
 
-// Popular quick-pick chips for the place explorer. Any place worldwide can be
-// typed into the search box — these are just convenient starting points.
+// Popular quick-pick chips for the place explorer.
 const POPULAR_PLACES = [
-  "New Delhi", "Mumbai", "Bangalore", "Hyderabad", "Chennai", "Pune", "Kolkata", "Jaipur",
+  "New Delhi", "Ranchi", "Kolkata", "Mumbai", "Bengaluru", "Jamshedpur", "Patna", "Hyderabad",
 ];
 
 // Fallback gradients for spot tiles that have no preview image.
@@ -1501,66 +1500,100 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── GLOBAL NETWORK ───────────────────────────────────────────── */}
+      {/* ── GLOBAL & PAN-INDIA NETWORK ───────────────────────────────────────────── */}
       <section className="py-16 md:py-24 bg-zinc-950 text-white relative overflow-hidden">
-        <div className="absolute top-0 left-1/3 w-96 h-96 bg-emerald-500/[0.07] blur-[140px] pointer-events-none rounded-full" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-sky-500/[0.05] blur-[140px] pointer-events-none rounded-full" />
+        <div className="absolute top-0 left-1/3 w-96 h-96 bg-[#C8A45C]/[0.08] blur-[140px] pointer-events-none rounded-full" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/[0.05] blur-[140px] pointer-events-none rounded-full" />
 
         <div className="max-w-7xl mx-auto px-4 md:px-10 relative z-10">
           <div className="mb-12 text-center">
-            <p className="text-[10px] font-bold tracking-[0.28em] uppercase text-white/25 mb-3">
-              Growing Network
+            <p className="text-[10px] font-bold tracking-[0.28em] uppercase text-[#C8A45C] mb-3">
+              GLOBAL & PAN-INDIA NETWORK
             </p>
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">
-              Local hands, <span className="text-zinc-500">global standards</span>
+              Engineered in India, <span className="text-[#C8A45C]">Serving Worldwide</span>
             </h2>
-            <p className="text-white/35 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
-              Built in New Delhi, engineered for everywhere. Our verified
-              professional network is expanding city by city - same upfront
-              pricing, same quality bar, wherever you are.
+            <p className="text-white/60 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+              Founded & developed by Gautam Pandit in New Delhi. Connecting background-verified home service professionals across 35+ Indian cities (Delhi, Jharkhand, Kolkata, Mumbai, Bengaluru) and expanding to global hubs.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/[0.06] bg-black p-2 md:p-4 shadow-[0_0_80px_-20px_rgba(52,211,153,0.15)]">
+          <div className="rounded-2xl border border-white/[0.08] bg-black p-2 md:p-4 shadow-[0_0_80px_-20px_rgba(200,164,92,0.18)]">
             <WorldMap
               theme="dark"
-              lineColor="#34d399"
+              lineColor="#C8A45C"
               dots={[
+                // Headquarters & PAN-India Hubs
                 {
-                  start: { lat: 28.6139, lng: 77.209, label: "New Delhi" },
-                  end: { lat: 25.2048, lng: 55.2708, label: "Dubai" },
+                  start: { lat: 28.6139, lng: 77.209, label: "New Delhi (HQ)", offset: { x: 0, y: -24 } },
+                  end: { lat: 23.3441, lng: 85.3096, label: "Jharkhand (India)", offset: { x: 40, y: 16 } },
                 },
                 {
-                  start: { lat: 28.6139, lng: 77.209, label: "New Delhi" },
-                  end: { lat: 1.3521, lng: 103.8198, label: "Singapore" },
+                  start: { lat: 28.6139, lng: 77.209, label: "New Delhi (HQ)" },
+                  end: { lat: 19.076, lng: 72.8777, label: "Mumbai (India)", offset: { x: -40, y: 16 } },
+                },
+                // Middle East & Africa
+                {
+                  start: { lat: 28.6139, lng: 77.209, label: "New Delhi (HQ)" },
+                  end: { lat: 25.2048, lng: 55.2708, label: "Dubai", offset: { x: -35, y: -10 } },
                 },
                 {
-                  start: { lat: 28.6139, lng: 77.209, label: "New Delhi" },
-                  end: { lat: 51.5074, lng: -0.1278, label: "London" },
+                  start: { lat: 25.2048, lng: 55.2708, label: "Dubai" },
+                  end: { lat: 30.0444, lng: 31.2357, label: "Cairo", offset: { x: -25, y: -10 } },
+                },
+                {
+                  start: { lat: 30.0444, lng: 31.2357, label: "Cairo" },
+                  end: { lat: -33.9249, lng: 18.4241, label: "Cape Town", offset: { x: 0, y: 18 } },
+                },
+                // Europe & Americas
+                {
+                  start: { lat: 28.6139, lng: 77.209, label: "New Delhi (HQ)" },
+                  end: { lat: 51.5074, lng: -0.1278, label: "London", offset: { x: 0, y: -18 } },
                 },
                 {
                   start: { lat: 51.5074, lng: -0.1278, label: "London" },
-                  end: { lat: 40.7128, lng: -74.006, label: "New York" },
+                  end: { lat: 48.8566, lng: 2.3522, label: "Paris", offset: { x: 28, y: 15 } },
+                },
+                {
+                  start: { lat: 51.5074, lng: -0.1278, label: "London" },
+                  end: { lat: 40.7128, lng: -74.006, label: "New York", offset: { x: 0, y: -18 } },
+                },
+                {
+                  start: { lat: 40.7128, lng: -74.006, label: "New York" },
+                  end: { lat: 37.7749, lng: -122.4194, label: "San Francisco", offset: { x: -10, y: 18 } },
+                },
+                {
+                  start: { lat: 40.7128, lng: -74.006, label: "New York" },
+                  end: { lat: -23.5505, lng: -46.6333, label: "São Paulo", offset: { x: 0, y: 18 } },
+                },
+                // East Asia & Australia
+                {
+                  start: { lat: 28.6139, lng: 77.209, label: "New Delhi (HQ)" },
+                  end: { lat: 1.3521, lng: 103.8198, label: "Singapore", offset: { x: 0, y: 18 } },
                 },
                 {
                   start: { lat: 1.3521, lng: 103.8198, label: "Singapore" },
-                  end: { lat: -33.8688, lng: 151.2093, label: "Sydney" },
+                  end: { lat: 35.6762, lng: 139.6503, label: "Tokyo", offset: { x: 20, y: -15 } },
+                },
+                {
+                  start: { lat: 1.3521, lng: 103.8198, label: "Singapore" },
+                  end: { lat: -33.8688, lng: 151.2093, label: "Sydney", offset: { x: 0, y: 18 } },
                 },
               ]}
             />
           </div>
 
-          <div className="mt-10 grid grid-cols-3 gap-px bg-white/[0.06] max-w-3xl mx-auto">
+          <div className="mt-10 grid grid-cols-3 gap-px bg-white/[0.06] max-w-3xl mx-auto rounded-xl overflow-hidden border border-white/10">
             {[
-              { value: "40+", label: "Cities served" },
-              { value: "2,500+", label: "Verified pros" },
-              { value: "120k+", label: "Jobs completed" },
+              { value: "35+", label: "Cities & Hubs" },
+              { value: "2,000+", label: "Verified Pros" },
+              { value: "12,450+", label: "Jobs Completed" },
             ].map((stat) => (
               <div key={stat.label} className="bg-zinc-950 py-6 px-4 text-center">
                 <p className="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-1">
                   {stat.value}
                 </p>
-                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/25">
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#C8A45C]">
                   {stat.label}
                 </p>
               </div>

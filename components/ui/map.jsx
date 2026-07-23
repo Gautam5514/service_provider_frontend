@@ -165,164 +165,104 @@ export function WorldMap({
           );
         })}
 
-        {dots.map((dot, i) => {
-          const startPoint = projectPoint(dot.start.lat, dot.start.lng);
-          const endPoint = projectPoint(dot.end.lat, dot.end.lng);
+        {/* Render unique points and labels */}
+        {(() => {
+          const uniqueMap = new Map();
+          dots.forEach((dot) => {
+            if (dot.start?.label) {
+              const key = `${dot.start.lat.toFixed(2)},${dot.start.lng.toFixed(2)}`;
+              if (!uniqueMap.has(key)) uniqueMap.set(key, dot.start);
+            }
+            if (dot.end?.label) {
+              const key = `${dot.end.lat.toFixed(2)},${dot.end.lng.toFixed(2)}`;
+              if (!uniqueMap.has(key)) uniqueMap.set(key, dot.end);
+            }
+          });
+          const uniquePoints = Array.from(uniqueMap.values());
 
-          return (
-            <g key={`points-group-${i}`}>
-              {/* Start Point */}
-              <g key={`start-${i}`}>
+          return uniquePoints.map((pt, i) => {
+            const point = projectPoint(pt.lat, pt.lng);
+            return (
+              <g key={`pt-group-${i}`}>
                 <motion.g
                   onHoverStart={() =>
-                    setHoveredLocation(dot.start.label || `Location ${i}`)
+                    setHoveredLocation(pt.label || `Location ${i}`)
                   }
                   onHoverEnd={() => setHoveredLocation(null)}
                   className="cursor-pointer"
-                  whileHover={{ scale: 1.2 }}
+                  whileHover={{ scale: 1.25 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
                   <circle
-                    cx={startPoint.x}
-                    cy={startPoint.y}
-                    r="3"
+                    cx={point.x}
+                    cy={point.y}
+                    r="4"
                     fill={lineColor}
                     filter="url(#glow)"
                     className="drop-shadow-lg"
                   />
                   <circle
-                    cx={startPoint.x}
-                    cy={startPoint.y}
-                    r="3"
+                    cx={point.x}
+                    cy={point.y}
+                    r="4"
                     fill={lineColor}
                     opacity="0.5"
                   >
                     <animate
                       attributeName="r"
-                      from="3"
-                      to="12"
-                      dur="2s"
-                      begin="0s"
+                      from="4"
+                      to="14"
+                      dur="2.2s"
+                      begin={`${(i % 3) * 0.4}s`}
                       repeatCount="indefinite"
                     />
                     <animate
                       attributeName="opacity"
-                      from="0.6"
+                      from="0.7"
                       to="0"
-                      dur="2s"
-                      begin="0s"
+                      dur="2.2s"
+                      begin={`${(i % 3) * 0.4}s`}
                       repeatCount="indefinite"
                     />
                   </circle>
                 </motion.g>
 
-                {showLabels && dot.start.label && (
-                  <motion.g
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 * i + 0.3, duration: 0.5 }}
-                    className="pointer-events-none"
-                  >
-                    <foreignObject
-                      x={startPoint.x - 50}
-                      y={startPoint.y - 35}
-                      width="100"
-                      height="30"
-                      className="block"
+                {showLabels && pt.label && (() => {
+                  const offsetX = pt.offset?.x || 0;
+                  const offsetY = pt.offset?.y || 0;
+                  return (
+                    <motion.g
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 * i + 0.1, duration: 0.4 }}
+                      className="pointer-events-none"
                     >
+                      <foreignObject
+                        x={point.x - 70 + offsetX}
+                        y={point.y - 36 + offsetY}
+                        width="140"
+                        height="32"
+                        className="block overflow-visible"
+                      >
                       <div className="flex items-center justify-center h-full">
                         <span
-                          className={`${labelClassName} font-medium px-2 py-0.5 rounded-md border shadow-sm ${
+                          className={`text-[11px] font-bold tracking-wide whitespace-nowrap px-2.5 py-1 rounded-md border shadow-md ${
                             isDark
-                              ? "bg-black/95 text-white border-gray-700"
-                              : "bg-white/95 text-black border-gray-200"
+                              ? "bg-black/90 text-white border-white/20 backdrop-blur-md"
+                              : "bg-white/95 text-black border-gray-200 backdrop-blur-md"
                           }`}
                         >
-                          {dot.start.label}
+                          {pt.label}
                         </span>
                       </div>
                     </foreignObject>
                   </motion.g>
-                )}
+                );
+              })()}
               </g>
-
-              {/* End Point */}
-              <g key={`end-${i}`}>
-                <motion.g
-                  onHoverStart={() =>
-                    setHoveredLocation(dot.end.label || `Destination ${i}`)
-                  }
-                  onHoverEnd={() => setHoveredLocation(null)}
-                  className="cursor-pointer"
-                  whileHover={{ scale: 1.2 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <circle
-                    cx={endPoint.x}
-                    cy={endPoint.y}
-                    r="3"
-                    fill={lineColor}
-                    filter="url(#glow)"
-                    className="drop-shadow-lg"
-                  />
-                  <circle
-                    cx={endPoint.x}
-                    cy={endPoint.y}
-                    r="3"
-                    fill={lineColor}
-                    opacity="0.5"
-                  >
-                    <animate
-                      attributeName="r"
-                      from="3"
-                      to="12"
-                      dur="2s"
-                      begin="0.5s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="opacity"
-                      from="0.6"
-                      to="0"
-                      dur="2s"
-                      begin="0.5s"
-                      repeatCount="indefinite"
-                    />
-                  </circle>
-                </motion.g>
-
-                {showLabels && dot.end.label && (
-                  <motion.g
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 * i + 0.5, duration: 0.5 }}
-                    className="pointer-events-none"
-                  >
-                    <foreignObject
-                      x={endPoint.x - 50}
-                      y={endPoint.y - 35}
-                      width="100"
-                      height="30"
-                      className="block"
-                    >
-                      <div className="flex items-center justify-center h-full">
-                        <span
-                          className={`${labelClassName} font-medium px-2 py-0.5 rounded-md border shadow-sm ${
-                            isDark
-                              ? "bg-black/95 text-white border-gray-700"
-                              : "bg-white/95 text-black border-gray-200"
-                          }`}
-                        >
-                          {dot.end.label}
-                        </span>
-                      </div>
-                    </foreignObject>
-                  </motion.g>
-                )}
-              </g>
-            </g>
-          );
-        })}
+            );
+          });
+        })()}
       </svg>
 
       {/* Mobile Tooltip */}

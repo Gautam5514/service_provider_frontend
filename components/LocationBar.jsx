@@ -127,7 +127,7 @@ export default function LocationBar({ onLocationChange, compact = false }) {
 function Panel({ query, setQuery, inputRef, location, srcInfo,
   onManual, onRefresh, refreshing, setOpen, onCitySelect, dark }) {
 
-  const POPULAR = ["Mumbai","Delhi","Bangalore","Hyderabad","Chennai","Pune","Kolkata","Ahmedabad","Jaipur","Lucknow","Noida","Gurgaon"];
+  const POPULAR = ["New Delhi", "Ranchi (Jharkhand)", "Kolkata", "Mumbai", "Bangalore", "Jamshedpur", "Dhanbad", "Patna", "Hyderabad", "Chennai", "Pune", "Ahmedabad", "Jaipur", "Lucknow"];
   const filtered = query.trim() ? POPULAR.filter(c => c.toLowerCase().includes(query.toLowerCase())) : POPULAR;
 
   const bg    = dark ? "bg-zinc-900 border-zinc-700" : "bg-white border-zinc-200";
