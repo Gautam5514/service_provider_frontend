@@ -7,6 +7,7 @@ import api from "@/lib/api";
 import { AUTH_CHANGED_EVENT, getStoredUser } from "@/lib/auth";
 import { SUPPORT_OPEN_EVENT } from "@/lib/supportWidget";
 import { CheckCircle2, Link2, Loader2, MessageSquare, Send, X } from "lucide-react";
+import SupportBot from "./SupportBot";
 
 // Routes where the floating button is hidden (they have their own support UX,
 // or are the support chat itself).
@@ -139,12 +140,19 @@ export default function SupportWidget() {
           {/* Panel header */}
           <div className="bg-zinc-950 px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                <MessageSquare size={15} className="text-emerald-400" />
+              <div className="sm-bot-host w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-center shrink-0">
+                <SupportBot size={30} />
               </div>
               <div>
                 <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-500">EliteCrew</p>
                 <p className="text-sm font-extrabold text-white">{isPartner ? "Partner Support" : "Support"}</p>
+                <p className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400">
+                  <span className="relative flex w-1.5 h-1.5">
+                    <span className="sm-ping-ring absolute inline-flex w-full h-full rounded-full bg-emerald-400" />
+                    <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  </span>
+                  Online
+                </p>
               </div>
             </div>
             <button
@@ -160,7 +168,9 @@ export default function SupportWidget() {
             {/* Not logged in */}
             {!user && (
               <div className="text-center py-4">
-                <MessageSquare size={32} className="text-zinc-200 mx-auto mb-3" />
+                <div className="sm-bot-host w-16 h-16 rounded-2xl bg-zinc-950 flex items-center justify-center mx-auto mb-3">
+                  <SupportBot size={48} />
+                </div>
                 <p className="font-extrabold text-zinc-900 mb-1">Get Support</p>
                 <p className="text-xs text-zinc-500 mb-5 leading-relaxed">
                   Sign in to raise a support ticket and chat with our team in real time.
@@ -293,15 +303,23 @@ export default function SupportWidget() {
       {/* ── Floating toggle button ──────────────────────────────────────────── */}
       <button
         onClick={() => { setOpen(v => !v); if (!open) reset(); }}
-        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 ${
+        className={`sm-bot-host relative w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 ${
           open
             ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
-            : "bg-zinc-950 text-white hover:bg-zinc-800 shadow-zinc-900/50"
+            : "bg-zinc-950 text-white hover:bg-zinc-800 hover:scale-105 shadow-zinc-900/50"
         }`}
         aria-label="Support"
         title="Get Support"
       >
-        {open ? <X size={20} /> : <MessageSquare size={20} />}
+        {open ? (
+          <X size={20} />
+        ) : (
+          <>
+            <SupportBot size={36} />
+            {/* Presence dot, anchored outside the bot's own artboard */}
+            <span className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-zinc-950" />
+          </>
+        )}
       </button>
     </div>
   );

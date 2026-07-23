@@ -125,6 +125,84 @@ html {
   animation: sm-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
+/* ── Support bot mascot ───────────────────────────────────────────────────── */
+/* Whole-body idle bob. Everything else layers on top of this. */
+@keyframes sm-bot-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-1.6px); }
+}
+/* Head leans into the wave, then settles back. */
+@keyframes sm-bot-tilt {
+  0%, 55%, 100% { transform: rotate(0deg); }
+  15%, 40%      { transform: rotate(-6deg); }
+}
+/* Eyes shut for two frames — the pause between blinks is most of the cycle. */
+@keyframes sm-bot-blink {
+  0%, 44%, 50%, 92%, 96%, 100% { transform: scaleY(1); }
+  46%, 48%, 94%                { transform: scaleY(0.08); }
+}
+/* Arm swings up and waves twice, then drops and waits. */
+@keyframes sm-bot-wave {
+  0%, 8%    { transform: rotate(40deg); }
+  16%       { transform: rotate(-6deg); }
+  24%       { transform: rotate(16deg); }
+  32%       { transform: rotate(-8deg); }
+  40%       { transform: rotate(14deg); }
+  48%       { transform: rotate(-4deg); }
+  58%, 100% { transform: rotate(40deg); }
+}
+/* Counter-swing on the far arm so the pose doesn't read as lopsided. */
+@keyframes sm-bot-arm-idle {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-9deg); }
+}
+/* Antenna bulb heartbeat + the halo that expands out of it. */
+@keyframes sm-bot-beacon {
+  0%, 100% { opacity: 1;    transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.82); }
+}
+@keyframes sm-bot-halo {
+  0%   { transform: scale(0.6); opacity: 0.55; }
+  70%  { transform: scale(2.3); opacity: 0;    }
+  100% { transform: scale(2.3); opacity: 0;    }
+}
+/* Mouth bar stretches as if mid-sentence. */
+@keyframes sm-bot-talk {
+  0%, 100% { transform: scaleX(1);    }
+  30%      { transform: scaleX(0.55); }
+  65%      { transform: scaleX(1.18); }
+}
+/* Specular sweep across the visor glass. */
+@keyframes sm-bot-glint {
+  0%, 60%, 100% { transform: translateX(0);    opacity: 0; }
+  70%           { opacity: 0.5; }
+  85%           { transform: translateX(26px); opacity: 0; }
+}
+
+.sm-bot-float   { animation: sm-bot-float 3.2s ease-in-out infinite; }
+.sm-bot-tilt    { animation: sm-bot-tilt 5s ease-in-out infinite;       transform-origin: 32px 43px; }
+.sm-bot-eyes    { animation: sm-bot-blink 5s ease-in-out infinite;      transform-origin: 32px 26px; }
+.sm-bot-wave    { animation: sm-bot-wave 5s ease-in-out infinite;       transform-origin: 51px 50px; }
+.sm-bot-arm     { animation: sm-bot-arm-idle 3.2s ease-in-out infinite; transform-origin: 16px 47px; }
+.sm-bot-beacon  { animation: sm-bot-beacon 1.8s ease-in-out infinite;   transform-origin: 32px 6.5px; }
+.sm-bot-halo    { animation: sm-bot-halo 2.4s cubic-bezier(0, 0, 0.2, 1) infinite; transform-origin: 32px 6.5px; }
+.sm-bot-mouth   { animation: sm-bot-talk 5s ease-in-out infinite;       transform-origin: 32px 34px; }
+.sm-bot-glint   { animation: sm-bot-glint 5s ease-in-out infinite; }
+
+/* Hover on the launcher: bot perks up and waves at double speed. */
+.sm-bot-host:hover .sm-bot-wave  { animation-duration: 2.2s; }
+.sm-bot-host:hover .sm-bot-float { animation-duration: 1.6s; }
+.sm-bot-host:hover .sm-bot-tilt  { animation-duration: 2.2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-bot-float, .sm-bot-tilt, .sm-bot-eyes, .sm-bot-wave,
+  .sm-bot-arm, .sm-bot-beacon, .sm-bot-halo, .sm-bot-mouth, .sm-bot-glint {
+    animation: none !important;
+  }
+  /* Without the wave keyframes the arm would sit at its raised rest angle. */
+  .sm-bot-wave { transform: rotate(18deg); }
+}
+
 /* Keep Leaflet popup above our sticky navbar */
 .leaflet-popup { z-index: 800 !important; }
 /* Leaflet controls sit below our app navbar (z-50 = 50, we stay at 40) */

@@ -10,6 +10,7 @@ import LocationBar from "@/components/LocationBar";
 import SmartSearch from "@/components/SmartSearch";
 import NotificationBell from "@/components/NotificationBell";
 import SiteFooter from "@/components/SiteFooter";
+import CategoryRow from "@/components/CategoryRow";
 import { WorldMap } from "@/components/ui/map";
 import {
   ArrowRight,
@@ -234,6 +235,41 @@ const CATEGORY_INSIGHTS = {
   moving:     { demand: 31, booked: "220",  rating: 4.6, eta: "scheduled" },
   gardening:  { demand: 28, booked: "180",  rating: 4.6, eta: "scheduled" },
 };
+
+// Categories are clustered into intent groups. 18 equal-weight cards force the
+// user to read every one; four labelled clusters let them skip straight to the
+// job they came for. Order inside a group follows CATEGORY_INSIGHTS demand.
+const CATEGORY_GROUPS = [
+  {
+    id:    "repair",
+    title: "Appliance & Cooling Repair",
+    blurb: "Same-day fixes for the machines you can't live without",
+    keys:  ["ac", "cooler", "fan", "fridge", "appliance", "tv"],
+  },
+  {
+    id:    "home",
+    title: "Home Repairs & Improvement",
+    blurb: "Wiring, leaks, fittings and finishes — done properly",
+    keys:  ["electrical", "plumbing", "carpentry", "painting"],
+  },
+  {
+    id:    "cleaning",
+    title: "Cleaning & Pest Control",
+    blurb: "Deep cleans and treatments that actually last",
+    keys:  ["cleaning", "pest-control", "car-wash", "gardening"],
+  },
+  {
+    id:    "personal",
+    title: "Personal Care & Daily Help",
+    blurb: "Salon-grade care and everyday errands at your door",
+    keys:  ["beauty", "grooming", "laundry", "moving"],
+  },
+];
+
+// Static catalog size per category — the floor that live services add to.
+const CATEGORY_STATIC_COUNTS = Object.fromEntries(
+  Object.entries(SERVICE_CATALOG).map(([k, a]) => [k, a.length])
+);
 
 // Real service photography for the image-led category cards (Urban Company style).
 const CATEGORY_PHOTOS = {
@@ -732,9 +768,6 @@ export default function HomePage() {
   const logout = () => { performLogout(); setUser(null); };
 
   const popularServices = Object.values(SERVICE_CATALOG).flat().filter(s => s.popular).slice(0, 6);
-  const catCounts       = Object.fromEntries(
-    Object.entries(SERVICE_CATALOG).map(([k, a]) => [k, a.length])
-  );
 
   // Live admin-created services enrich the category cards: uploaded photos,
   // real counts and real starting prices — so a new category like "cleaning"
@@ -766,6 +799,42 @@ export default function HomePage() {
       })
       .catch(() => {});
   }, []);
+
+  // One resolved record per category, shared by the spotlight cards and the
+  // grouped tiles below them so both always agree on price/count/photo.
+  const catStats = useMemo(() => {
+    const out = {};
+    for (const [key, meta] of Object.entries(CATEGORY_META)) {
+      if (key === "other") continue;
+      const services = SERVICE_CATALOG[key] || [];
+      const live     = liveByCat[key];
+
+      // Merge static + live: count dedupes by slug, price takes the true
+      // minimum, photo prefers the curated shot then the first uploaded one.
+      const staticSlugs = new Set(services.map(s => s.slug));
+      const liveOnly    = live ? [...live.slugs].filter(sl => !staticSlugs.has(sl)).length : 0;
+      const staticMin   = services.length ? Math.min(...services.map(s => s.price)) : null;
+      const prices      = [staticMin, live?.minPrice].filter(v => v != null);
+
+      out[key] = {
+        key,
+        meta,
+        ins:      CATEGORY_INSIGHTS[key] || { demand: 50, booked: "100", rating: 4.7, eta: "same day" },
+        count:    (CATEGORY_STATIC_COUNTS[key] || 0) + liveOnly,
+        minPrice: prices.length ? Math.min(...prices) : null,
+        popular:  services.find(s => s.popular) || services[0] || (live?.firstName ? { name: live.firstName } : null),
+        photo:    live?.image || CATEGORY_PHOTOS[key] || null,
+      };
+    }
+    return out;
+  }, [liveByCat]);
+
+  // Only the three genuinely hottest categories get a full-size card — badges
+  // like "Most booked" mean nothing when every tile shouts equally loud.
+  const spotlightCats = useMemo(
+    () => Object.values(catStats).sort((a, b) => b.ins.demand - a.ins.demand).slice(0, 3),
+    [catStats]
+  );
 
   const [stats, setStats] = useState(null);
   useEffect(() => {
@@ -1125,7 +1194,7 @@ export default function HomePage() {
       </section>
 
       {/* ── SERVICE CATEGORIES ───────────────────────────────────────── */}
-      <section id="categories" className="py-24 md:py-32 relative overflow-hidden bg-white border-b border-zinc-100 animate-reveal-up">
+      <section id="categories" className="py-16 md:py-24 relative overflow-hidden bg-white border-b border-zinc-100 animate-reveal-up">
         <div className="absolute inset-0 opacity-[0.04] pointer-events-none" 
           style={{backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '64px 64px'}} 
         />
@@ -1133,125 +1202,133 @@ export default function HomePage() {
         <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-white to-transparent" />
 
         <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="w-12 h-px bg-zinc-950" />
-                <span className="text-[10px] font-black tracking-[0.3em] uppercase text-zinc-400">Discover Services</span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-black mb-6 leading-[0.9]">
-                Browse by <span className="text-zinc-300">Category</span>
+          <div className="flex items-center justify-between gap-5 mb-8 md:mb-10">
+            <div>
+              <p className="text-xs font-semibold tracking-wide uppercase text-emerald-600 mb-2">
+                Our services
+              </p>
+              <h2 className="text-2xl md:text-[2rem] font-bold tracking-tight text-zinc-900 leading-tight">
+                Browse by category
               </h2>
-              {location && (
-                <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-zinc-50 border border-zinc-150 rounded-full">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <p className="text-[11px] font-bold text-zinc-500">
-                    Ranked by what&rsquo;s most booked in <span className="text-black">{location.city}</span>
-                  </p>
-                </div>
-              )}
+              <p className="text-sm text-zinc-500 mt-2">
+                {location
+                  ? <>Ranked by what&rsquo;s most booked in <span className="font-semibold text-zinc-700">{location.city}</span></>
+                  : "Pick a service and book a verified pro in minutes"}
+              </p>
             </div>
             <Link href="/services/ac"
-              className="group flex items-center gap-3 text-[11px] font-black tracking-widest uppercase text-black">
-              View All Services
-              <div className="w-10 h-10 rounded-full border border-zinc-200 flex items-center justify-center group-hover:bg-black group-hover:border-black group-hover:text-white transition-all duration-300">
-                <ChevronRight size={14} strokeWidth={3} className="group-hover:translate-x-0.5 transition-transform" />
-              </div>
+              className="group hidden sm:inline-flex items-center gap-2 text-sm font-semibold text-zinc-900 shrink-0 px-4 py-2.5 rounded-full border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white transition-all duration-300">
+              View all
+              <ChevronRight size={15} strokeWidth={2.5} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 mb-20">
-            {Object.entries(CATEGORY_META)
-              .sort(([a], [b]) => (CATEGORY_INSIGHTS[b]?.demand || 0) - (CATEGORY_INSIGHTS[a]?.demand || 0))
-              .map(([key, meta], idx) => {
-                const ins      = CATEGORY_INSIGHTS[key] || { demand: 50, booked: "100", rating: 4.7, eta: "same day" };
-                const services = SERVICE_CATALOG[key] || [];
-                const live     = liveByCat[key];
+          {/* ── Tier 1: spotlight ────────────────────────────────────────
+              Only the three highest-demand categories get a full-size card.
+              Everything below is a compact tile, so these actually read as
+              recommendations instead of eighteen identical shouting boxes. */}
+          <div className="grid gap-4 md:gap-5 lg:grid-cols-4 lg:grid-rows-2 mb-16">
+            {spotlightCats.map(({ key, meta, ins, count, minPrice, popular, photo }, idx) => (
+              <Link
+                key={key}
+                href={`/services/${key}`}
+                className={`group relative overflow-hidden rounded-[1.75rem] bg-zinc-900 transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_40px_70px_-30px_rgba(0,0,0,0.45)] ${
+                  idx === 0
+                    ? "lg:col-span-2 lg:row-span-2 min-h-[300px] lg:min-h-[420px]"
+                    : "lg:col-span-2 min-h-[220px] lg:min-h-[200px]"
+                }`}
+              >
+                {photo && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={photo}
+                    alt={meta.label}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-105"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/5" />
 
-                // Merge static + live: count dedupes by slug, price takes the
-                // true minimum, photo prefers the curated one then the first
-                // uploaded service image (so new categories always have one).
-                const staticSlugs = new Set(services.map(s => s.slug));
-                const liveOnly    = live ? [...live.slugs].filter(sl => !staticSlugs.has(sl)).length : 0;
-                const count       = (catCounts[key] || 0) + liveOnly;
+                {/* Badges — meaningful because only two cards carry one */}
+                {idx === 0 && (
+                  <span className="absolute top-4 left-4 z-10 bg-gradient-to-r from-orange-500 to-rose-500 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+                    <Flame size={11} strokeWidth={2.5} /> #1 in {location?.city || "your area"}
+                  </span>
+                )}
+                {idx === 1 && (
+                  <span className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur text-black text-[9px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+                    <TrendingUp size={11} strokeWidth={2.5} /> Trending now
+                  </span>
+                )}
 
-                const staticMin = services.length ? Math.min(...services.map(s => s.price)) : null;
-                const minPrice  = [staticMin, live?.minPrice].filter(v => v != null).length
-                  ? Math.min(...[staticMin, live?.minPrice].filter(v => v != null))
-                  : null;
+                <div className={`absolute inset-x-0 bottom-0 z-10 p-5 ${idx === 0 ? "md:p-7" : ""}`}>
+                  <div className="flex items-center gap-2 mb-2.5 text-[10px] font-bold text-white/70">
+                    <span className="flex items-center gap-1 text-emerald-300">
+                      <Clock size={11} strokeWidth={2.5} /> {ins.eta}
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-white/25" />
+                    <span className="flex items-center gap-1">
+                      <Star size={10} className="fill-amber-400 text-amber-400" /> {ins.rating}
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-white/25" />
+                    <span>{ins.booked} booked</span>
+                  </div>
 
-                const popular  = services.find(s => s.popular) || services[0] || (live?.firstName ? { name: live.firstName } : null);
-                const photo    = live?.image || CATEGORY_PHOTOS[key] || null;
-                return (
-                  <Link
-                    key={key}
-                    href={`/services/${key}`}
-                    className="group relative bg-white border border-zinc-150 rounded-[1.5rem] flex flex-col transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_30px_60px_-24px_rgba(0,0,0,0.28)] hover:border-zinc-200 overflow-hidden"
-                  >
-                    {/* Service photo */}
-                    <div className="relative h-44 overflow-hidden">
-                      {photo && (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          src={photo}
-                          alt={meta.label}
-                          loading="lazy"
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-110"
-                        />
-                      )}
-                      {/* Legibility gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/5" />
+                  <h3 className={`text-white font-black tracking-tight leading-none ${idx === 0 ? "text-2xl md:text-4xl" : "text-xl md:text-2xl"}`}>
+                    {meta.label}
+                  </h3>
+                  <p className="text-white/60 text-xs font-semibold mt-1.5 truncate">
+                    {popular ? popular.name : meta.description} · {count} services
+                  </p>
 
-                      {/* Demand tag */}
-                      {idx === 0 && (
-                        <span className="absolute top-3 left-3 z-10 bg-gradient-to-r from-orange-500 to-rose-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
-                          <Flame size={10} strokeWidth={2.5} /> Most booked
-                        </span>
-                      )}
-                      {idx === 1 && (
-                        <span className="absolute top-3 left-3 z-10 bg-black/90 backdrop-blur text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
-                          <TrendingUp size={10} strokeWidth={2.5} /> Trending
-                        </span>
-                      )}
+                  <div className="flex items-center justify-between gap-3 mt-4">
+                    <p className="text-white font-black tracking-tight">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/50 mr-1.5">From</span>
+                      {minPrice != null ? formatPrice(minPrice) : "—"}
+                    </p>
+                    <span className="inline-flex items-center gap-1.5 bg-white text-black text-[10px] font-black uppercase tracking-wider pl-4 pr-3 py-2.5 rounded-full shadow-lg group-hover:gap-2.5 transition-all duration-300">
+                      Explore <ArrowUpRight size={13} strokeWidth={2.75} />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
 
-                      {/* Rating chip */}
-                      <span className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur text-black text-[10px] font-black px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
-                        <Star size={10} className="fill-amber-400 text-amber-400" /> {ins.rating}
-                      </span>
+          {/* ── Tier 2: everything else, clustered by intent ──────────────
+              Each group is a horizontal slider so the row stays on one line
+              instead of wrapping, and the heading lets a user jump to their job. */}
+          <div className="space-y-12 md:space-y-14 mb-14">
+            {CATEGORY_GROUPS.map((group) => {
+              const items = group.keys.map(k => catStats[k]).filter(Boolean);
+              if (!items.length) return null;
+              return (
+                <CategoryRow key={group.id} group={group} items={items} />
+              );
+            })}
 
-                      {/* Title over photo */}
-                      <div className="absolute bottom-3.5 left-4 right-4 z-10">
-                        <p className="text-white font-black text-lg leading-tight tracking-tight drop-shadow-sm">{meta.label}</p>
-                        {popular && (
-                          <p className="text-white/75 text-[11px] font-semibold mt-0.5 truncate">{popular.name}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Info strip: trust + speed (no confusing meters) */}
-                    <div className="px-4 pt-3 flex items-center gap-2 text-[10px] font-bold text-zinc-400">
-                      <span className="flex items-center gap-1 text-emerald-600">
-                        <Clock size={10} strokeWidth={2.5} /> {ins.eta}
-                      </span>
-                      <span className="w-1 h-1 rounded-full bg-zinc-200" />
-                      <span>{ins.booked} booked</span>
-                      <span className="w-1 h-1 rounded-full bg-zinc-200" />
-                      <span>{count} services</span>
-                    </div>
-
-                    {/* Footer: price + book */}
-                    <div className="px-4 pt-2.5 pb-4 mt-auto flex items-center justify-between">
-                      <div className="leading-none">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Starts at</span>
-                        <p className="text-lg font-black text-black tracking-tight mt-0.5">{minPrice != null ? formatPrice(minPrice) : "—"}</p>
-                      </div>
-                      <span className="inline-flex items-center gap-1.5 bg-black text-white text-[10px] font-black uppercase tracking-wider px-4 py-3 rounded-xl shadow-md group-hover:gap-2.5 group-hover:bg-zinc-800 transition-all duration-300">
-                        Book <ArrowUpRight size={13} strokeWidth={2.5} />
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
+            {/* Catch-all so admin-created services outside the four clusters
+                stay reachable from the home page. */}
+            <Link
+              href="/services/other"
+              className="group flex items-center justify-between gap-4 px-5 py-4 rounded-2xl bg-zinc-50 ring-1 ring-zinc-150 hover:ring-zinc-300 hover:bg-white transition-all duration-300"
+            >
+              <span className="flex items-center gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-xl bg-white ring-1 ring-zinc-200 flex items-center justify-center shrink-0 text-zinc-500 group-hover:text-zinc-900 transition-colors">
+                  <Wrench size={16} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-zinc-900 tracking-tight">Can&rsquo;t find your service?</span>
+                  <span className="block text-xs text-zinc-400 truncate">
+                    Tell us the job and we&rsquo;ll match you with a verified pro
+                  </span>
+                </span>
+              </span>
+              <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-900">
+                Browse all
+                <ArrowUpRight size={14} strokeWidth={2.5} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </span>
+            </Link>
           </div>
 
           {/* ─── NEW INTERACTIVE SYMPTOM DIAGNOSTICS MATCHER ───────────────── */}
