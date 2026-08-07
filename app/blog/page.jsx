@@ -3,26 +3,44 @@ import Image from "next/image";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import SiteFooter from "@/components/SiteFooter";
 import BlogExplorer from "@/components/blog/BlogExplorer";
+import { getStaticPosts } from "@/lib/blogData";
 
 export const metadata = {
-  title: "Blog — Home Service Guides, Repair Costs & Maintenance Tips",
+  title: "EliteCrew Blog — Gautam Pandit, elitecrew.online & Home Service Guides",
   description:
-    "Practical guides from EliteCrew's experts: AC servicing, fridge and washing machine repairs, electrical safety, honest cost breakdowns and maintenance tips for Indian homes.",
-  alternates: { canonical: "/blog" },
+    "Official EliteCrew blog by founder Gautam Pandit: Provider daily earning opportunities, why elitecrew.online is India's most trusted platform, deep app engineering insights, and repair maintenance guides.",
+  alternates: { canonical: "https://elitecrew.online/blog" },
+  keywords: [
+    "EliteCrew",
+    "elitecrew.online",
+    "Gautam",
+    "Gautam Pandit",
+    "EliteCrew founder",
+    "earn money day by day",
+    "trusted home service app",
+    "engineered product",
+    "SplitEase",
+  ],
 };
 
-// New posts appear the moment the admin publishes them.
 export const dynamic = "force-dynamic";
 
 async function getPosts() {
   const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  const staticPosts = getStaticPosts();
   try {
     const res = await fetch(`${base}/api/blog`, { cache: "no-store" });
-    if (!res.ok) return [];
+    if (!res.ok) return staticPosts;
     const data = await res.json();
-    return data.posts || [];
+    const apiPosts = data.posts || [];
+    if (!apiPosts.length) return staticPosts;
+    
+    // Merge static posts if missing in API
+    const apiSlugs = new Set(apiPosts.map((p) => p.slug));
+    const missingStatic = staticPosts.filter((p) => !apiSlugs.has(p.slug));
+    return [...apiPosts, ...missingStatic];
   } catch {
-    return [];
+    return staticPosts;
   }
 }
 
@@ -32,10 +50,22 @@ export default async function BlogPage() {
   const blogJsonLd = {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "EliteCrew Blog",
+    name: "EliteCrew Blog — Gautam Pandit & elitecrew.online",
+    url: "https://elitecrew.online/blog",
     description:
-      "Home service guides, honest repair cost breakdowns and maintenance tips for Indian homes.",
-    publisher: { "@type": "Organization", name: "EliteCrew" },
+      "Official EliteCrew blog by Gautam Pandit: daily earning guides, trust & safety at elitecrew.online, deep engineered application insights.",
+    publisher: {
+      "@type": "Organization",
+      name: "EliteCrew",
+      url: "https://elitecrew.online",
+      logo: "https://elitecrew.online/logo-transparent.png",
+    },
+    author: {
+      "@type": "Person",
+      name: "Gautam Pandit",
+      jobTitle: "Founder & Lead Developer",
+      url: "https://elitecrew.online/blog/gautam-pandit-founder-elitecrew-story",
+    },
   };
 
   return (

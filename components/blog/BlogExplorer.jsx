@@ -5,11 +5,14 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Clock, Newspaper } from "lucide-react";
 
 export const CAT_STYLES = {
-  "AC & Cooling":     { chip: "bg-sky-50 text-sky-700 border-sky-200",             dot: "bg-sky-500" },
-  "Appliances":       { chip: "bg-rose-50 text-rose-700 border-rose-200",          dot: "bg-rose-500" },
-  "Electrical":       { chip: "bg-amber-50 text-amber-700 border-amber-200",       dot: "bg-amber-500" },
-  "Maintenance Tips": { chip: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
-  "Buying Guides":    { chip: "bg-violet-50 text-violet-700 border-violet-200",    dot: "bg-violet-500" },
+  "Founder Story":          { chip: "bg-amber-50 text-amber-900 border-amber-300",          dot: "bg-amber-500" },
+  "Provider Opportunities": { chip: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+  "System Architecture":    { chip: "bg-indigo-50 text-indigo-700 border-indigo-200",    dot: "bg-indigo-500" },
+  "AC & Cooling":           { chip: "bg-sky-50 text-sky-700 border-sky-200",             dot: "bg-sky-500" },
+  "Appliances":             { chip: "bg-rose-50 text-rose-700 border-rose-200",          dot: "bg-rose-500" },
+  "Electrical":             { chip: "bg-amber-50 text-amber-700 border-amber-200",       dot: "bg-amber-500" },
+  "Maintenance Tips":       { chip: "bg-teal-50 text-teal-700 border-teal-200",          dot: "bg-teal-500" },
+  "Buying Guides":          { chip: "bg-violet-50 text-violet-700 border-violet-200",    dot: "bg-violet-500" },
 };
 const catStyle = (c) => CAT_STYLES[c] || { chip: "bg-zinc-50 text-zinc-600 border-zinc-200", dot: "bg-zinc-400" };
 
@@ -68,8 +71,16 @@ export default function BlogExplorer({ posts }) {
   const [active, setActive] = useState("All");
 
   const filtered = active === "All" ? posts : posts.filter((p) => p.category === active);
-  const featured = active === "All" ? filtered.find((p) => p.isFeatured) || filtered[0] : null;
-  const rest = featured ? filtered.filter((p) => p._id !== featured._id) : filtered;
+  // Guarantee Founder Journey is featured in hero section on All tab
+  const featured =
+    active === "All"
+      ? filtered.find((p) => p.slug === "gautam-pandit-founder-elitecrew-story") ||
+        filtered.find((p) => p.isFeatured) ||
+        filtered[0]
+      : null;
+  const rest = featured
+    ? filtered.filter((p) => p._id !== featured._id && p.slug !== featured.slug)
+    : filtered;
 
   if (!posts.length) {
     return (

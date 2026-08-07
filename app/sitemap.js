@@ -1,21 +1,30 @@
 import { SITE_URL } from "@/lib/seo";
 import { CATEGORY_META } from "@/lib/services";
+import { BLOG_POSTS } from "@/lib/blogData";
 
 async function getBlogEntries() {
   const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  let posts = BLOG_POSTS;
   try {
     const res = await fetch(`${base}/api/blog`, { next: { revalidate: 3600 } });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.posts || []).map((p) => ({
-      url: `${SITE_URL}/blog/${p.slug}`,
-      lastModified: new Date(p.updatedAt || p.createdAt),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    }));
+    if (res.ok) {
+      const data = await res.json();
+      if (data.posts && data.posts.length) {
+        const apiSlugs = new Set(data.posts.map((p) => p.slug));
+        const extraStatic = BLOG_POSTS.filter((p) => !apiSlugs.has(p.slug));
+        posts = [...data.posts, ...extraStatic];
+      }
+    }
   } catch {
-    return [];
+    // fallback to static BLOG_POSTS
   }
+
+  return posts.map((p) => ({
+    url: `${SITE_URL}/blog/${p.slug}`,
+    lastModified: new Date(p.updatedAt || p.createdAt || Date.now()),
+    changeFrequency: "monthly",
+    priority: 0.8,
+  }));
 }
 
 export default async function sitemap() {

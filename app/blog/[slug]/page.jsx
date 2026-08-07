@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, ChevronRight, Clock } from "lucide-react";
 import SiteFooter from "@/components/SiteFooter";
 import ArticleBody from "@/components/blog/ArticleBody";
 import { SITE_URL } from "@/lib/seo";
+import { getStaticPostBySlug } from "@/lib/blogData";
 
 export const dynamic = "force-dynamic";
 
@@ -16,12 +17,15 @@ const initials = (name = "") =>
 
 async function getPost(slug) {
   const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  const staticData = getStaticPostBySlug(slug);
   try {
     const res = await fetch(`${base}/api/blog/${slug}`, { cache: "no-store" });
-    if (!res.ok) return null;
-    return await res.json();
+    if (!res.ok) return staticData;
+    const data = await res.json();
+    if (!data?.post) return staticData;
+    return data;
   } catch {
-    return null;
+    return staticData;
   }
 }
 
