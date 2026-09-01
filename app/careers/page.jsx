@@ -186,10 +186,10 @@ export default async function CareersPage() {
               </p>
             </div>
             <a
-              href="mailto:careers@elitecrew.in"
+              href="mailto:careers@elitecrew.online"
               className="inline-flex h-11 flex-shrink-0 items-center gap-2 rounded-[10px] bg-[#C8A45C] px-6 text-xs font-bold text-black transition-colors hover:bg-[#d7b877]"
             >
-              careers@elitecrew.in
+              careers@elitecrew.online
               <ArrowRight size={13} />
             </a>
           </div>

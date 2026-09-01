@@ -231,7 +231,7 @@ export function AdminSidebar() {
                 {user.fullName || "Admin"}
               </span>
               <span className="text-[10px] text-zinc-400 truncate leading-none mt-0.5">
-                {user.email || "admin@elitecrew.com"}
+                {user.email || "support@elitecrew.online"}
               </span>
             </div>
           </div>

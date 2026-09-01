@@ -12,7 +12,7 @@ export const metadata = {
 };
 
 const CHANNELS = [
-  { icon: Mail, label: "Email", value: "support@elitecrew.in", href: "mailto:support@elitecrew.in" },
+  { icon: Mail, label: "Email", value: "support@elitecrew.online", href: "mailto:support@elitecrew.online" },
   { icon: Phone, label: "Phone", value: "+91 90000 00000", href: "tel:+919000000000" },
   { icon: Clock, label: "Support hours", value: "9:00 AM – 8:00 PM, all days" },
   { icon: MapPin, label: "Coverage", value: "Serving homes across India" },

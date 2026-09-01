@@ -175,7 +175,7 @@ export default function SiteFooter() {
             </ul>
             <div className="mt-6 space-y-2.5">
               <p className="flex items-center gap-2 text-[12px] text-zinc-500">
-                <Mail size={13} className="text-zinc-600" /> support@elitecrew.in
+                <Mail size={13} className="text-zinc-600" /> support@elitecrew.online
               </p>
               <p className="flex items-center gap-2 text-[12px] text-zinc-500">
                 <MapPin size={13} className="text-zinc-600" /> Serving homes across India

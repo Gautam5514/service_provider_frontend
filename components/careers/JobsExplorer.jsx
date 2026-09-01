@@ -48,8 +48,8 @@ export default function JobsExplorer({ jobs }) {
         <p className="text-[16px] font-bold text-zinc-900">No open roles right now</p>
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-500">
           We're always happy to hear from great people. Send your resume to{" "}
-          <a href="mailto:careers@elitecrew.in" className="font-semibold text-zinc-900 underline underline-offset-2">
-            careers@elitecrew.in
+          <a href="mailto:careers@elitecrew.online" className="font-semibold text-zinc-900 underline underline-offset-2">
+            careers@elitecrew.online
           </a>{" "}
           and we'll reach out when something opens up.
         </p>

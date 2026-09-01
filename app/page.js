@@ -603,7 +603,7 @@ function Stars({ n = 5, size = 10 }) {
 
 function Overline({ children, light = false }) {
   return (
-    <p className={`text-[10px] font-bold tracking-[0.28em] uppercase mb-3 flex items-center gap-2 ${light ? "text-white/30" : "text-zinc-400"}`}>
+    <p className={`text-[10px] font-bold tracking-[0.28em] uppercase mb-3 flex items-center gap-2 ${light ? "text-white/45" : "text-zinc-400"}`}>
       <span className="w-5 h-px bg-current opacity-60 shrink-0" />
       {children}
     </p>
@@ -1379,7 +1379,7 @@ export default function HomePage() {
                 {/* Live status dot */}
                 <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Live Scan</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/45">Live Scan</span>
                 </div>
 
                 {/* Appliance image with interactive diagnostic hotspots */}
@@ -1684,7 +1684,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 md:px-10">
 
           <div className="mb-14 text-center">
-            <p className="text-[10px] font-bold tracking-[0.28em] uppercase text-white/25 mb-3">
+            <p className="text-[10px] font-bold tracking-[0.28em] uppercase text-white/45 mb-3">
               Simple Process
             </p>
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
@@ -1695,14 +1695,14 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/[0.06]">
             {STEPS.map((step, i) => (
               <div key={i} className="relative bg-zinc-950 p-8 md:p-10 hover:bg-zinc-900 transition-colors">
-                <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-white/18 mb-7">
+                <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-white/40 mb-7">
                   Step 0{i + 1}
                 </p>
                 <span className="w-12 h-12 inline-flex items-center justify-center border border-white/[0.10] bg-white/[0.04] mb-7">
-                  <step.Icon size={20} strokeWidth={1.8} className="text-white/60" />
+                  <step.Icon size={20} strokeWidth={1.8} className="text-white/70" />
                 </span>
                 <h3 className="text-xl font-extrabold tracking-tight mb-3">{step.title}</h3>
-                <p className="text-white/35 text-sm leading-relaxed">{step.desc}</p>
+                <p className="text-white/60 text-sm leading-relaxed">{step.desc}</p>
                 {i < 2 && (
                   <ChevronRight size={14} className="hidden md:block absolute top-1/2 -right-2.5 -translate-y-1/2 text-white/15 z-10" />
                 )}
@@ -1727,9 +1727,9 @@ export default function HomePage() {
               <span className="text-[10px] font-black tracking-[0.3em] uppercase text-zinc-400">Security & Integrity</span>
             </div>
             <h2 className="text-5xl md:text-7xl font-black tracking-tighter text-white mb-8 leading-[0.85] bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/40">
-              Built for <br className="hidden md:block" /> <span className="text-zinc-500">peace of mind</span>
+              Built for <br className="hidden md:block" /> <span className="text-zinc-400">peace of mind</span>
             </h2>
-            <p className="text-zinc-500 text-base max-w-xl mx-auto font-medium leading-relaxed">
+            <p className="text-zinc-400 text-base max-w-xl mx-auto font-medium leading-relaxed">
               We&apos;ve engineered every step of the service journey to prioritize your safety, comfort, and absolute satisfaction.
             </p>
           </div>
@@ -1745,12 +1745,12 @@ export default function HomePage() {
 
                 <div className="absolute -top-20 -left-20 w-40 h-40 bg-white opacity-0 group-hover:opacity-[0.04] blur-[80px] transition-opacity duration-700" />
 
-                <div className={`w-16 h-16 inline-flex items-center justify-center rounded-2xl bg-white/[0.03] border border-white/5 mb-10 transition-all duration-700 group-hover:scale-110 group-hover:bg-white group-hover:text-black group-hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] text-white/30`}>
+                <div className={`w-16 h-16 inline-flex items-center justify-center rounded-2xl bg-white/[0.03] border border-white/5 mb-10 transition-all duration-700 group-hover:scale-110 group-hover:bg-white group-hover:text-black group-hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] text-white/50`}>
                   <t.Icon size={28} strokeWidth={1.2} />
                 </div>
-                
+
                 <h3 className="text-xl font-black text-white mb-4 tracking-tight uppercase">{t.label}</h3>
-                <p className="text-[13px] text-zinc-500 leading-relaxed font-medium group-hover:text-zinc-300 transition-colors duration-500">
+                <p className="text-[13px] text-zinc-400 leading-relaxed font-medium group-hover:text-zinc-300 transition-colors duration-500">
                   {t.desc}
                 </p>
 
@@ -1891,7 +1891,7 @@ export default function HomePage() {
               <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-5">
                 Turn your skills into a stable income.
               </h2>
-              <p className="text-white/40 text-base leading-relaxed mb-8 max-w-md">
+              <p className="text-white/60 text-base leading-relaxed mb-8 max-w-md">
                 Join 2,000+ verified professionals already earning through EliteCrew. Flexible hours, instant job alerts, and weekly direct payouts.
               </p>
 
@@ -1917,7 +1917,7 @@ export default function HomePage() {
             {/* Right — earnings table */}
             <div className="lg:flex lg:justify-end">
               <div className="w-full max-w-sm border border-white/[0.09] bg-white/[0.03] p-7">
-                <p className="text-[10px] font-bold tracking-[0.28em] uppercase text-white/22 mb-7">
+                <p className="text-[10px] font-bold tracking-[0.28em] uppercase text-white/45 mb-7">
                   Estimated Monthly Earnings
                 </p>
                 <div>
@@ -1926,13 +1926,13 @@ export default function HomePage() {
                       className={`flex items-center justify-between py-4 ${i < EARNINGS.length - 1 ? "border-b border-white/[0.07]" : ""}`}>
                       <div>
                         <p className="text-sm font-bold text-white">{row.role}</p>
-                        <p className="text-[10px] text-white/25 font-medium mt-0.5">{row.rate}</p>
+                        <p className="text-[10px] text-white/45 font-medium mt-0.5">{row.rate}</p>
                       </div>
                       <p className="text-sm font-extrabold text-emerald-400 shrink-0 ml-4">{row.earn}</p>
                     </div>
                   ))}
                 </div>
-                <p className="text-[10px] text-white/18 font-medium mt-6 leading-relaxed">
+                <p className="text-[10px] text-white/35 font-medium mt-6 leading-relaxed">
                   * Based on active professional averages on the platform.
                 </p>
               </div>

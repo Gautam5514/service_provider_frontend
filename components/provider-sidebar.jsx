@@ -120,7 +120,7 @@ export function ProviderSidebar() {
                 {user.fullName || "Partner"}
               </span>
               <span className="text-[10px] text-zinc-400 truncate leading-none mt-0.5">
-                {user.email || "partner@elitecrew.com"}
+                {user.email || "admin@elitecrew.online"}
               </span>
             </div>
           </div>
