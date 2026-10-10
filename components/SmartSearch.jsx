@@ -256,7 +256,7 @@ const ROLE_CONFIG = {
   },
   public: {
     label:       "Search services",
-    placeholder: "Search home services (AC, cooler, wiring)...",
+    placeholder: "Try “AC repair”, “fridge”, “wiring”…",
     endpoint:    "/search/public",
     chips:       ["AC repair", "Fridge repair", "Fan install", "TV mounting"],
   },
@@ -615,11 +615,11 @@ export default function SmartSearch({ role: roleProp, compact = false, className
             )}
           </div>
         ) : (
-          <div className="group relative rounded-full bg-white border border-zinc-200 shadow-[0_14px_38px_-14px_rgba(0,0,0,0.30)] focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/12 focus-within:shadow-[0_18px_46px_-12px_rgba(16,185,129,0.40)] transition-all duration-300">
+          <div className="group relative rounded-full bg-white ring-1 ring-white/40 shadow-[0_12px_32px_-12px_rgba(0,0,0,0.55)] focus-within:ring-emerald-400/50 focus-within:shadow-[0_18px_50px_-12px_rgba(16,185,129,0.55)] transition-all duration-300">
 
             {/* Left search icon */}
-            <div className="pointer-events-none absolute left-1.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-zinc-950 text-white shadow-[0_4px_12px_rgba(0,0,0,0.35)] md:h-12 md:w-12">
-              <Search size={20} strokeWidth={2.8} />
+            <div className="pointer-events-none absolute left-3.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-zinc-400">
+              <Search size={17} strokeWidth={2.2} />
             </div>
 
             <input
@@ -640,11 +640,11 @@ export default function SmartSearch({ role: roleProp, compact = false, className
               placeholder={cfg.placeholder}
               autoComplete="off"
               spellCheck={false}
-              className="h-14 w-full rounded-full bg-transparent pl-16 pr-32 text-sm font-bold text-zinc-900 outline-none placeholder:text-zinc-400 md:h-16 md:pr-40 md:text-base"
+              className="h-11 w-full rounded-full bg-transparent pl-11 pr-24 text-[13px] font-medium text-zinc-900 outline-none placeholder:text-zinc-400 md:h-12 md:pr-32"
             />
 
             {/* Right controls: clear + Search button */}
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
               {query && (
                 <button
                   type="button"
@@ -665,9 +665,9 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                 type="button"
                 aria-label="Search"
                 onClick={() => { setOpen(true); inputRef.current?.focus(); }}
-                className="inline-flex items-center gap-1.5 rounded-full bg-zinc-950 px-4 py-2.5 text-[11px] font-black uppercase tracking-wider text-white hover:bg-zinc-800 active:scale-95 transition-all md:px-6 md:py-3.5 md:text-xs"
+                className="inline-flex items-center gap-1.5 rounded-full bg-zinc-950 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-emerald-600 active:scale-95 transition-all md:px-5 md:py-2.5"
               >
-                <Search size={14} strokeWidth={3} />
+                <Search size={12} strokeWidth={3} />
                 <span className="hidden sm:inline">Search</span>
               </button>
             </div>
@@ -680,18 +680,18 @@ export default function SmartSearch({ role: roleProp, compact = false, className
         <div
           id="sm-results"
           role="listbox"
-          className={`absolute top-full z-50 mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-white/99 backdrop-blur-2xl shadow-[0_25px_65px_-15px_rgba(0,0,0,0.35)] animate-in fade-in slide-in-from-top-3 duration-200 ${
+          className={`absolute top-full z-50 mt-3 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-[0_25px_65px_-15px_rgba(0,0,0,0.35)] animate-in fade-in slide-in-from-top-3 duration-200 ${
             compact
               ? "right-0 w-[92vw] max-w-[520px] sm:w-[480px] md:w-[520px] origin-top-right"
-              : "left-0 right-0 origin-top"
+              : "left-0 right-0 sm:right-auto sm:w-[560px] max-w-[calc(100vw-2rem)] origin-top"
           }`}
         >
           {/* Header */}
-          <div className="border-b border-zinc-100 px-5 py-4 bg-zinc-50/50">
+          <div className="border-b border-zinc-100 px-5 py-3.5 bg-white">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Search size={11} className="text-zinc-400" />
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
                   {cfg.label}
                 </p>
               </span>
@@ -704,13 +704,13 @@ export default function SmartSearch({ role: roleProp, compact = false, className
 
             {/* Quick-access chips (shown when query is empty) */}
             {showChips && (
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {cfg.chips.map(chip => (
                   <button
                     key={chip}
                     type="button"
                     onClick={() => applyChip(chip)}
-                    className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-widest text-zinc-500 hover:border-black hover:text-black transition-colors duration-200"
+                    className="rounded-full bg-zinc-100 px-3 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-900 hover:text-white transition-colors transition-colors duration-200"
                   >
                     {chip}
                   </button>
@@ -814,10 +814,10 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                 )}
 
                 {/* 2. Role-Specific Grid Panels */}
-                <div className="px-5 py-5">
+                <div className="px-5 py-4">
                   <div className="flex items-center gap-1.5 mb-3">
                     <LayoutDashboard size={11} className="text-zinc-400" />
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
                       {(role === "public" || role === "customer") ? "Popular services" : "Quick actions"}
                     </p>
                   </div>
@@ -831,8 +831,8 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                         { q: "Refrigerator Repair", Icon: Refrigerator, label: "Fridge Repair",         sub: "Cooling issues · compressor",  price: "₹499" },
                         { q: "Fan Installation",    Icon: Fan,          label: "Fan Installation",      sub: "Ceiling & wall mount",         price: "₹149" },
                       ].map(({ q, Icon, label, sub, price }) => (
-                        <div key={q} onClick={() => applyChip(q)} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 hover:border-black cursor-pointer group transition-colors">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-900">
+                        <div key={q} onClick={() => applyChip(q)} className="flex items-center gap-3 rounded-xl bg-zinc-50 p-2.5 ring-1 ring-transparent hover:bg-white hover:ring-zinc-900/80 hover:shadow-md cursor-pointer group transition-all">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-600 shadow-sm ring-1 ring-zinc-200/70">
                             <Icon size={16} />
                           </div>
                           <div className="min-w-0 flex-1">
@@ -858,8 +858,8 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                         { href: "/dashboard/provider/profile",   Icon: Star,              label: "My ratings",        sub: "Customer feedback" },
                       ].map(({ href, Icon, label, sub }, i) => (
                         <Link key={label + i} href={href}>
-                          <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 hover:border-black cursor-pointer group transition-colors">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-900">
+                          <div className="flex items-center gap-3 rounded-xl bg-zinc-50 p-2.5 ring-1 ring-transparent hover:bg-white hover:ring-zinc-900/80 hover:shadow-md cursor-pointer group transition-all">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-600 shadow-sm ring-1 ring-zinc-200/70">
                               <Icon size={16} />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -883,8 +883,8 @@ export default function SmartSearch({ role: roleProp, compact = false, className
                         { href: "/admin/support",   Icon: ShieldAlert, label: "Support center",   sub: "Complaints & disputes" },
                       ].map(({ href, Icon, label, sub }) => (
                         <Link key={label} href={href}>
-                          <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 hover:border-black cursor-pointer group transition-colors">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-900">
+                          <div className="flex items-center gap-3 rounded-xl bg-zinc-50 p-2.5 ring-1 ring-transparent hover:bg-white hover:ring-zinc-900/80 hover:shadow-md cursor-pointer group transition-all">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-600 shadow-sm ring-1 ring-zinc-200/70">
                               <Icon size={16} />
                             </div>
                             <div className="min-w-0 flex-1">

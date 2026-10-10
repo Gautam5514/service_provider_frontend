@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORY_META, SERVICE_CATALOG, formatPrice } from "@/lib/services";
 import SmartSearch from "@/components/SmartSearch";
@@ -9,7 +9,7 @@ import api from "@/lib/api";
 import BrandLoader from "@/components/BrandLoader";
 import { 
   ArrowLeft, Clock, Check, ArrowRight, Sparkles, 
-  ChevronRight, Shield, Star, Award, Zap, HelpCircle 
+  ChevronRight, ChevronLeft, Shield, Star, Award, Zap, HelpCircle 
 } from "lucide-react";
 
 const SERVICE_IMAGES = {
@@ -142,126 +142,157 @@ const CATEGORY_BACKGROUNDS = {
 
 const DEFAULT_SERVICE_IMAGE = "/images/default_service.png";
 
-// Diagnostic Blueprints
-const APPLIANCE_BLUEPRINTS = {
-  ac: {
-    title: "Split AC Blueprint & Diagnostics",
-    subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "/images/ac.webp",
-    hotspots: [
-      { id: "coil", name: "Evaporator Coils", x: "32%", y: "45%", desc: "Clogged or dusty evaporator coils decrease heat exchange, causing poor cooling or AC freezing.", service: "ac-repair" },
-      { id: "filter", name: "Heavy Air Filter", x: "72%", y: "30%", desc: "Dirty or blocked air filters restrict internal airflow, create foul smells, and hike electrical bills.", service: "ac-deep-cleaning" },
-      { id: "blower", name: "Turbine Blower Fan", x: "52%", y: "60%", desc: "Accumulated grime on blower blades creates noisy vibrations or causes low, weak airflow.", service: "ac-deep-cleaning" },
-      { id: "compressor", name: "Gas Chamber Valve", x: "18%", y: "82%", desc: "Low gas pressure or refrigerant leaks cause dry running, blowing warm air, or coil frosting.", service: "ac-gas-refilling" }
-    ]
-  },
-  cooler: {
-    title: "Desert Cooler Blueprint & Diagnostics",
-    subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "/images/cooler_repair.png",
-    hotspots: [
-      { id: "pump", name: "Submersible Pump", x: "28%", y: "78%", desc: "Zero water flow usually means the submersible pump is burnt or clogged with scale.", service: "cooler-repair" },
-      { id: "pad", name: "Honeycomb Pads", x: "72%", y: "48%", desc: "Dirty or lime-scaled honeycomb pads block fresh evaporation and block airflow.", service: "cooler-service" },
-      { id: "fan", name: "Exhaust Fan Motor", x: "50%", y: "38%", desc: "Exhaust fan motor hums but doesn't spin, or operates at extremely sluggish speeds.", service: "cooler-repair" }
-    ]
-  },
-  fan: {
-    title: "Ceiling Fan Blueprint & Diagnostics",
-    subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "/images/fan_repair.png",
-    hotspots: [
-      { id: "capacitor", name: "Speed Capacitor", x: "50%", y: "22%", desc: "Ceiling fan spinning slowly is 90% caused by a deteriorated or weak speed capacitor.", service: "fan-repair" },
-      { id: "winding", name: "Copper Winding Core", x: "50%", y: "45%", desc: "Burnt copper winding or motor stator damages cause complete operational deadness or loud humming.", service: "fan-repair" },
-      { id: "blades", name: "Aerodynamic Blades", x: "24%", y: "68%", desc: "Wobbling blades, incorrect pitch, or dirt layer creates high wind noise and reduces cooling.", service: "fan-servicing" }
-    ]
-  },
-  tv: {
-    title: "LED TV Anatomy & Diagnostics",
-    subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "/images/tv_repair.png",
-    hotspots: [
-      { id: "panel", name: "IPS LED Panel", x: "50%", y: "45%", desc: "Lines on screen, flickering display, or dark patches are caused by internal backlighting errors.", service: "tv-repair" },
-      { id: "board", name: "Power Motherboard", x: "82%", y: "35%", desc: "TV not powering on at all or failing to detect HDMI sources indicates board-level voltage failure.", service: "tv-repair" },
-      { id: "mount", name: "Wall Mount Bracket", x: "50%", y: "78%", desc: "Ditch weak brackets. Fit heavy duty steel mount plate with perfect horizontal level alignment.", service: "tv-wall-mounting" }
-    ]
-  },
-  fridge: {
-    title: "Inverter Fridge Blueprint & Diagnostics",
-    subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "/images/refrigerator.webp",
-    hotspots: [
-      { id: "coil", name: "Cooling Evaporator", x: "50%", y: "28%", desc: "Frost buildup on coils or fan freeze stops cool air from circulating to the lower cabinets.", service: "fridge-repair" },
-      { id: "thermostat", name: "Thermostat Controller", x: "78%", y: "42%", desc: "Faulty temperature sensor dial prevents the compressor from kicking off or cooling correctly.", service: "fridge-repair" },
-      { id: "compressor", name: "Rotary Inverter Compressor", x: "32%", y: "84%", desc: "Frequent clicking sounds, zero cooling, or refrigerant gas leaks require high-precision diagnostics.", service: "fridge-gas-refill" }
-    ]
-  },
-  electrical: {
-    title: "MCB Distribution Board & Diagnostics",
-    subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "/images/electricboard.webp",
-    hotspots: [
-      { id: "mcb", name: "MCB Breaker Switch", x: "42%", y: "32%", desc: "Frequent circuit breaker tripping is a classic sign of short-circuit faults or circuit overloading.", service: "electrical-work" },
-      { id: "socket", name: "Modular Plug Sockets", x: "76%", y: "62%", desc: "Sparking switches or loose, burnt contact terminals behind sockets are severe fire hazards.", service: "electrical-work" },
-      { id: "wiring", name: "Heavy Copper Cabling", x: "28%", y: "76%", desc: "Deteriorated insulation, burnt aluminum wiring, or old cables require replacement with FR copper wires.", service: "wiring-cabling" }
-    ]
-  },
-  appliance: {
-    title: "Washing Machine Blueprint & Diagnostics",
-    subtitle: "Identify faults instantly by selecting interactive glowing components",
-    image: "/images/washing_machine_repair.png",
-    hotspots: [
-      { id: "drum", name: "Stainless Steel Tub", x: "50%", y: "42%", desc: "Loud rattling or heavy shaking during spin cycles indicates bearing damage or shock absorber failures.", service: "washing-machine-repair" },
-      { id: "motor", name: "Direct Drive Motor", x: "50%", y: "78%", desc: "Drum refuses to rotate despite electrical panel sounding active is 90% a motor or belt issue.", service: "washing-machine-repair" },
-      { id: "pump", name: "Drain Filter Pump", x: "82%", y: "86%", desc: "Water standing inside the tub after wash cycles is caused by a blocked drain impeller or pump failure.", service: "appliance-repair" }
-    ]
-  }
+// "What's the problem?" finder: symptom -> service slug (slugs live in lib/services.js)
+const FINDER_DATA = {
+  ac: [
+    { q: "AC is on but not cooling properly", slug: "ac-repair",         why: "Cooling problems need a proper check first. Our pro inspects gas pressure, coils and the compressor as part of the visit." },
+    { q: "Bad smell or dust from the vents",  slug: "ac-deep-cleaning",  why: "Dirty filters and coils are the usual cause. A deep clean removes the dust, bacteria and smell." },
+    { q: "Water dripping from the indoor unit", slug: "ac-deep-cleaning", why: "A choked drain tray makes the unit drip. Deep cleaning includes a full drain flush." },
+    { q: "Ice on the pipes or gas leak",      slug: "ac-gas-refilling",  why: "Frosting and warm air point to low refrigerant. The pro finds the leak and refills the gas." },
+    { q: "I bought a new AC",                 slug: "ac-installation",   why: "Wall mounting, copper piping and electrical connection, finished with a demo." },
+    { q: "Shifting house, need AC removed",   slug: "ac-uninstallation", why: "Safe dismounting with gas recovery and pipe capping, ready to move." },
+  ],
+  cooler: [
+    { q: "Cooler isn't cooling or smells musty", slug: "cooler-service",      why: "Scaled pads and a dirty tank cause weak cooling. Full service cleans everything and overhauls the pump." },
+    { q: "Motor hums, fan won't spin, or no water", slug: "cooler-repair",   why: "The pro checks the motor, pump and wiring and fixes the fault on the spot." },
+    { q: "New cooler to set up",              slug: "cooler-installation", why: "Placement, water connection and electrical setup with a test run." },
+  ],
+  fan: [
+    { q: "Fan spins slowly",                  slug: "fan-repair",       why: "A weak capacitor is the most common cause. It gets checked and replaced if needed." },
+    { q: "Fan won't start or hums",           slug: "fan-repair",       why: "Winding and capacitor inspection finds out whether it's a quick fix." },
+    { q: "Wobbling, noisy or very dusty",     slug: "fan-servicing",    why: "Cleaning, blade balancing and bearing lubrication bring back smooth, quiet running." },
+    { q: "New fan to fit",                    slug: "fan-installation", why: "Ceiling or wall mounting with wiring, blade balancing and a test." },
+  ],
+  tv: [
+    { q: "No display, lines or flicker",      slug: "tv-repair",        why: "Backlight and panel faults need a diagnosis. The pro inspects the boards and repairs what's possible." },
+    { q: "TV won't switch on",                slug: "tv-repair",        why: "Power and main-board checks come first, followed by a basic repair." },
+    { q: "Want it mounted on the wall",       slug: "tv-wall-mounting", why: "Bracket installation, tidy cables and level alignment, with a safety check." },
+  ],
+  fridge: [
+    { q: "Fridge isn't cooling enough",       slug: "fridge-repair",     why: "Cooling diagnosis covers the compressor and thermostat, followed by a basic repair." },
+    { q: "Strange noise or frequent clicking", slug: "fridge-repair",    why: "The compressor and its relay are inspected to find the source of the noise." },
+    { q: "Heavy ice build-up or gas leak",    slug: "fridge-gas-refill", why: "Leak check, gas refill and pressure testing, then a cooling test." },
+  ],
+  electrical: [
+    { q: "Switch or socket sparking, loose or dead", slug: "electrical-work", why: "Switch and socket repair with a wiring and safety check on the same visit." },
+    { q: "MCB keeps tripping",                slug: "electrical-work",  why: "Tripping points to overload or a short. The pro inspects the MCB and circuit." },
+    { q: "New or old wiring needs replacing", slug: "wiring-cabling",   why: "New wiring, cable routing and junction boxes, fully tested." },
+  ],
+  appliance: [
+    { q: "Washing machine shaking, not draining or not spinning", slug: "washing-machine-repair", why: "Motor, drum, belt and pump are checked, then a test run." },
+    { q: "Geyser, microwave or another appliance is faulty",      slug: "appliance-repair",       why: "General diagnosis and component check, with a basic repair." },
+  ],
+  plumbing: [
+    { q: "Tap or mixer is leaking",           slug: "tap-mixer-repair",    why: "Washer, cartridge and mixer repair or replacement." },
+    { q: "Toilet flush not working or running", slug: "toilet-flush-repair", why: "Flush tank and mechanism repair." },
+    { q: "Sink or drain is blocked",          slug: "drain-unclogging",    why: "Unclogging of sinks, floor drains and pipes." },
+    { q: "Leaking pipe or damp wall",         slug: "pipe-leakage-repair", why: "Leak is traced and the pipe repaired." },
+    { q: "Water tank is dirty",               slug: "water-tank-cleaning", why: "Full tank cleaning so the water in your taps is clean." },
+  ],
+  cleaning: [
+    { q: "Stained bathroom, limescale",       slug: "bathroom-deep-cleaning",  why: "Deep scrub of tiles, fittings and floor." },
+    { q: "Greasy kitchen",                    slug: "kitchen-deep-cleaning",   why: "Chimney, hob, cabinets and tiles degreased." },
+    { q: "Whole house before a festival or move-in", slug: "full-home-deep-cleaning", why: "Every room covered in one booking." },
+    { q: "Dirty sofa",                        slug: "sofa-shampoo-cleaning",   why: "Shampoo cleaning that lifts stains and dust." },
+    { q: "Mattress or carpet needs cleaning", slug: "mattress-cleaning",       why: "Deep cleaning for dust, mites and stains." },
+  ],
 };
 
-// Before / After Comparisons
-const BEFORE_AFTER_DATA = {
-  ac: {
-    before: "/images/ac_before_dirty.png",
-    after: "/images/ac_after_clean.png",
-    title: "AC Coil Deep Cleaning Proof",
-    desc: "Clogged, dusty coils block thermal exchange. Our jet pump wash strips away dust, mold, and odor-causing bacteria instantly."
-  },
-  cooler: {
-    before: "/images/cooler_before_dirty.png",
-    after: "/images/cooler_after_clean.png",
-    title: "Honeycomb Cooling Pad Renewal",
-    desc: "Salinized, brittle honeycomb pads ruin cooling output. Drag to see the incredible transformation with high-density fresh pads."
-  },
-  fan: {
-    before: "/images/fan_before_dirty.png",
-    after: "/images/fan_after_clean.png",
-    title: "Greasy Fan Blade De-griming",
-    desc: "Heavy grease and soot create aerodynamical drag and wobble ceiling fans. We fully dismantle, chemical-wash, and grease bearings."
-  },
-  tv: {
-    before: "/images/tv_before_dirty.png",
-    after: "/images/tv_after_clean.png",
-    title: "TV Flush Wall-Mounting Magic",
-    desc: "Messy cords and risky shelves ruin premium room vibes. Drag to compare a cluttered setup with perfectly anchored flush wall mounting."
-  },
-  fridge: {
-    before: "/images/fridge_before_dirty.png",
-    after: "/images/fridge_after_clean.png",
-    title: "Coil Defrosting & Seal Refresh",
-    desc: "Thick ice accumulation raises compressor workload by 40%. We defrost, clean tubes, and sanitize door gaskets completely."
-  },
-  electrical: {
-    before: "/images/electrical_before_dirty.png",
-    after: "/images/electrical_after_clean.png",
-    title: "Breaker Board Cable Organizing",
-    desc: "Cluttered bird's-nest fuse wiring is a severe short-circuit risk. We strip old wires and arrange modular MCB boxes with safety insulation."
-  },
-  appliance: {
-    before: "/images/appliance_before_dirty.png",
-    after: "/images/appliance_after_clean.png",
-    title: "Washing Machine Tub Descaling",
-    desc: "Scale and detergent mold build up on the outer tub ring, dirtying fresh clothes. See the pristine shine after anti-scale descaling."
-  }
-};
+function ServiceFinder({ category, services, onBook, onViewCard }) {
+  const options = (FINDER_DATA[category] || [])
+    .map(o => ({ ...o, svc: services.find(sv => sv.slug === o.slug) }))
+    .filter(o => o.svc);
+  const [idx, setIdx] = useState(0);
+  if (options.length === 0) return null;
+
+  const cur = options[Math.min(idx, options.length - 1)];
+  const svc = cur.svc;
+  const includes = (svc.includes || []).slice(0, 4);
+
+  return (
+    <section className="max-w-7xl mx-auto px-6 md:px-10 pb-6">
+      <div className="mb-5">
+        <p className="text-[11px] font-semibold tracking-wide text-emerald-600 mb-1">Not sure what to book?</p>
+        <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-zinc-900">What&rsquo;s the problem?</h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5">
+        {/* Symptoms */}
+        <div className="md:col-span-5 rounded-3xl bg-white border border-zinc-200 p-2.5 flex flex-col gap-1">
+          {options.map((o, i) => {
+            const on = i === idx;
+            return (
+              <button
+                key={o.q}
+                type="button"
+                onClick={() => setIdx(i)}
+                className={`flex items-center gap-3 text-left rounded-2xl px-3.5 py-3 text-[13.5px] font-medium cursor-pointer transition-colors ${on ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100"}`}
+              >
+                <span className={`flex w-[18px] h-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors ${on ? "border-emerald-400" : "border-zinc-300"}`}>
+                  {on && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
+                </span>
+                {o.q}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Recommendation */}
+        <div key={cur.q} className="md:col-span-7 rounded-3xl bg-zinc-950 text-white p-5 md:p-7 flex flex-col relative overflow-hidden animate-reveal-up">
+          <div className="pointer-events-none absolute -right-20 -top-24 w-72 h-72 rounded-full bg-emerald-500/15 blur-[90px]" />
+          <p className="relative text-[11px] font-semibold tracking-wide text-emerald-400 mb-2">We recommend</p>
+          <h3 className="relative text-2xl md:text-3xl font-extrabold tracking-tight leading-tight">{svc.name}</h3>
+          <p className="relative text-sm text-zinc-400 leading-relaxed mt-2 max-w-lg">{cur.why}</p>
+
+          {includes.length > 0 && (
+            <ul className="relative grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 mt-5">
+              {includes.map(item => (
+                <li key={item} className="flex items-center gap-2 text-[13px] text-zinc-200">
+                  <Check size={14} className="text-emerald-400 shrink-0" strokeWidth={3} />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="relative mt-6 pt-5 border-t border-white/10 flex flex-wrap items-center gap-x-6 gap-y-4">
+            <div>
+              <p className="text-[11px] text-zinc-500 font-medium">Starts at</p>
+              <p className="text-2xl font-extrabold leading-none mt-0.5">{formatPrice(svc.price)}
+                <span className="text-xs font-medium text-zinc-500 ml-1.5">{String(svc.unit || "per_visit").replace("_", " ")} · {svc.duration}</span>
+              </p>
+            </div>
+            <div className="flex items-center gap-2 sm:ml-auto">
+              <button
+                type="button"
+                onClick={() => onViewCard(svc.slug)}
+                className="rounded-xl border border-white/20 px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                View details
+              </button>
+              <button
+                type="button"
+                onClick={() => onBook(svc.slug)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-400 px-5 py-2.5 text-xs font-bold text-zinc-950 hover:bg-emerald-300 transition-colors cursor-pointer"
+              >
+                Book now <ArrowRight size={13} strokeWidth={2.5} />
+              </button>
+            </div>
+          </div>
+
+          <div className="relative mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-[11px] font-medium text-zinc-400">
+            {["Free diagnosis on every visit", "Pay after the job is done", "Background-verified pros"].map(t => (
+              <span key={t} className="inline-flex items-center gap-1.5">
+                <Check size={12} className="text-emerald-400" strokeWidth={3} /> {t}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 
 const CATEGORY_FAQS = [
   { q: "What is covered in the 30-Day Free Warranty?", a: "If the same fault reoccurs within 30 days of our service, we dispatch a senior expert for free inspection and repairs, zero additional charge." },
@@ -269,6 +300,68 @@ const CATEGORY_FAQS = [
   { q: "How is accidental damage handled?", a: "We provide an ultimate platform safety insurance guarantee of up to ₹10,000 to cover any accidental damages to home electronics during our service." },
   { q: "Can I easily reschedule or cancel my booking?", a: "Absolutely. Rescheduling or cancelling is completely free and can be done instantly with a single click in your dashboard up to 3 hours before the scheduled time slot." }
 ];
+
+function CategoryTabs({ active }) {
+  const scroller = useRef(null);
+  const [edge, setEdge] = useState({ left: false, right: true });
+
+  const update = useCallback(() => {
+    const el = scroller.current;
+    if (!el) return;
+    setEdge({
+      left: el.scrollLeft > 4,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+    });
+  }, []);
+
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    update();
+    // keep the active tab in view
+    el.querySelector('[data-active="true"]')?.scrollIntoView({ inline: "center", block: "nearest" });
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [update, active]);
+
+  const scrollBy = (dir) => {
+    const el = scroller.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.7, behavior: "smooth" });
+  };
+
+  const arrow = "absolute top-1/2 -translate-y-1/2 z-10 hidden sm:flex w-8 h-8 items-center justify-center rounded-full bg-white border border-zinc-200 shadow-md text-zinc-700 cursor-pointer hover:bg-zinc-900 hover:text-white hover:border-zinc-900 transition-colors";
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 md:px-10 relative">
+      {edge.left && (
+        <>
+          <div className="pointer-events-none absolute left-6 md:left-10 top-0 h-full w-14 bg-gradient-to-r from-white to-transparent z-[5]" />
+          <button type="button" aria-label="Scroll tabs left" onClick={() => scrollBy(-1)} className={`${arrow} left-6 md:left-10`}>
+            <ChevronLeft size={16} strokeWidth={2.4} />
+          </button>
+        </>
+      )}
+      <div ref={scroller} onScroll={update} className="flex gap-2 overflow-x-auto py-3 scrollbar-hide">
+        {Object.entries(CATEGORY_META).map(([key, m]) => (
+          <Link key={key} href={`/services/${key}`} data-active={key === active} className="shrink-0">
+            <span className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-full whitespace-nowrap cursor-pointer transition-colors ${key === active ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900"}`}>
+              <m.icon size={14} strokeWidth={2} />
+              {m.label}
+            </span>
+          </Link>
+        ))}
+      </div>
+      {edge.right && (
+        <>
+          <div className="pointer-events-none absolute right-6 md:right-10 top-0 h-full w-14 bg-gradient-to-l from-white to-transparent z-[5]" />
+          <button type="button" aria-label="Scroll tabs right" onClick={() => scrollBy(1)} className={`${arrow} right-6 md:right-10`}>
+            <ChevronRight size={16} strokeWidth={2.4} />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function ServiceCategoryPage({ params }) {
   const { category } = use(params);
@@ -280,8 +373,6 @@ export default function ServiceCategoryPage({ params }) {
 
   // State Hooks for Interactive Upgrades
   const [cart, setCart] = useState({});
-  const [activeSpot, setActiveSpot] = useState(null);
-  const [sliderPos, setSliderPos] = useState(50);
   const [openFaq, setOpenFaq] = useState(null);
   const [highlightedService, setHighlightedService] = useState(null);
 
@@ -341,15 +432,6 @@ export default function ServiceCategoryPage({ params }) {
     return () => { active = false; };
   }, [category]);
 
-  // Initialize active hotspot on load
-  useEffect(() => {
-    const blueprint = APPLIANCE_BLUEPRINTS[category];
-    if (blueprint && blueprint.hotspots.length > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveSpot(blueprint.hotspots[0]);
-    }
-  }, [category]);
-
   if (loading) {
     return <BrandLoader />;
   }
@@ -368,10 +450,6 @@ export default function ServiceCategoryPage({ params }) {
   }
 
   const bgBanner = CATEGORY_BACKGROUNDS[category] || DEFAULT_SERVICE_IMAGE;
-  const blueprint = APPLIANCE_BLUEPRINTS[category];
-  const beforeAfter = BEFORE_AFTER_DATA[category];
-
-  // Cart Helper Functions
   const getSvcDetails = (slug) => {
     return services.find(s => s.slug === slug);
   };
@@ -443,7 +521,7 @@ export default function ServiceCategoryPage({ params }) {
 
       {/* Navbar - Premium Glassmorphism */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-150 shadow-[0_1px_15px_rgba(0,0,0,0.02)]">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 min-h-16 py-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 h-[116px] sm:h-16 flex flex-col justify-center gap-3 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => router.back()} 
@@ -467,234 +545,57 @@ export default function ServiceCategoryPage({ params }) {
         </div>
       </nav>
 
-      {/* Category header - Stunning Watermarked Dark Banner */}
-      <div className="bg-zinc-950 border-b border-zinc-900 px-6 md:px-10 py-16 relative overflow-hidden">
-        {/* Curated background image watermark */}
+      {/* Category header */}
+      <div className="bg-zinc-950 px-6 md:px-10 py-6 md:py-8 relative overflow-hidden">
         <img
           src={bgBanner}
-          alt={meta.label}
-          className="absolute inset-0 w-full h-full object-cover opacity-25 filter grayscale contrast-125 pointer-events-none"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-50 pointer-events-none"
         />
-        {/* Luxury Vignette and Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/85 to-zinc-950/50 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-zinc-950/80 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/75 to-zinc-950/10 pointer-events-none" />
+        <div className="pointer-events-none absolute -left-20 -bottom-24 w-60 h-60 rounded-full bg-emerald-500/20 blur-[80px]" />
 
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="max-w-2xl">
-              {/* Overline pill */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-white/10 border border-white/10 rounded-full mb-4 animate-reveal-up">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[9px] font-black tracking-widest text-white/90 uppercase">Service Category</span>
-              </div>
-              <h1 className="text-4xl md:text-5.5xl font-black tracking-tighter text-white mb-4 animate-reveal-up leading-[0.9]">
+        <div className="max-w-7xl mx-auto relative z-10 flex items-center justify-between gap-6">
+          <div>
+            <nav className="flex items-center gap-1.5 text-[11px] font-medium text-white/55 mb-2" aria-label="Breadcrumb">
+              <Link href="/" className="hover:text-white transition-colors">Home</Link>
+              <span className="text-white/30">/</span>
+              <span>Services</span>
+              <span className="text-white/30">/</span>
+              <span className="text-emerald-400">{meta.label}</span>
+            </nav>
+            <div className="flex items-center gap-3">
+              <span className="flex w-9 h-9 rounded-xl bg-emerald-400/15 border border-emerald-400/30 items-center justify-center text-emerald-300 shrink-0">
+                <meta.icon size={18} strokeWidth={1.8} />
+              </span>
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white leading-none animate-reveal-up">
                 {meta.label}
               </h1>
-              <p className="text-zinc-400 text-sm md:text-base max-w-xl animate-reveal-up leading-relaxed">
-                {meta.description}
-              </p>
             </div>
-            
-            {/* Floating Banner Icon Container */}
-            <div className="hidden md:flex w-24 h-24 rounded-3xl bg-white/5 border border-white/10 items-center justify-center text-white/40 hover:scale-105 hover:text-white hover:border-white/20 transition-all duration-500 shadow-2xl animate-reveal-up">
-              <meta.icon size={42} strokeWidth={1.2} />
-            </div>
+            <p className="text-white/65 text-[13px] md:text-sm mt-2 animate-reveal-up">
+              {meta.description}
+            </p>
           </div>
-        </div>
-      </div>
 
-      {/* Category Selection Tabs - Modern Silver Pills */}
-      <div className="sticky top-[73px] z-40 border-b border-zinc-150 bg-white/95 backdrop-blur-md px-6 md:px-10 py-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-        <div className="max-w-7xl mx-auto flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-          {Object.entries(CATEGORY_META).map(([key, m]) => (
-            <Link key={key} href={`/services/${key}`}>
-              <span className={`inline-flex items-center gap-2 px-4 py-2 text-[10px] font-black tracking-widest uppercase transition-all duration-300 rounded-full border whitespace-nowrap cursor-pointer hover:-translate-y-0.5 ${key === category ? "bg-black text-white border-black shadow-[0_5px_15px_rgba(0,0,0,0.15)]" : "bg-white text-zinc-500 border-zinc-200 hover:border-black hover:text-black hover:bg-zinc-50"}`}>
-                <m.icon size={13} strokeWidth={2.2} />
-                {m.label}
+          <div className="hidden md:flex items-center gap-2 shrink-0">
+            {["Verified pros", "Pay after service"].map(t => (
+              <span key={t} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur border border-white/15 px-3 py-1.5 text-[11px] font-semibold text-white/90">
+                <Check size={12} className="text-emerald-400" strokeWidth={3} />
+                {t}
               </span>
-            </Link>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Interactive Bento Section */}
-      {blueprint && beforeAfter && (
-        <div className="max-w-7xl mx-auto px-6 md:px-10 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
-            
-            {/* Left Box: Clickable Appliance Hotspot Visualizer (7 cols) */}
-            <div className="md:col-span-7 bg-zinc-950 text-white rounded-3xl p-6 md:p-8 flex flex-col justify-between relative overflow-hidden min-h-[460px] md:min-h-[500px] border border-zinc-900 bento-grid-bg shadow-[0_20px_50px_rgba(0,0,0,0.15)]">
-              {/* Luxury radial gradient highlight */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(52,211,153,0.12),transparent_50%)] pointer-events-none" />
-              
-              <div className="relative z-10 w-full">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/10 rounded-full mb-4">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[9px] font-black tracking-widest text-emerald-400 uppercase">Interactive Diagnosis</span>
-                </div>
-                <h2 className="text-2xl font-black tracking-tight text-white mb-1">
-                  {blueprint.title}
-                </h2>
-                <p className="text-xs text-zinc-400 mb-6">
-                  {blueprint.subtitle}
-                </p>
-                
-                {/* Blueprint Anatomy Visual Area */}
-                <div className="relative w-full aspect-[16/10] bg-zinc-900/60 border border-white/5 rounded-2xl overflow-hidden">
-                  <img 
-                    src={blueprint.image} 
-                    alt={blueprint.title} 
-                    className="absolute inset-0 w-full h-full object-cover rounded-2xl opacity-20 filter grayscale invert contrast-150 pointer-events-none"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 to-transparent pointer-events-none" />
-                  
-                  {/* Absolute Blinking Hotspots */}
-                  {blueprint.hotspots.map(spot => {
-                    const isActive = activeSpot?.id === spot.id;
-                    return (
-                      <button
-                        key={spot.id}
-                        onClick={() => {
-                          setActiveSpot(spot);
-                          const card = document.getElementById(`service-${spot.service}`);
-                          if (card) {
-                            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            setHighlightedService(spot.service);
-                            setTimeout(() => setHighlightedService(null), 3000);
-                          }
-                        }}
-                        style={{ left: spot.x, top: spot.y }}
-                        className="absolute -translate-x-1/2 -translate-y-1/2 group z-20 flex items-center justify-center w-8 h-8 rounded-full cursor-pointer focus:outline-none"
-                      >
-                        <span className={`absolute inset-0 rounded-full transition-all duration-500 ${isActive ? "bg-emerald-400/40 animate-ping" : "bg-emerald-400/10 group-hover:bg-emerald-400/30"}`} />
-                        <span className={`relative w-3.5 h-3.5 rounded-full border border-white transition-all duration-300 ${isActive ? "bg-emerald-450 scale-125 shadow-[0_0_15px_rgba(52,211,153,1)]" : "bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.5)] group-hover:scale-110"}`} />
-                        
-                        <span className="absolute top-9 bg-zinc-900 border border-zinc-800 text-white font-black tracking-widest text-[8px] uppercase px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap shadow-xl pointer-events-none">
-                          {spot.name}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Dynamic hotspot diagnostics footer card */}
-              {activeSpot && (
-                <div className="relative z-10 mt-6 bg-white/5 border border-white/10 rounded-2xl p-4.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 backdrop-blur-md animate-reveal-up">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[9px] font-black tracking-widest uppercase text-emerald-400">Diagnosis Matched</span>
-                      <span className="w-1 h-1 bg-zinc-600 rounded-full" />
-                      <span className="text-[9px] font-black text-zinc-400 uppercase">{activeSpot.name}</span>
-                    </div>
-                    <p className="text-xs text-zinc-350 leading-relaxed max-w-xl">{activeSpot.desc}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const card = document.getElementById(`service-${activeSpot.service}`);
-                      if (card) {
-                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        setHighlightedService(activeSpot.service);
-                        setTimeout(() => setHighlightedService(null), 3000);
-                      }
-                    }}
-                    className="self-start sm:self-center bg-white text-zinc-950 hover:bg-zinc-200 transition-all duration-300 px-4 py-2.5 rounded-xl text-[9px] font-black tracking-widest uppercase whitespace-nowrap shadow-md cursor-pointer"
-                  >
-                    View Pricing
-                  </button>
-                </div>
-              )}
-            </div>
-            
-            {/* Right Box: Before / After Draggable Compare Widget (5 cols) */}
-            <div className="md:col-span-5 bg-white border border-zinc-200 rounded-3xl p-6 md:p-8 flex flex-col justify-between shadow-[0_10px_40px_rgba(0,0,0,0.02)] min-h-[420px] sm:min-h-[500px]">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-zinc-100 border border-zinc-200 rounded-full mb-4">
-                  <span className="w-1.5 h-1.5 rounded-full bg-black" />
-                  <span className="text-[9px] font-black tracking-widest text-zinc-650 uppercase font-sans">Visual Guarantee</span>
-                </div>
-                <h2 className="text-2xl font-black tracking-tight text-black mb-1">
-                  {beforeAfter.title}
-                </h2>
-                <p className="text-xs text-zinc-500 mb-6 leading-relaxed">
-                  {beforeAfter.desc}
-                </p>
-                
-                {/* Visualizer Compare frame */}
-                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-zinc-150 shadow-inner group">
-                  {/* AFTER (Pristine state image on back) */}
-                  <img 
-                    src={beforeAfter.after} 
-                    alt="After Cleaning State" 
-                    className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
-                  />
-                  <div className="absolute top-4 right-4 bg-emerald-500 text-white text-[9px] font-black tracking-widest uppercase px-2.5 py-1.5 rounded-lg shadow-md z-20 select-none">
-                    Pristine Clean
-                  </div>
-
-                  {/* BEFORE (Dirty state image on left, width controlled by slider percentage) */}
-                  <div 
-                    className="absolute inset-0 overflow-hidden" 
-                    style={{ width: `${sliderPos}%` }}
-                  >
-                    {/* Simulated dirty styling using rich CSS image filters */}
-                    <img 
-                      src={beforeAfter.before} 
-                      alt="Before Cleaning State" 
-                      className="absolute inset-0 w-full h-full object-cover max-w-none filter sepia-[0.3] brightness-70 contrast-125 saturate-[0.7] select-none pointer-events-none"
-                      style={{ width: "100%", height: "100%" }}
-                    />
-                    <div className="absolute top-4 left-4 bg-zinc-950/80 border border-white/10 text-white text-[9px] font-black tracking-widest uppercase px-2.5 py-1.5 rounded-lg shadow-md z-20 select-none">
-                      Dirty & Worn
-                    </div>
-                  </div>
-
-                  {/* Vertical bar divider */}
-                  <div 
-                    className="absolute top-0 bottom-0 w-[2px] bg-white cursor-ew-resize z-20 pointer-events-none shadow-[0_0_12px_rgba(0,0,0,0.4)]"
-                    style={{ left: `${sliderPos}%` }}
-                  >
-                    {/* Central drag knob button */}
-                    <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-9 h-9 rounded-full bg-white border border-zinc-200 shadow-xl flex items-center justify-center pointer-events-none">
-                      <svg className="w-4 h-4 text-zinc-800" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l-4 4 4 4m8-8l4 4-4 4" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Transparent overlay input range for simple native accessibility & desktop/mobile dragging */}
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="100" 
-                    value={sliderPos} 
-                    onChange={(e) => setSliderPos(Number(e.target.value))}
-                    className="absolute inset-0 opacity-0 cursor-ew-resize z-30 w-full h-full"
-                    aria-label="Before / After Compare Slider"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between text-[9px] text-zinc-450 font-black tracking-widest uppercase">
-                <span>← Swipe slider left-right to review →</span>
-                <span className="text-black font-black">{Math.round(sliderPos)}% Dirty</span>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      )}
+      {/* Category tabs */}
+      <div className="sticky top-[116px] sm:top-16 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur-md">
+        <CategoryTabs active={category} />
+      </div>
 
       {/* Service Cards Grid */}
-      <div className="max-w-7xl mx-auto px-6 md:px-10 py-12">
-        <div className="flex items-center gap-3 mb-10 animate-reveal-up">
-          <span className="w-8 h-px bg-zinc-300" />
-          <p className="text-[10px] font-black tracking-widest uppercase text-zinc-400">
-            {services.length} Premium Service{services.length !== 1 ? "s" : ""} Available
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {services.map((svc, idx) => {
             const imageUrl = (svc.images && svc.images.length > 0)
               ? svc.images[0]
@@ -703,112 +604,132 @@ export default function ServiceCategoryPage({ params }) {
             const isHighlighted = highlightedService === svc.slug;
 
             return (
-              <div 
-                key={svc.slug} 
+              <div
+                key={svc.slug}
                 id={`service-${svc.slug}`}
-                className={`group bg-white border flex flex-col relative overflow-hidden rounded-2xl smooth-lift ${
-                  isHighlighted 
-                    ? "border-black scale-[1.02] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.12)] ring-4 ring-black/5 z-10" 
-                    : "border-zinc-200 hover:border-black hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)]"
+                className={`group bg-white flex flex-col relative overflow-hidden rounded-2xl border transition-all duration-300 ${
+                  isHighlighted
+                    ? "border-emerald-500 ring-4 ring-emerald-500/15 shadow-[0_24px_50px_-18px_rgba(16,185,129,0.35)]"
+                    : "border-zinc-200 hover:border-zinc-300 hover:shadow-[0_24px_50px_-24px_rgba(0,0,0,0.25)]"
                 }`}
                 style={{ animationDelay: `${idx * 75}ms` }}
               >
-                {/* Product Card Image Header */}
-                <div className="h-56 relative w-full overflow-hidden bg-zinc-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={imageUrl} 
-                    alt={svc.name} 
-                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  />
-                  {/* Premium overlay gradients */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent pointer-events-none" />
-                  
-                  {/* Custom popular badge */}
-                  {svc.popular && (
-                    <div className="absolute top-4 right-4 bg-black/75 backdrop-blur-md border border-white/10 text-white text-[9px] font-black tracking-widest uppercase px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
-                      <Sparkles size={9} className="text-amber-400" />
-                      Popular
-                    </div>
-                  )}
+                {/* Image with floating Add button (overlaps the edge) */}
+                <div className="relative p-2.5 pb-0">
+                  <div className="relative h-44 w-full overflow-hidden rounded-xl bg-zinc-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imageUrl}
+                      alt={svc.name}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent pointer-events-none" />
+                    {svc.popular && (
+                      <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-zinc-900 shadow-sm">
+                        <Sparkles size={11} className="text-amber-500" />
+                        Most booked
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-                  {/* Duration and unit tags */}
-                  <div className="absolute bottom-4 left-4 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/95 backdrop-blur-sm text-black text-[9px] font-black tracking-widest uppercase rounded-lg shadow-sm">
-                      <Clock size={10} strokeWidth={3} className="text-zinc-650" />
-                      {svc.duration}
+                {/* Body */}
+                <div className="px-5 pt-4 pb-0 flex-1 flex flex-col">
+                  <h3 className="text-[17px] font-extrabold text-zinc-900 tracking-tight leading-snug">{svc.name}</h3>
+
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <span className="text-[13px] text-zinc-500">Starts at <span className="text-[17px] font-extrabold text-zinc-900 align-baseline">{formatPrice(svc.price)}</span></span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-600">
+                      <Clock size={12} className="text-zinc-400" />{svc.duration}
                     </span>
-                    <span className="inline-flex items-center px-3 py-1 bg-black/60 backdrop-blur-sm text-white border border-white/10 text-[9px] font-black tracking-widest uppercase rounded-lg capitalize shadow-sm">
+                    <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-600 capitalize">
                       {svc.unit.replace("_", " ")}
                     </span>
                   </div>
-                </div>
 
-                {/* Card Info Body */}
-                <div className="p-6 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-xl font-black text-black tracking-tight mb-4 group-hover:text-zinc-800 transition-colors">{svc.name}</h3>
-
-                    {/* What's included checklist */}
-                    <div className="mb-6">
-                      <p className="text-[10px] font-black tracking-widest uppercase text-zinc-400 mb-3">What&apos;s Included</p>
-                      <ul className="space-y-2">
-                        {svc.includes.map((item, i) => (
-                          <li key={i} className="flex items-start gap-2.5 text-xs text-zinc-600 leading-normal">
-                            <span className="w-4.5 h-4.5 rounded-full bg-emerald-50 border border-emerald-150 flex items-center justify-center mt-0.5 flex-shrink-0">
-                              <Check size={10} strokeWidth={3} className="text-emerald-600" />
-                            </span>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  <div className="border-t border-dashed border-zinc-200 mt-4 pt-4 pb-5">
+                    <p className="text-[11px] font-semibold text-zinc-400 mb-2.5">What&rsquo;s included</p>
+                    <ul className="space-y-2">
+                      {svc.includes.slice(0, 3).map((item, i) => (
+                        <li key={i} className="flex items-start gap-2.5 text-[13px] text-zinc-700 leading-snug">
+                          <Check size={15} strokeWidth={2.6} className="text-emerald-500 mt-px shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {svc.includes.length > 3 && (
+                      <details className="group/more mt-2">
+                        <summary className="list-none cursor-pointer text-[12px] font-semibold text-emerald-600 hover:text-emerald-700 select-none [&::-webkit-details-marker]:hidden">
+                          <span className="group-open/more:hidden">+{svc.includes.length - 3} more included</span>
+                          <span className="hidden group-open/more:inline">Show less</span>
+                        </summary>
+                        <ul className="mt-2 space-y-2">
+                          {svc.includes.slice(3).map((item, i) => (
+                            <li key={i} className="flex items-start gap-2.5 text-[13px] text-zinc-700 leading-snug">
+                              <Check size={15} strokeWidth={2.6} className="text-emerald-500 mt-px shrink-0" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
                   </div>
-                </div>
 
-                {/* Checkout pricing and action footer */}
-                <div className="px-6 pb-6 pt-4 border-t border-zinc-150 flex items-center justify-between bg-zinc-50/40">
-                  <div>
-                    <p className="text-[9px] font-bold tracking-wider uppercase text-zinc-400 mb-0.5">Starting From</p>
-                    <p className="text-2xl font-black text-black leading-none">{formatPrice(svc.price)}</p>
-                  </div>
-                  
-                  {/* Cart interactive segment control */}
-                  {qty === 0 ? (
-                    <button 
-                      onClick={() => updateQty(svc.slug, 1)}
-                      className="group/btn inline-flex items-center gap-2 bg-black text-white px-5 py-3 text-[10px] font-black tracking-widest uppercase hover:bg-zinc-850 transition-all duration-300 rounded-xl shadow-md cursor-pointer"
-                    >
-                      Add
-                      <ArrowRight size={11} strokeWidth={2.5} className="transition-transform duration-200 group-hover/btn:translate-x-0.5 text-emerald-400" />
-                    </button>
-                  ) : (
-                    <div className="flex items-center bg-black text-white rounded-xl shadow-md p-1 border border-zinc-800">
-                      <button 
-                        onClick={() => updateQty(svc.slug, -1)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black hover:bg-zinc-800 transition-colors cursor-pointer text-zinc-400 hover:text-white"
-                        aria-label="Decrease quantity"
-                      >
-                        -
-                      </button>
-                      <span className="px-3 text-[11px] font-black tracking-widest text-center min-w-8">
-                        {qty}
-                      </span>
-                      <button 
+                  {/* Footer: trust note + add action on one line */}
+                  <div className="mt-auto -mx-5 px-5 py-3 bg-emerald-50/70 border-t border-emerald-100 flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-1.5 text-[11.5px] font-medium text-emerald-800 leading-tight">
+                      <Shield size={14} className="text-emerald-600 shrink-0" /> Pay after the job is done
+                    </span>
+                    {qty === 0 ? (
+                      <button
                         onClick={() => updateQty(svc.slug, 1)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black hover:bg-zinc-800 transition-colors cursor-pointer text-emerald-450 hover:text-emerald-350"
-                        aria-label="Increase quantity"
+                        className="shrink-0 rounded-lg bg-white border border-emerald-500 px-5 py-1.5 text-[13px] font-bold text-emerald-700 shadow-sm hover:bg-emerald-500 hover:text-white transition-colors cursor-pointer"
                       >
-                        +
+                        Add
                       </button>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="shrink-0 flex items-center rounded-lg bg-emerald-500 text-white overflow-hidden shadow-sm">
+                        <button
+                          onClick={() => updateQty(svc.slug, -1)}
+                          className="w-8 h-8 flex items-center justify-center text-base font-bold hover:bg-emerald-600 transition-colors cursor-pointer"
+                          aria-label="Decrease quantity"
+                        >
+                          −
+                        </button>
+                        <span className="min-w-5 text-center text-[13px] font-bold">{qty}</span>
+                        <button
+                          onClick={() => updateQty(svc.slug, 1)}
+                          className="w-8 h-8 flex items-center justify-center text-base font-bold hover:bg-emerald-600 transition-colors cursor-pointer"
+                          aria-label="Increase quantity"
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Help me choose: after the listing, for people still unsure */}
+      <ServiceFinder
+        category={category}
+        services={services}
+        onBook={(slug) => router.push(`/book/${slug}?cart=${slug}:1`)}
+        onViewCard={(slug) => {
+          const card = document.getElementById(`service-${slug}`);
+          if (card) {
+            card.scrollIntoView({ behavior: "smooth", block: "center" });
+            setHighlightedService(slug);
+            setTimeout(() => setHighlightedService(null), 3000);
+          }
+        }}
+      />
 
       {/* Premium Trust Badges */}
       <div className="border-y border-zinc-150 bg-zinc-50/50 backdrop-blur-sm px-6 md:px-10 py-12">

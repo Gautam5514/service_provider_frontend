@@ -16,7 +16,7 @@ const SOURCE_LABEL = {
   manual:   { text: "Manual",  cls: "text-blue-600"    },
 };
 
-export default function LocationBar({ onLocationChange, compact = false }) {
+export default function LocationBar({ onLocationChange, compact = false, onDark = false }) {
   const [location, setLocation] = useState(null);
   const [status, setStatus]     = useState("idle");
   const [open, setOpen]         = useState(false);
@@ -68,10 +68,10 @@ export default function LocationBar({ onLocationChange, compact = false }) {
     return (
       <div ref={panelRef} className="relative">
         <button onClick={() => setOpen(o => !o)}
-          className="flex items-center gap-1.5 text-xs font-semibold text-zinc-600 hover:text-black transition-colors group">
+          className={`flex items-center gap-1.5 text-xs font-semibold transition-colors group ${onDark ? "text-white/90 hover:text-white" : "text-zinc-600 hover:text-black"}`}>
           {status === "detecting" || refreshing
             ? <Loader2 size={13} className="animate-spin text-zinc-400" />
-            : <MapPin size={13} className="text-zinc-400 group-hover:text-black transition-colors" />}
+            : <MapPin size={13} className={`transition-colors ${onDark ? "text-white/80" : "text-zinc-400 group-hover:text-black"}`} />}
           <span className="max-w-[100px] truncate">
             {status === "detecting" ? "Detecting…" : (location?.city || "Set location")}
           </span>
@@ -135,22 +135,22 @@ function Panel({ query, setQuery, inputRef, location, srcInfo,
   const btn   = dark ? "hover:bg-zinc-700 text-zinc-400 hover:text-white" : "hover:bg-zinc-100 text-zinc-400 hover:text-black";
   const txt   = dark ? "text-white" : "text-zinc-800";
   const sub   = dark ? "text-zinc-400" : "text-zinc-400";
-  const field = dark ? "border-zinc-700 bg-zinc-800 focus-within:border-zinc-400 text-white placeholder:text-zinc-500" : "border-zinc-200 bg-zinc-50 focus-within:border-zinc-900 text-zinc-900 placeholder:text-zinc-400";
+  const field = dark ? "border-zinc-700 bg-zinc-800 focus-within:border-zinc-400 text-white placeholder:text-zinc-500" : "border-zinc-200 bg-zinc-50 focus-within:border-emerald-500 text-zinc-900 placeholder:text-zinc-400";
   const rowBtn = dark ? "border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800" : "border-zinc-200 text-zinc-700 hover:border-zinc-900 hover:bg-zinc-50";
   const cityBtn = (selected) => selected
-    ? (dark ? "bg-emerald-600 border-emerald-600 text-white" : "bg-black border-black text-white")
-    : (dark ? "border-zinc-700 text-zinc-400 hover:border-zinc-400 hover:text-white" : "border-zinc-200 text-zinc-600 hover:border-black hover:text-black");
+    ? (dark ? "bg-emerald-600 border-emerald-600 text-white" : "bg-emerald-50 border-emerald-500 text-emerald-700")
+    : (dark ? "border-zinc-700 text-zinc-400 hover:border-zinc-400 hover:text-white" : "border-zinc-200 text-zinc-600 hover:border-zinc-400 hover:bg-zinc-50 hover:text-black");
 
   return (
-    <div className={`absolute top-full left-0 mt-2 w-72 rounded-2xl shadow-2xl border z-50 overflow-hidden ${bg}`}>
+    <div className={`absolute top-full left-0 mt-3 w-[300px] max-w-[calc(100vw-2rem)] rounded-2xl shadow-[0_24px_60px_-18px_rgba(0,0,0,0.45)] border z-50 overflow-hidden ${bg}`}>
       {/* Header */}
-      <div className={`px-4 py-3 border-b flex items-center justify-between ${div}`}>
+      <div className={`px-4 pt-3.5 pb-3 flex items-start justify-between`}>
         <div>
-          <p className={`text-[10px] font-bold tracking-widest uppercase ${sub}`}>Your Location</p>
+          <p className={`text-[10px] font-semibold tracking-[0.14em] uppercase ${sub}`}>Your location</p>
           {location && (
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <CheckCircle2 size={11} className="text-emerald-500" />
-              <span className={`text-xs font-semibold ${txt}`}>
+            <div className="flex items-center gap-1.5 mt-1">
+              <CheckCircle2 size={13} className="text-emerald-500" />
+              <span className={`text-[13px] font-bold ${txt}`}>
                 {location.city}{location.state ? `, ${location.state}` : ""}
               </span>
               {srcInfo && <span className={`text-[9px] font-bold ${srcInfo.cls}`}>· {srcInfo.text}</span>}
@@ -168,17 +168,17 @@ function Panel({ query, setQuery, inputRef, location, srcInfo,
       </div>
 
       {/* GPS button */}
-      <div className="px-4 pt-3 pb-2">
+      <div className="px-4 pb-2.5">
         <button onClick={onRefresh} disabled={refreshing}
-          className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all ${rowBtn}`}>
+          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${dark ? "" : "bg-emerald-50/60 !border-emerald-100 hover:!bg-emerald-50 hover:!border-emerald-300"} ${rowBtn}`}>
           <Navigation size={14} className="text-emerald-500" />
           {refreshing ? "Detecting your location…" : "Use my current location"}
         </button>
       </div>
 
       {/* Search input */}
-      <div className="px-4 pb-2">
-        <div className={`flex items-center gap-2 border rounded-xl px-3 py-2 transition-colors ${field}`}>
+      <div className="px-4 pb-3">
+        <div className={`flex items-center gap-2 border rounded-xl px-3 py-2 transition-all focus-within:ring-2 focus-within:ring-emerald-500/20 ${field}`}>
           <Search size={13} className="opacity-50 flex-shrink-0" />
           <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
             onKeyDown={e => e.key === "Enter" && onManual()}
@@ -191,12 +191,12 @@ function Panel({ query, setQuery, inputRef, location, srcInfo,
       </div>
 
       {/* Popular cities */}
-      <div className="px-4 pb-4">
-        <p className={`text-[9px] font-bold tracking-widest uppercase mb-2 ${sub}`}>Popular Cities</p>
+      <div className={`px-4 pb-4 pt-3 border-t ${div}`}>
+        <p className={`text-[10px] font-semibold tracking-[0.14em] uppercase mb-2 ${sub}`}>Popular cities</p>
         <div className="flex flex-wrap gap-1.5">
           {filtered.slice(0, 8).map(city => (
             <button key={city} onClick={() => onCitySelect(city)}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide border transition-all ${cityBtn(location?.city === city)}`}>
+              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${cityBtn(location?.city === city)}`}>
               {city}
             </button>
           ))}

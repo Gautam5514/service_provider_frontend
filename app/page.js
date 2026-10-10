@@ -749,6 +749,15 @@ export default function HomePage() {
   const [user,      setUser]      = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [location,  setLocation]  = useState(null);
+  // Navbar is transparent over the hero, turns solid white once scrolled.
+  const [scrolled,  setScrolled]  = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     // Validate the httpOnly cookie with the server on every page load.
@@ -1001,7 +1010,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-white font-sans selection:bg-black selection:text-white relative">
 
       {/* ── TOP ANNOUNCEMENT ─────────────────────────────────────────── */}
-      <div className="bg-zinc-950 border-b border-zinc-800 py-3.5 text-center">
+      <div className="bg-zinc-950 py-3.5 text-center">
         <p className="text-[11px] md:text-xs font-semibold text-white/45 tracking-wide">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 align-middle mr-2 animate-pulse" />
           Now live in 25+ cities · Free service diagnosis on every visit · Pay after job done
@@ -1009,7 +1018,11 @@ export default function HomePage() {
       </div>
 
       {/* ── NAVBAR ───────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-40 bg-white/96 backdrop-blur-md border-b border-zinc-100 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+      <nav className={`sticky top-0 z-40 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/95 backdrop-blur-md shadow-[0_1px_0_rgba(0,0,0,0.08)]"
+          : "bg-white md:bg-transparent shadow-[0_1px_0_rgba(0,0,0,0.06)] md:shadow-none"
+      }`}>
         <div className="max-w-7xl mx-auto px-4 md:px-10 h-16 flex items-center gap-4">
 
           {/* Logo */}
@@ -1022,13 +1035,13 @@ export default function HomePage() {
                 className="w-8 h-8 object-contain drop-shadow-sm"
               />
             </div>
-            <span className="hidden sm:block text-base font-extrabold tracking-tight">
-              Elite<span className="font-light text-zinc-400">Crew</span>
+            <span className={`hidden sm:block text-base font-extrabold tracking-tight transition-colors ${scrolled ? "text-black" : "md:text-white"}`}>
+              Elite<span className={`font-light transition-colors ${scrolled ? "text-zinc-400" : "md:text-white/70"}`}>Crew</span>
             </span>
           </Link>
 
           {/* Desktop search */}
-          <div className="flex-1 max-w-lg mx-4 hidden md:block">
+          <div className={`flex-1 max-w-lg mx-4 hidden md:block transition-all duration-300 ${scrolled ? "opacity-100" : "opacity-0 pointer-events-none -translate-y-1"}`}>
             <SmartSearch role={user?.role === "customer" ? "customer" : "public"} compact />
           </div>
 
@@ -1036,7 +1049,7 @@ export default function HomePage() {
           <div className="ml-auto flex items-center gap-2 shrink-0">
             {authReady && (
               <>
-                <LocationBar onLocationChange={setLocation} compact />
+                <LocationBar onLocationChange={setLocation} compact onDark={!scrolled} />
                 {user ? (
                   <>
                     <Link href="/bookings"
@@ -1049,11 +1062,11 @@ export default function HomePage() {
                 ) : (
                   <>
                     <Link href="/login"
-                      className="hidden sm:block text-xs font-semibold text-zinc-500 hover:text-black transition-colors px-1">
+                      className={`hidden sm:block text-xs font-semibold transition-colors px-1 ${scrolled ? "text-zinc-500 hover:text-black" : "text-white/90 hover:text-white"}`}>
                       Sign In
                     </Link>
                     <Link href="/register"
-                      className="bg-black text-white px-4 py-2 text-[10px] font-bold tracking-widest uppercase hover:bg-zinc-800 transition-colors">
+                      className={`px-4 py-2 text-[10px] font-bold tracking-widest uppercase transition-colors ${scrolled ? "bg-black text-white hover:bg-zinc-800" : "bg-white text-black hover:bg-zinc-200"}`}>
                       Register
                     </Link>
                   </>
@@ -1069,126 +1082,68 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ── HERO (warm / light) ──────────────────────────────────────── */}
-      <section className="relative bg-gradient-to-b from-white via-white to-zinc-50 overflow-hidden border-b border-zinc-100">
-        {/* Soft warm ambient accents */}
-        <div className="pointer-events-none absolute -top-32 -right-24 w-[520px] h-[520px] bg-emerald-100/45 rounded-full blur-[130px]" />
-        <div className="pointer-events-none absolute bottom-0 -left-28 w-[420px] h-[420px] bg-amber-50 rounded-full blur-[120px]" />
+      {/* ── HERO (full-bleed image, text overlay) ────────────────────── */}
+      <section className="relative z-30 isolate bg-zinc-900 min-h-[520px] md:min-h-[640px] md:-mt-16 md:pt-16 flex items-center">
+        <div className="absolute inset-0 -z-20 overflow-hidden">
+        <Image
+          src="/hero/elitecrew-home-services.webp"
+          alt="Home service professional with a toolkit and an AC technician working in a customer's home"
+          fill
+          preload
+          sizes="100vw"
+          className="object-cover object-[76%_center] md:object-[center_30%]"
+        />
+        {/* Keep white copy readable while letting the service team stay visible. */}
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,24,24,0.94)_0%,rgba(8,24,24,0.84)_55%,rgba(8,24,24,0.58)_100%)] md:bg-[linear-gradient(90deg,rgba(8,24,24,0.98)_0%,rgba(8,24,24,0.94)_30%,rgba(8,24,24,0.86)_46%,rgba(8,24,24,0.38)_64%,rgba(8,24,24,0.06)_82%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,18,18,0.72)_0%,rgba(8,18,18,0.12)_24%,transparent_45%,rgba(8,18,18,0.22)_100%)]" />
+        </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 md:px-10 pt-4 pb-12 md:pt-6 md:pb-16">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
-
-            {/* LEFT — content */}
-            <div>
-              {/* Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.6rem] font-black tracking-tight leading-[1.05] text-black mb-5">
-                Fix anything at home,{" "}
-                <span className="text-emerald-600">with experts you trust.</span>
-              </h1>
-
-              <p className="text-zinc-500 text-base md:text-lg max-w-[520px] mb-7 leading-relaxed">
-                AC, fridge, washing machine, wiring &amp; more — book a background-verified
-                pro in minutes. Upfront prices, and you only pay once the job&rsquo;s done.
-              </p>
-
-              {/* Search box */}
-              <div className="mb-4">
-                <SmartSearch role={user?.role === "customer" ? "customer" : "public"} />
-              </div>
-
-              {/* Quick category chips */}
-              <div className="flex flex-wrap items-center gap-2 mb-7">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mr-0.5">Popular:</span>
-                {[
-                  { label: "AC Service",       href: "/services/ac" },
-                  { label: "Fridge",           href: "/services/fridge" },
-                  { label: "Electrician",      href: "/services/electrical" },
-                  { label: "Fan",              href: "/services/fan" },
-                  { label: "Washing Machine",  href: "/services/appliance" },
-                ].map(c => (
-                  <Link
-                    key={c.label}
-                    href={c.href}
-                    className="px-3 py-1.5 rounded-full border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:border-black hover:text-black hover:shadow-sm transition-all"
-                  >
-                    {c.label}
-                  </Link>
+        <div className="relative w-full max-w-7xl mx-auto px-5 md:px-10 py-14 md:py-20">
+          <div className="max-w-[520px]">
+            {/* Rating */}
+            <div className="inline-flex items-center gap-2.5 mb-4 rounded-full bg-white/95 shadow-[0_8px_24px_-10px_rgba(0,0,0,0.5)] pl-3 pr-3.5 py-1.5">
+              <span className="flex gap-0.5">
+                {[0, 1, 2, 3, 4].map(i => (
+                  <Star key={i} size={13} className="fill-amber-400 text-amber-400" />
                 ))}
-              </div>
+              </span>
+              <span className="text-[13px] font-extrabold text-zinc-900 leading-none">4.8</span>
+              <span className="h-3 w-px bg-zinc-300" />
+              <span className="text-[11px] font-semibold text-zinc-500 leading-none">Customer rating</span>
+            </div>
 
-              {/* Location + browse */}
-              <div className="flex flex-wrap items-center gap-3 mb-9">
-                <LocationBar compact onLocationChange={setLocation} />
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] text-white mb-3 drop-shadow-[0_2px_20px_rgba(0,0,0,0.35)]">
+              Fix anything at home,{" "}
+              <span className="text-emerald-400">with experts you trust.</span>
+            </h1>
+
+            <p className="text-white/75 text-sm md:text-base max-w-[400px] mb-6 leading-relaxed">
+              Verified pros. Upfront prices. Pay only after the job&rsquo;s done.
+            </p>
+
+            {/* Search */}
+            <div className="mb-4 max-w-[460px]">
+              <SmartSearch role={user?.role === "customer" ? "customer" : "public"} />
+            </div>
+
+            {/* Quick chips */}
+            <div className="flex flex-wrap items-center gap-1.5 mb-6">
+              {[
+                { label: "AC Service",       href: "/services/ac" },
+                { label: "Fridge",           href: "/services/fridge" },
+                { label: "Electrician",      href: "/services/electrical" },
+                { label: "Fan",              href: "/services/fan" },
+                { label: "Washing Machine",  href: "/services/appliance" },
+              ].map(c => (
                 <Link
-                  href="#categories"
-                  className="group inline-flex items-center gap-2 bg-black text-white px-6 py-3 rounded-xl text-xs font-bold tracking-widest uppercase hover:bg-zinc-800 transition-colors"
+                  key={c.label}
+                  href={c.href}
+                  className="px-3 py-1 rounded-full border border-white/25 bg-white/10 backdrop-blur-md text-[10px] font-semibold text-white hover:bg-white hover:text-black transition-all"
                 >
-                  Browse All Services
-                  <ArrowRight size={13} className="transition-transform duration-150 group-hover:translate-x-0.5" />
+                  {c.label}
                 </Link>
-              </div>
-
-              {/* Trust strip */}
-              <div className="flex flex-wrap items-center gap-x-7 gap-y-3 border-t border-zinc-100 pt-6">
-                {STATS.map(({ value, label, Icon }) => (
-                  <div key={label} className="flex items-center gap-2">
-                    <Icon size={16} className="text-emerald-500 shrink-0" strokeWidth={2} />
-                    <span className="text-sm font-black text-black">{value}</span>
-                    <span className="text-[11px] text-zinc-400 font-medium">{label}</span>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
-
-            {/* RIGHT — services showcase (4 real jobs we solve) */}
-            <div className="relative">
-              <div className="grid grid-cols-2 gap-3 md:gap-4 rounded-[2rem] bg-white p-3 md:p-4 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.35)] border border-zinc-100">
-                {[
-                  { src: "/hero/acrepair.webp",   label: "AC Repair & Service", href: "/services/ac" },
-                  { src: "/hero/fridges.webp",    label: "Fridge Repair",       href: "/services/fridge" },
-                  { src: "/hero/electrician.webp",label: "Electrical Work",     href: "/services/electrical" },
-                  { src: "/hero/washing.webp",    label: "Washing Machine",     href: "/services/appliance" },
-                ].map((item, i) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="group/tile relative block aspect-[4/5] rounded-2xl overflow-hidden bg-zinc-100"
-                  >
-                    <Image
-                      src={item.src}
-                      alt={item.label}
-                      fill
-                      priority={i < 2}
-                      sizes="(max-width: 1024px) 45vw, 24vw"
-                      className="object-cover transition-transform duration-700 group-hover/tile:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-                    <span className="absolute bottom-2.5 left-3 right-3 text-white text-[11px] md:text-xs font-black tracking-tight leading-tight drop-shadow-sm">
-                      {item.label}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-
-              {/* Floating rating card */}
-              <div className="absolute -top-4 right-4 sm:-right-4 bg-white rounded-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] border border-zinc-100 px-4 py-2.5 flex items-center gap-2">
-                <Star size={15} className="fill-amber-400 text-amber-400" />
-                <span className="text-sm font-black text-black">4.8</span>
-                <span className="text-[10px] text-zinc-400 font-bold">/5</span>
-              </div>
-
-              {/* Floating verified card */}
-              <div className="absolute -bottom-5 left-4 sm:-left-5 bg-white rounded-2xl shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] border border-zinc-100 px-4 py-3 flex items-center gap-3">
-                <span className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                  <ShieldCheck size={18} />
-                </span>
-                <div>
-                  <p className="text-[11px] font-black text-black leading-none">KYC-Verified Pro</p>
-                  <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Aadhaar + Police Check</p>
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
       </section>
